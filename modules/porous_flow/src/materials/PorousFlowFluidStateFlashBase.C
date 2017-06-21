@@ -201,6 +201,11 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
         (*_dgradp_qp_dgradv)[_qp][ph][_pvar] = 1.0;
     }
 
+    if (!_nodal_material)
+      (*_dgradp_qp_dgradv)[_qp][_aqueous_phase_number][_zvar[0]] =
+          dpc * _fsp[_aqueous_phase_number].dsaturation_dp +
+          dpc * _fsp[_aqueous_phase_number].dsaturation_dz;
+
     // The aqueous phase porepressure is also a function of liquid saturation,
     // which depends on both gas porepressure and z
     _dporepressure_dvar[_qp][_aqueous_phase_number][_pvar] +=
@@ -261,18 +266,15 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
     (*_gradp_qp)[_qp][_aqueous_phase_number] =
         _gas_gradp_qp[_qp] + dpc * (*_grads_qp)[_qp][_aqueous_phase_number];
 
-    (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component] =
-        _fsp[_aqueous_phase_number].dmass_fraction_dp[_aqueous_fluid_component] *
-            _gas_gradp_qp[_qp] +
-        _fsp[_aqueous_phase_number].dmass_fraction_dz[_aqueous_fluid_component] *
-            (*_gradz_qp[0])[_qp];
-    (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_gas_fluid_component] =
-        -(*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component];
-    (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component] =
-        _fsp[_gas_phase_number].dmass_fraction_dp[_aqueous_fluid_component] * _gas_gradp_qp[_qp] +
-        _fsp[_gas_phase_number].dmass_fraction_dz[_aqueous_fluid_component] * (*_gradz_qp[0])[_qp];
-    (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_gas_fluid_component] =
-        -(*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component];
+    for (unsigned int ph = 0; ph < _num_phases; ++ph)
+    {
+      (*_grad_mass_frac_qp)[_qp][ph][_aqueous_fluid_component] =
+          _fsp[ph].dmass_fraction_dp[_aqueous_fluid_component] * _gas_gradp_qp[_qp] +
+          _fsp[ph].dmass_fraction_dz[_aqueous_fluid_component] * (*_gradz_qp[0])[_qp];
+
+      (*_grad_mass_frac_qp)[_qp][ph][_gas_fluid_component] =
+          -(*_grad_mass_frac_qp)[_qp][ph][_aqueous_fluid_component];
+    }
   }
 }
 
