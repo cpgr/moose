@@ -81,12 +81,6 @@ public:
   void read();
 
   /**
-   * Set/get methods for comment charcter
-   */
-  void setComment(const std::string value) { _comment = value; };
-  std::string getComment() const { return _comment; };
-
-  /**
    * Set the list of primary species to read from database
    * @param names list of primary species names
    */
@@ -105,20 +99,30 @@ public:
   void setMineralSpeciesNames(std::vector<std::string> names) { _ms_names = names; };
 
   /**
+   * Get the temperature points that the equilibrium constant is defined at.
+   * Note: must be called after read()
+   * @param[out] vector of temperature points (C)
+   */
+  void getTemperatures(std::vector<Real> & temperature) { temperature = _temperature_points; };
+
+  /**
    * Get the primary species structure
+   * Note: must be called after read()
    * @param[out] primary species structure
    */
   void getPrimarySpecies(std::vector<GeochemicalDatabasePrimarySpecies> & primary_species) const;
 
   /**
    * Get the secondary equilibrium species structure
+   * Note: must be called after read()
    * @param[out] secondary species structure
    */
   void getEquilibriumSpecies(
       std::vector<GeochemicalDatabaseEquilibriumSpecies> & secondary_species) const;
 
   /**
-   * Get the secondary equilibrium species structure
+   * Get the mineral species structure
+   * Note: must be called after read()
    * @param[out] secondary species structure
    */
   void getMineralSpecies(std::vector<GeochemicalDatabaseMineralSpecies> & mineral_species) const;
@@ -126,6 +130,7 @@ public:
   /**
    * Generates a formatted vector of strings representing all aqueous equilibrium
    * reactions
+   * Note: must be called after read()
    * @param[out] reactions formatted equilibrium reactions
    */
   void equilibriumReactions(std::vector<std::string> & reactions);
@@ -151,8 +156,6 @@ protected:
 
   /// Database filename
   const FileName _filename;
-  /// Comment character (default is no comment character)
-  std::string _comment;
   /// List of primary species names to read from database
   std::vector<std::string> _ps_names;
   /// List of secondary equilibrium species to read from database

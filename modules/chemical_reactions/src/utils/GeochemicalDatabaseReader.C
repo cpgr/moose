@@ -33,10 +33,9 @@ GeochemicalDatabaseReader::read()
   // Read the database
   while (std::getline(file_data, line))
   {
-    // Skip lines starting with comment character (if comment is set)
-    if (!_comment.empty())
-      if (line.find(_comment) == 0)
-        continue;
+    // Skip lines starting with comment character #
+    if (line.find('#') == 0)
+      continue;
 
     // Skip empty lines
     if (line.empty())
@@ -52,22 +51,21 @@ GeochemicalDatabaseReader::read()
     // Tokenize each line
     MooseUtils::tokenize(line, tokens, 1, " ");
 
-    if (tokens[0] == "temperature_points")
+    if (tokens[0] == "temperatures")
     {
-      // The temperature data consists of an integer of the number of points,
-      // then temperature values
-      _temperature_points.resize(std::stoi(tokens[1]));
+      // Read the temperature data
+      _temperature_points.resize(tokens.size() - 1);
       for (auto i = beginIndex(_temperature_points); i < _temperature_points.size(); ++i)
-        _temperature_points[i] = std::stod(tokens[i + 2]);
+        _temperature_points[i] = std::stod(tokens[i + 1]);
     }
 
-    else if (tokens[0] == "primary_species")
+    else if (tokens[0] == "primary")
     {
       _section_enum = sectionEnum::PRIMARY;
       continue;
     }
 
-    else if (tokens[0] == "secondary_species")
+    else if (tokens[0] == "secondary")
     {
       _section_enum = sectionEnum::SECONDARY;
       continue;
@@ -152,18 +150,21 @@ GeochemicalDatabaseReader::readEquilibriumSpecies(std::vector<std::string> & tok
 {
   GeochemicalDatabaseEquilibriumSpecies sspecies;
 
+  // The first four tokens are name, radius a0, charge and molar mass
   sspecies.name = tokens[0];
+  sspecies.debye_a = std::stod(tokens[1]);
+  sspecies.charge = std::stod(tokens[2]);
+  sspecies.molar_mass = std::stod(tokens[3]);
 
   // The next element of tokens is the number of primary species involved
   // this secondary species equilibrium reaction
-  unsigned int nprimary = std::stoi(tokens[1]);
+  unsigned int nprimary = std::stoi(tokens[4]);
   sspecies.nspecies = nprimary;
 
   // At this point, we can check the number of tokens is correct. There should be
-  // values for name, nprimary, 2 * nprimary (corresponding to primary species),
-  // _temperature_points.size() equilibrium constant values, then individual values
-  // for the Debye a parameter, charge and molar mass
-  const unsigned int num_tokens = 2 + 2 * nprimary + _temperature_points.size() + 3;
+  // values for name, the Debye a parameter, charge and molar mass, nprimary, 2 * nprimary
+  // (corresponding to primary species), _temperature_points.size() equilibrium constant values
+  const unsigned int num_tokens = 5 + 2 * nprimary + _temperature_points.size();
   if (tokens.size() != num_tokens)
     mooseError("Incorrect number of secondary species values encountered in ",
                _filename,
@@ -175,27 +176,26 @@ GeochemicalDatabaseReader::readEquilibriumSpecies(std::vector<std::string> & tok
   std::vector<Real> stoichiometric_coeff;
   std::vector<std::string> primary_species;
 
+  // The primary species begin at position 5
+  const unsigned int element_pos = 5;
+
   for (unsigned int i = 0; i < nprimary; ++i)
   {
-    stoichiometric_coeff.push_back(std::stod(tokens[2 + 2 * i]));
-    primary_species.push_back(tokens[3 + 2 * i]);
+    stoichiometric_coeff.push_back(std::stod(tokens[element_pos + 2 * i]));
+    primary_species.push_back(tokens[element_pos + 2 * i + 1]);
   }
 
   sspecies.stoichiometric_coeff = stoichiometric_coeff;
   sspecies.primary_species = primary_species;
 
-  // Now read the array of equilibrium values (starting from position 2 + 2 * nprimary)
-  const unsigned int eq_pos = 2 + 2 * nprimary;
+  // Now read the array of equilibrium values (starting from position 5 + 2 * nprimary)
+  const unsigned int eq_pos = 5 + 2 * nprimary;
+
   std::vector<Real> eq_const;
   for (unsigned int i = eq_pos; i < eq_pos + _temperature_points.size(); ++i)
     eq_const.push_back(std::stod(tokens[i]));
 
   sspecies.equilibrium_const = eq_const;
-
-  // The next three tokens are the Debye a parameter, the charge and the molar mass
-  sspecies.debye_a = std::stod(tokens[num_tokens - 3]);
-  sspecies.charge = std::stod(tokens[num_tokens - 2]);
-  sspecies.molar_mass = std::stod(tokens[num_tokens - 1]);
 
   _equilibrium_species.push_back(sspecies);
 }
@@ -265,7 +265,7 @@ GeochemicalDatabaseReader::equilibriumReactions(std::vector<std::string> & react
     }
 
     // Add the equilibrium species name
-    eq_reaction += " = " + _equilibrium_species[i].name;
+    eq_reaction += "= " + _equilibrium_species[i].name;
 
     reactions[i] = eq_reaction;
   }

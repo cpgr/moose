@@ -11,7 +11,7 @@
 [ReactionNetwork]
    primary_species = 'H+ Ca++ HCO3-'
   [./GeochemicalDatabase]
-    filename = sample.dat
+    filename = ../../../database/eq36.dat
     primary_species = 'H+ Ca++ HCO3-'
     secondary_species = 'OH- CaOH+'
   [../]

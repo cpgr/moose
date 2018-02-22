@@ -63,6 +63,7 @@ AddGeochemicalDatabaseSpeciesAction::AddGeochemicalDatabaseSpeciesAction(
 
   database.read();
 
+  database.getTemperatures(_temperature_points);
   database.getPrimarySpecies(_primary_species);
   database.getEquilibriumSpecies(_equilibrium_species);
   database.getMineralSpecies(_mineral_species);
@@ -104,16 +105,23 @@ AddGeochemicalDatabaseSpeciesAction::act()
     for (auto i = beginIndex(_primary_species); i < _primary_species.size(); ++i)
       _problem->addVariable(_primary_species[i].name, _fe_type, _scaling);
 
-  // Add auxvariables for each secondary equilibrium and mineral species
+  // Add auxvariables for each secondary equilibrium and mineral species, as well
+  // as equilibrium constants
   if (_current_task == "add_aux_variable")
   {
     if (_equilibrium_reactions)
       for (auto i = beginIndex(_equilibrium_species); i < _equilibrium_species.size(); ++i)
+      {
         _problem->addAuxVariable(_equilibrium_species[i].name, _fe_type);
+        _problem->addAuxVariable(_equilibrium_species[i].name + "_logk", _fe_type);
+      }
 
     if (_mineral_reactions)
       for (auto i = beginIndex(_mineral_species); i < _mineral_species.size(); ++i)
+      {
         _problem->addAuxVariable(_mineral_species[i].name, _fe_type);
+        _problem->addAuxVariable(_mineral_species[i].name + "_logk", _fe_type);
+      }
   }
 
   if (_current_task == "add_kernel")
@@ -146,7 +154,8 @@ AddGeochemicalDatabaseSpeciesAction::act()
         params_sub.set<NonlinearVariableName>("variable") =
             _equilibrium_species[i].primary_species[j];
         params_sub.set<Real>("weight") = 1.0;
-        // params_sub.set<Real>("log_k") = _eq_const[j];
+        params_sub.set<std::vector<VariableName>>("log_k") = {_equilibrium_species[i].name +
+                                                              "_logk"};
         params_sub.set<Real>("sto_u") = _equilibrium_species[i].stoichiometric_coeff[j];
         params_sub.set<std::vector<Real>>("sto_v") = sto_v;
         params_sub.set<std::vector<VariableName>>("v") = v_names;

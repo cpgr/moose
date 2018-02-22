@@ -46,6 +46,8 @@ private:
   const FEType _fe_type;
   /// String representing water species in database
   const std::string _h2o;
+  /// Temperature points where the equilibrium constants are defined
+  std::vector<Real> _temperature_points;
   /// Primary species data read from the database
   std::vector<GeochemicalDatabasePrimarySpecies> _primary_species;
   /// Secondary equilibrium species data read from the database
