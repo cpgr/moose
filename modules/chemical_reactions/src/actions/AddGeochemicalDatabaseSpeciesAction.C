@@ -26,6 +26,8 @@ validParams<AddGeochemicalDatabaseSpeciesAction>()
                                             "The list of secondary equilibrium species to add");
   params.addParam<std::vector<std::string>>("mineral_species",
                                             "The list of mineral species to add");
+  params.addCoupledVar(
+      "temperature", 298.15, "The temperature of the aqueous phase (K). Default is 298.15K");
   // Get MooseEnums for the possible order/family options for this variable
   MooseEnum families(AddVariableAction::getNonlinearVariableFamilies());
   MooseEnum orders(AddVariableAction::getNonlinearVariableOrders());
@@ -48,12 +50,14 @@ AddGeochemicalDatabaseSpeciesAction::AddGeochemicalDatabaseSpeciesAction(
     _primary_species_names(getParam<std::vector<std::string>>("primary_species")),
     _secondary_species_names(getParam<std::vector<std::string>>("secondary_species")),
     _mineral_species_names(getParam<std::vector<std::string>>("mineral_species")),
+    _temperature(getParam<std::vector<VariableName>>("temperature")),
     _equilibrium_reactions(params.isParamSetByUser("secondary_species")),
     _mineral_reactions(params.isParamSetByUser("mineral_species")),
     _scaling(getParam<Real>("scaling")),
     _fe_type(Utility::string_to_enum<Order>(getParam<MooseEnum>("order")),
              Utility::string_to_enum<FEFamily>(getParam<MooseEnum>("family"))),
-    _h2o(getParam<std::string>("water"))
+    _h2o(getParam<std::string>("water")),
+    _T_c2k(273.15)
 {
   // Read database
   GeochemicalDatabaseReader database(_filename);
@@ -67,6 +71,10 @@ AddGeochemicalDatabaseSpeciesAction::AddGeochemicalDatabaseSpeciesAction(
   database.getPrimarySpecies(_primary_species);
   database.getEquilibriumSpecies(_equilibrium_species);
   database.getMineralSpecies(_mineral_species);
+
+  // Convert temperature from C to K
+  for (auto & tp : _temperature_points)
+    tp += _T_c2k;
 
   // Remove any water species as they are not used for any kernels etc
   for (auto i = beginIndex(_equilibrium_species); i < _equilibrium_species.size(); ++i)
@@ -181,5 +189,38 @@ AddGeochemicalDatabaseSpeciesAction::act()
                                 _equilibrium_species[i].name + "_sub",
                             params_sub);
       }
+  }
+
+  if (_current_task == "add_aux_kernel")
+  {
+    // Add EquilibriumConstantAux AuxKernels for each equilibrium species
+    for (auto i = beginIndex(_equilibrium_species); i < _equilibrium_species.size(); ++i)
+    {
+      InputParameters params_eqaux = _factory.getValidParams("EquilibriumConstantAux");
+      params_eqaux.set<AuxVariableName>("variable") = _equilibrium_species[i].name + "_logk";
+      params_eqaux.applySpecificParameters(parameters(), {"temperature"});
+      params_eqaux.set<std::vector<Real>>("temperature_points") = _temperature_points;
+      params_eqaux.set<std::vector<Real>>("logk_points") =
+          _equilibrium_species[i].equilibrium_const;
+      _problem->addAuxKernel(
+          "EquilibriumConstantAux", "aux_" + _equilibrium_species[i].name + "_logk", params_eqaux);
+    }
+
+    // Add AqueousEquilibriumRxnAux AuxKernels for equilibrium species
+    for (auto i = beginIndex(_equilibrium_species); i < _equilibrium_species.size(); ++i)
+    {
+      // Temporary vector of variable names
+      std::vector<VariableName> pspecies(_equilibrium_species[i].primary_species.size());
+      for (auto j = beginIndex(pspecies); j < pspecies.size(); ++j)
+        pspecies[j] = _equilibrium_species[i].primary_species[j];
+
+      InputParameters params_eq = _factory.getValidParams("AqueousEquilibriumRxnAux");
+      params_eq.set<AuxVariableName>("variable") = _equilibrium_species[i].name;
+      params_eq.set<std::vector<VariableName>>("log_k") = {_equilibrium_species[i].name + "_logk"};
+      params_eq.set<std::vector<Real>>("sto_v") = _equilibrium_species[i].stoichiometric_coeff;
+      params_eq.set<std::vector<VariableName>>("v") = pspecies;
+      _problem->addAuxKernel(
+          "AqueousEquilibriumRxnAux", "aux_" + _equilibrium_species[i].name, params_eq);
+    }
   }
 }

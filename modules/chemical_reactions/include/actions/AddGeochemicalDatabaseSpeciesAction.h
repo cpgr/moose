@@ -36,6 +36,8 @@ private:
   const std::vector<std::string> _secondary_species_names;
   /// List of mineral species to read from database
   const std::vector<std::string> _mineral_species_names;
+  /// Temperature (in K)
+  const std::vector<VariableName> _temperature;
   /// Flag to denote whether equilibrium reactions are included
   const bool _equilibrium_reactions;
   /// Flag to denote whether mineral reactions are included
@@ -54,6 +56,8 @@ private:
   std::vector<GeochemicalDatabaseEquilibriumSpecies> _equilibrium_species;
   /// Mineral species data read from the database
   std::vector<GeochemicalDatabaseMineralSpecies> _mineral_species;
+  /// Conversion from C to K
+  const Real _T_c2k;
 };
 
 #endif // ADDGEOCHEMICALDATABASESPECIESACTION_H
