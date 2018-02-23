@@ -255,7 +255,8 @@ GeochemicalDatabaseReader::equilibriumReactions(std::vector<std::string> & react
 
       if (j == 0 && sign == "-")
         eq_reaction += sign;
-      else
+
+      if (j > 0)
         eq_reaction += sign;
 
       if (std::fabs(sto) != 1.0)

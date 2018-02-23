@@ -87,6 +87,23 @@ AddGeochemicalDatabaseSpeciesAction::AddGeochemicalDatabaseSpeciesAction(
     }
   }
 
+  // Check that all primary species in each equilibrium reaction read from the database
+  // have been included in the list of primary species
+  for (auto i = beginIndex(_equilibrium_species); i < _equilibrium_species.size(); ++i)
+    for (auto j = beginIndex(_equilibrium_species[i].primary_species);
+         j < _equilibrium_species[i].primary_species.size();
+         ++j)
+    {
+      if (std::find(_primary_species_names.begin(),
+                    _primary_species_names.end(),
+                    _equilibrium_species[i].primary_species[j]) == _primary_species_names.end())
+        mooseError("Primary species ",
+                   _equilibrium_species[i].primary_species[j],
+                   " is required for the equilibrium reaction for ",
+                   _equilibrium_species[i].name,
+                   " but has not been included in the list of primary species");
+    }
+
   // Print out details of the equilibrium reactions to the console
   std::vector<std::string> eq_reactions;
   database.equilibriumReactions(eq_reactions);
