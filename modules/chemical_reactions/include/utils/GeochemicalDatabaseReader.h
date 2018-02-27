@@ -32,8 +32,8 @@ struct GeochemicalDatabasePrimarySpecies
  * Data structure for secondary equilibrium species. Members are:
  * Species name
  * Number of constituent species in the reaction
- * Stoichiometric coefficients of primarys species in the reaction
  * Names of primary species in the reaction
+ * Stoichiometric coefficients of primarys species in the reaction
  * Equilibrium constant at given temperatures
  * Debye-Huckel parameter a
  * charge
@@ -54,7 +54,12 @@ struct GeochemicalDatabaseEquilibriumSpecies
 /**
  * Data structure for mineral species. Members are:
  * Species name
- * Molar volume (mol / l)
+ * Molar volume (mol/l)
+ * Number of constituent species in the reaction
+ * Names of primary species in the reaction
+ * Stoichiometric coefficients of primarys species in the reaction
+ * Equilibrium constant at given temperatures
+ * molar mass (g/mol)
  */
 struct GeochemicalDatabaseMineralSpecies
 {
@@ -135,6 +140,13 @@ public:
    */
   void equilibriumReactions(std::vector<std::string> & reactions);
 
+  /**
+   * Generates a formatted vector of strings representing all mineral reactions
+   * Note: must be called after read()
+   * @param[out] reactions formatted mineral reactions
+   */
+  void mineralReactions(std::vector<std::string> & reactions);
+
 protected:
   /**
    * Reads primary species data from database
@@ -162,6 +174,8 @@ protected:
   std::vector<std::string> _es_names;
   /// List of secondary mineral species to read from database
   std::vector<std::string> _ms_names;
+  /// Flag to indicate that read() has been called
+  bool _read;
   /// Temperature points in database
   std::vector<Real> _temperature_points;
   /// Primary species data read from the database

@@ -14,6 +14,7 @@
     filename = ../../../database/eq36.dat
     primary_species = 'H+ Ca++ HCO3-'
     secondary_species = 'OH- CaOH+ CO3-- CaHCO3+ CaCO3(aq) CO2(aq)'
+    mineral_species = 'Calcite'
   [../]
 []
 

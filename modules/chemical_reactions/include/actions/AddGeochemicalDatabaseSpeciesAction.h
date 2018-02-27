@@ -28,6 +28,12 @@ public:
   virtual void act() override;
 
 private:
+  template <typename T>
+  void removeH2O(std::vector<T> & species);
+
+  template <typename T>
+  void checkPrimarySpecies(std::vector<T> & species);
+
   /// Database filename
   const FileName _filename;
   /// List of primary species to read from database
@@ -38,10 +44,6 @@ private:
   const std::vector<std::string> _mineral_species_names;
   /// Temperature (in K)
   const std::vector<VariableName> _temperature;
-  /// Flag to denote whether equilibrium reactions are included
-  const bool _equilibrium_reactions;
-  /// Flag to denote whether mineral reactions are included
-  const bool _mineral_reactions;
   /// Scaling of variables
   const Real _scaling;
   /// Finite element type
@@ -50,6 +52,8 @@ private:
   const std::string _h2o;
   /// Temperature points where the equilibrium constants are defined
   std::vector<Real> _temperature_points;
+  /// Value of missing log(Keq) points
+  const Real _invalid_logk;
   /// Primary species data read from the database
   std::vector<GeochemicalDatabasePrimarySpecies> _primary_species;
   /// Secondary equilibrium species data read from the database
