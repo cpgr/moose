@@ -6,10 +6,36 @@
 //*
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
+//* 
+//* References:
+//* [1] Duan, Moller and Weare, "An equation of state for the CH4-CO2-H2O system:
+//*     I. Pure systems from 0 to 1000 degree C and 0 to 8000 bar", 
+//*     Geochimica et Cosmochimica Acta Vol. 56, pp. 2605-2617, 1992
+//* [2] Duan and Mao, "A thermodynamic model for calculating methane solubility, density
+//*     and gas phase composition of methane-bearing aqueous fluids from 273 to 523 K
+//*     and from 1 to 2000 bar", Geochimica et Cosmochimica Acta, 70, 3369-3386 (2006)
 
 #include "PorousFlowBrineMethane.h"
 #include "BrineFluidProperties.h"
 #include "SinglePhaseFluidPropertiesPT.h"
+
+// EOS parameters for methane. [Ref 1] Table 3
+const Real CH4a1 = 8.72553928e-02; 
+const Real CH4a2 = -7.52599476e-01; 
+const Real CH4a3 = 3.75419887e-01;
+const Real CH4a4 = 1.07291342e-02;
+const Real CH4a5 = 5.49626360e-03;
+const Real CH4a6 = -1.84772802e-02;
+const Real CH4a7 = 3.18993183e-04;
+const Real CH4a8 = 2.11079375e-04;
+const Real CH4a9 = 2.01682801e-05;
+const Real CH4a10 = -1.65606189e-05; 
+const Real CH4a11 = 1.19614546e-04;
+const Real CH4a12 = -1.08087289e-04; 
+const Real CH4alpha = 4.48262295e-02;
+const Real CH4beta = 7.5397e-01;
+const Real CH4gamma = 7.7167e-02;
+
 
 template <>
 InputParameters
@@ -292,7 +318,7 @@ PorousFlowBrineMethane::saturationTwoPhase(Real pressure,
   Real dXch4_dp = liquid.dmass_fraction_dp[_gas_fluid_component];
   Real dXch4_dT = liquid.dmass_fraction_dT[_gas_fluid_component];
 
-  // The liquid density should be calcualted here
+  // The liquid density should be calculated here
   Real liquid_density;
 
   Real dliquid_density_dp;
@@ -361,10 +387,115 @@ PorousFlowBrineMethane::equilibriumMassFractions(Real pressure,
 }
 
 void
+PorousFlowBrineMethane::EOSTempDependentCoefsMethane(
+  Real Tr, Real & B, Real & C, Real & D, Real & E, Real & F) const
+{
+  // Compute temperature-dependent coefficients of EOS for methane.
+  // Input is reduced temperature.
+
+  // To avoid expensive recalculation
+  Real inv_Tr_squared = 1.0 / (Tr*Tr);
+  Real inv_Tr_cubed = 1.0 / std::pow(Tr,3.0);
+
+  Real B = CH4a1 + CH4a2*inv_Tr_squared + CH4a3*inv_Tr_cubed;
+  Real C = CH4a4 + CH4a5*inv_Tr_squared + CH4a6*inv_Tr_cubed;
+  Real D = CH4a7 + CH4a8*inv_Tr_squared + CH4a9*inv_Tr_cubed;
+  Real E = CH4a10 + CH4a11*inv_Tr_squared + CH4a12*inv_Tr_cubed;
+  Real F = CH4alpha * inv_Tr_cubed;
+}
+
+Real 
+PorousFlowBrineMethane::EOSBalanceMethane(
+  Real Pr, Real Tr, Real Vr) const
+{
+  // EOS for methane, rearranged so that the output is zero when it is perfectly balanced.
+  // All input are reduced properties.
+
+  // To avoid expensive recalculation
+  Real inv_Vr_squared = 1.0 / (Vr*Vr);
+
+  EOSTempDependentCoefsMethane(Tr, B, C, D, E, F);
+
+  return(1.0 + B/Vr + C*inv_Vr_squared + D/std::pow(Vr,4.0) + E/std::pow(Vr,5.0) +
+      F * inv_Vr_squared * (CH4beta+CH4gamma*inv_Vr_squared) * std::exp(-CH4gamma*inv_Vr_squared) -
+      Pr * Vr / Tr);
+}
+
+Real
+PorousFlowBrineMethane::solveMolarVolumeMethane(Real Pr, Real Tr) const
+{
+  // Based on the Matlab code.
+  // Given reduced pressure and temperature, return reduced molar volume.
+  // Tolerance for Vr. 
+  // TODO: Check for input valid range to avoid converging to wrong root.
+  // QUESTION: Given the order of parameters, do we need to be this accurate?
+  const Real tolerance = 1.0e-12;  
+  Real Vr0 = 0.02;
+  Real Vr1 = 110;
+  Real balance0 = EOSBalanceMethane(Pr, Tr, Vr0);
+  Real balance1 = EOSBalanceMethane(Pr, Tr, Vr1);
+  if (balance0 * balance1 > 0.0) {
+    // The method works only when balance0 * balance1 <= 0.0
+    // TODO: capture this error
+    return 0.0;
+  }
+  for (int i=0; i<100; ++i) {
+    Vr = (Vr0+Vr1) * 0.5;
+    balance = EOSBalanceMethane(Pr, Tr, Vr);
+    if (abs(Vr0-Vr1) < tolerance) {
+      return Vr;
+    } else {
+      if (balance * balance0 > 0.0) {
+        Vr0 = Vr;
+      } else {
+        Vr1 = Vr;
+      }
+    }
+  }
+  // Finished without sufficiently converged.
+  // TODO: capture this error
+}
+
+void
 PorousFlowBrineMethane::fugacityCoefficientMethane(
     Real pressure, Real temperature, Real & fch4, Real & dfch4_dp, Real & dfch4_dT) const
 {
-  // Eq. A4 from Duan and Mao
+  // Eq. A4 from Duan and Mao, which refers to [Ref. 1].
+  //
+  // Convert pressure from Pa to bar
+  Real pbar = pressure * 1.0e-5;
+
+  // Universal gas constant
+  // TO DO: Maybe it already exists somewhere? Check
+  const Real R = 0.08314472;  // bar.l/(mol.K)
+
+  // Critical pressure and temperature of methane.
+  // Note that Vc is the molar volume at critical pressure and temperature, 
+  // and not critical molar volume.
+  const Real Pc = 46.41;            // Pressure in bar
+  const Real Tc = -82.55 + 273.15;  // Temperature in Kelvin
+  const Real Vc = R * Tc / Pc;      // Molar volume in l/mol
+
+  // Reduced properties
+  Real Pr = pbar / Pc;
+  Real Tr = temperature / Tc;
+  Real Vr = solveMolarVolumeMethane(Pr, Tr);
+
+  Real Z = Pr * Vr / Tr;
+  EOSTempDependentCoefsMethane(Tr, B, C, D, E, F);
+  Real gamma_by_square_Vr = CH4gamma / (Vr * Vr);
+  Real G = 0.5 * F / CH4gamma * 
+      (CH4beta + 1.0 - (beta + 1.0 + gamma_by_square_Vr) * std::exp(-gamma_by_square_Vr));
+
+  // Fugacity coefficient
+  fch4 = std::exp(Z - 1.0 - std::log(Z) + 
+      B/Vr + C/(2.0*Vr*Vr) + D/(4.0*std::pow(Vr,4.0)) + E/(5.0*std::pow(Vr,5.0)) + G);
+
+  // The derivative of fugacity coefficient wrt pressure
+  dfch4_dp = ;
+
+  // The derivative of fugacity coefficient wrt temperature
+  dfch4_dT = ;
 }
 
 void
@@ -372,6 +503,26 @@ PorousFlowBrineMethane::fugacityCoefficientH2O(
     Real pressure, Real temperature, Real & fh2o, Real & dfh2o_dp, Real & dfh2o_dT) const
 {
   // Eq. 6 from Duan and Mao
+  // Convert pressure from Pa to bar
+  Real pbar = pressure * 1.0e-5;
+
+  // Parameters for eq. 6
+  const Real a1 = -1.42006707e-2;
+  const Real a2 = 1.08369910e-2;
+  const Real a3 = -1.59213160e-6;
+  const Real a4 = -1.10804676e-5;
+  const Real a5 = -3.14287155;
+  const Real a6 = 1.06338095e-3;
+
+  // Fugacity coefficient
+  fh2o = std::exp(a1 + a2*p + a3*pbar*pbar + a4*pbar*temperature + a5*pbar/temperature + a6*pbar*pbar/temperature);
+
+  // The derivative of fugacity coefficient wrt pressure
+  dfh2o_dp = fh2o * (a2 + 2*a3*pbar + a4*temperature + a5/temperature + 2*a6*pbar/temperature);
+
+  // The derivative of fugacity coefficient wrt temperature
+  inv_temp_squared = 1.0 / (temperature*temperature);
+  dfh2o_dT = fh2o * (a4*pbar - a5*pbar*inv_temp_squared - a6*pbar*pbar*inv_temp_squared);
 }
 
 void
