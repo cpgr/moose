@@ -10,6 +10,8 @@
 #ifndef POROUSFLOWBRINEMETHANE_H
 #define POROUSFLOWBRINEMETHANE_H
 
+#include <vector>
+#include <math.h>
 #include "PorousFlowFluidStateBase.h"
 
 class BrineFluidProperties;
@@ -145,6 +147,20 @@ public:
    */
   void fugacityCoefficientH2O(
       Real pressure, Real temperature, Real & fh2o, Real & dfh2o_dp, Real & dfh2o_dT) const;
+
+  /**
+   * Activity coefficient for methane in brine
+   *
+   * @param pressure phase pressure (Pa)
+   * @param temperature phase temperature (K)
+   * @param xnacl salt mass fraction (kg/kg)
+   * @param[out] gamma activity coefficient for Methane in brine (output)
+   * @param[out] dgamma_dp derivative of activity coefficient wrt pressure
+   * @param[out] dgamma_dT derivative of activity coefficient wrt temperature
+   */
+  // Real activityCoefficient(Real pressure,
+  //                          Real temperature,
+  //                          Real xnacl) const;
 
   /**
    * Activity coefficient for methane in brine
