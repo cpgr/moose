@@ -35,7 +35,7 @@
 
 // Comment this out when integrating with MOOSE.
 // Uncomment to use this file by itself
-// #define STANDALONE
+#define STANDALONE
 
 //#define VERBOSE
 
@@ -147,8 +147,8 @@ molecule_s CO2 = {
 
 molecule_s H2O = {
   18.01528e-3, // molar mass
-  373.946, //374.1,       // Tc
-  220.64, //221.19,      // Pc
+  374.1, //373.946, //374.1,       // Tc
+  221.19, //220.64, //221.19,      // Pc
   {            // EOS parameters
     8.64449220E-02,
     -3.96918955E-01,
@@ -793,10 +793,17 @@ pureFugacityCoefficient(
 #ifdef VERBOSE
   cout << "pureFugacityCoefficient\n";
 #endif
+  // Compute fugacity coefficient for CH4, CO2 and H20 in a generic way.
   // Ref. 1, Eq. A4, which is from Ref. 2 Eq. 1-6
   // Input: pressure (Pascal), temperature (Kelvin)
   // Output: fugacity
-  // Return: status
+  // WARNING: 
+  // For the present purpose, we care only for fugacity of CH4, 
+  // where the results reproduce the values in Table 4 quite closely.
+  // On the other hand, results for H2O and CO2 are a bit off in various places,
+  // due to less-than-optimum root-finding routine.
+  // TODO: Find a better way for root finding (ie. based in physics)
+
   Real PBar = pressurePascalToBar(PPascal);
   // Check valid range:
   // Note that the pressure range indicated by the title of Ref. 1 is 0~8000 bar,
@@ -913,8 +920,6 @@ molFractionOfWaterInGas(const Real PPascal, const Real TKelvin, const Real Xh2o)
 #ifdef VERBOSE
   cout << "Fugacity coefficient: " << fh2o << "\n";
 #endif
-  // Fugacity computation from Ref 2
-  // Real fh2o = pureFugacityCoefficient(H2O, PPascal, TKelvin);
   // Density of water
   Real densityh2o = waterliquidReducedDensityAtSaturation(Tr) * criticalDensityH2O;  // kg/m^3
 #ifdef VERBOSE
@@ -1059,8 +1064,9 @@ activityCoef(Real pressure, Real temperature, Real Xnacl)
   // Output: activity coefficient
 
   Real PBar = pressurePascalToBar(pressure);
-  // Molality of NaCl in liquid
-  Real mnacl = Xnacl / (1.0 - Xnacl) / H2O.molarMass;
+  // Molality of NaCl in liquid 
+  // Note the constant 2 is due to NaCl dissociation
+  Real mnacl = Xnacl / (2.0 * H2O.molarMass * (1.0 - Xnacl));
 
   return std::exp(2.0 * lambdaCH4_Na(PBar, temperature) * mnacl
       + xiCH4_Na_Cl(PBar, temperature) * mnacl * mnacl);
@@ -1096,22 +1102,19 @@ methaneSolubilityInLiquid(const Real pressure, const Real temperature, const Rea
 
   Real PBar = pressurePascalToBar(pressure);
   // Approximate mol fraction of water in liquid for CH4-H2O-NaCl system.
-  // Note that for the case of CH4-H2O system (ie. no NaCl), it reduces to just 1.0.
+  // Note:
+  // - For the case of CH4-H2O system (ie. no NaCl), it reduces to just 1.0
+  // - The fraction of NaCl is multiplied by 2, because NaCl dissociates into Na+ and Cl-
   Real Xh2o = 1.0 - 2.0*Xnacl;  
   // Mol fraction of water in gas: Yh2o given by Ref. 1, Eq 5
   Real Yh2o = molFractionOfWaterInGas(pressure, temperature, Xh2o);  
   // Mol fraction of CH4 in gas
   Real Ych4 = 1.0 - Yh2o;
-  // Molality of NaCl in liquid
-  Real mnacl = Xnacl / (1.0 - Xnacl) / H2O.molarMass;
-
   // Solubility of CH4 in liquid (mol/kg)
   Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
       - log(pureFugacityCoefficient(CH4, pressure, temperature))
       + log(activityCoef(pressure, temperature, Xnacl));
-      // + 2.0 * lambdaCH4_Na(PBar, TKelvin) * mnacl
-      // + xiCH4_Na_Cl(PBar, TKelvin) * mnacl * mnacl;
-  Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
+  Real mch4 = std::max(0.0, Ych4 * PBar / exp(RHS));  // Filter out negative result
 
   return mch4;
 }
@@ -1139,15 +1142,10 @@ equilibriumMassFrac(const Real pressure, const Real temperature, const Real Xnac
   // Mass fraction of water in gas
   wh2o = Yh2o * H2O.molarMass / totalGasMolarMass;
 
-  // Molality of NaCl in liquid
-  Real mnacl = Xnacl / (1.0 - Xnacl) / H2O.molarMass;
-
   // Solubility of CH4 in liquid (mol/kg)
   Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
       - log(pureFugacityCoefficient(CH4, pressure, temperature))
       + log(activityCoef(pressure, temperature, Xnacl));
-      // + 2.0 * lambdaCH4_Na(PBar, TKelvin) * mnacl
-      // + xiCH4_Na_Cl(PBar, TKelvin) * mnacl * mnacl;
   Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
 
   Real massh2o = Xh2o * H2O.molarMass;
@@ -1186,7 +1184,7 @@ PorousFlowBrineMethane::equilibriumMassFractions(Real pressure,
   // Mass fraction of water in gas: Yh2o given by Eq 5 from Duan and Mao
   // Mass fraction of methane in liquid: Xch4 calculated from Eq 3 by solving
   // for mch4 (moles/kg of CH4 in liquid) and dividing by _Mch4 (molar mass of methane)
-  // Perturbedd values:
+  // Perturbed values:
   Real Xch4p, Yh2op;
 
   equilibriumMassFrac(pressure, temperature, Xnacl, Xch4, Yh2o);
@@ -1224,14 +1222,12 @@ equilibriumMolFractions(const Real pressure, const Real temperature, const Real 
   // Mol fraction of CH4 in gas
   Real Ych4 = 1.0 - Yh2o;
   // Molality of NaCl in liquid
-  Real mnacl = Xnacl / (1.0 - Xnacl) / H2O.molarMass;
+  // Real mnacl = Xnacl / (1.0 - Xnacl) / H2O.molarMass;
 
   // Solubility of CH4 in liquid (mol/kg)
   Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
       - log(pureFugacityCoefficient(CH4, pressure, temperature))
       + log(activityCoef(pressure, temperature, Xnacl));
-      // + 2.0 * lambdaCH4_Na(PBar, TKelvin) * mnacl
-      // + xiCH4_Na_Cl(PBar, TKelvin) * mnacl * mnacl;
   Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
 
   Real massh2o = Xh2o * H2O.molarMass;
@@ -1250,7 +1246,7 @@ equilibriumMolFractionsAndDerivatives(
     Real & Xch4, Real & dXch4_dp, Real & dXch4_dT,
     Real & Yh2o, Real & dYh2o_dp, Real & dYh2o_dT)
 {
-  // Perturbedd values:
+  // Perturbed values:
   Real Xch4p, Yh2op;
 
   equilibriumMolFractions(PPascal, TKelvin, Xnacl, Xch4, Yh2o);
@@ -1306,13 +1302,13 @@ PorousFlowBrineMethane::fugacityCoefficientH2O(
   // Check valid input range
   if ((temperature < 273.0) || (temperature > 523.16)) {
 #ifdef VERBOSE
-    cout << "ERROR in fugacityCoefficientAndDerivativesH2O: temperature is beyond valid range\n";
+    cout << "ERROR in fugacityCoefficientH2O: temperature is beyond valid range\n";
 #endif
   }
   Real PBar = pressurePascalToBar(pressure);
   if ((PBar < 0.999) || (PBar > 2000.01)) {
 #ifdef VERBOSE
-    cout << "ERROR in fugacityCoefficientAndDerivativesH2O: pressure is beyond valid range\n";
+    cout << "ERROR in fugacityCoefficientH2O: pressure is beyond valid range\n";
 #endif
   }
 
@@ -1566,7 +1562,7 @@ test_pureFugacityCoefficient(const molecule_s & m, const std::string name)
   testSetUpTemperature(1200, tlist);
   Real f[plist.size()][tlist.size()];
   for (int i = 0; i < plist.size(); ++i) {
-    for (int j = 0; j < tlist.size(); j++) {
+    for (int j = 0; j < tlist.size(); ++j) {
       PPascal = pressureBarToPascal(plist[i]);
       TKelvin = temperatureCelsiusToKelvin(tlist[j]);
       f[i][j] = pureFugacityCoefficient(m, PPascal, TKelvin);
@@ -1577,7 +1573,7 @@ test_pureFugacityCoefficient(const molecule_s & m, const std::string name)
   cout << "Fugacity coefficient\n";
   cout << std::setprecision(7);
   cout << std::setw(5) << "P";
-  for (int i=0; i<tlist.size(); i++) {
+  for (int i=0; i<tlist.size(); ++i) {
     cout << "," << std::setw(11) << tlist[i];
   }
   cout << "\n";
@@ -1642,7 +1638,7 @@ test_molFractionOfWaterInGas()
     cout << "NaCl: molality: " << molalityNaCl << " mol/kg, mol fraction: " << XNaCl << "\n";
     Real Xh2o = 1.0 - 2*XNaCl;  // Fraction of water in liquid
     for (int i = 0; i < plist.size(); ++i) {
-      for (int j = 0; j < Tlist.size(); j++) {
+      for (int j = 0; j < Tlist.size(); ++j) {
         PPascal = pressureBarToPascal(plist[i]);
         // TKelvin = temperatureCelsiusToKelvin(tlist[j]);
         TKelvin = Tlist[j];
@@ -1653,7 +1649,7 @@ test_molFractionOfWaterInGas()
     cout << "Fraction of water in gas for various pressure (bar) and temperature (K)\n";
     cout << std::setprecision(5);
     cout << std::setw(5) << "P";
-    for (int i = 0; i < Tlist.size(); i++) {
+    for (int i = 0; i < Tlist.size(); ++i) {
       cout << "," << std::setw(11) << Tlist[i];
     }
     cout << "\n";
@@ -1682,7 +1678,7 @@ test_muCH4StandardLiquidByRT()
   Real mu;
   cout << std::setprecision(5);
   cout << std::setw(5) << "P";
-  for (int i = 0; i < tlist.size(); i++) {
+  for (int i = 0; i < tlist.size(); ++i) {
     cout << "," << std::setw(9) << tlist[i];
   }
   cout << "\n";
@@ -1710,7 +1706,7 @@ test_lambdaCH4_Na()
   Real mu;
   cout << std::setprecision(5);
   cout << std::setw(5) << "P";
-  for (int i = 0; i < tlist.size(); i++) {
+  for (int i = 0; i < tlist.size(); ++i) {
     cout << "," << std::setw(9) << tlist[i];
   }
   cout << "\n";
@@ -1738,7 +1734,7 @@ test_xiCH4_Na_Cl()
   Real mu;
   cout << std::setprecision(5);
   cout << std::setw(5) << "P";
-  for (int i = 0; i < tlist.size(); i++) {
+  for (int i = 0; i < tlist.size(); ++i) {
     cout << "," << std::setw(9) << tlist[i];
   }
   cout << "\n";
@@ -1768,7 +1764,7 @@ test_xiCH4_Na_Cl()
 //   Real XCH4;
 //   cout << std::setprecision(5);
 //   cout << std::setw(5) << "P";
-//   for (int i = 0; i < tlist.size(); i++) {
+//   for (int i = 0; i < tlist.size(); ++i) {
 //     cout << "," << std::setw(9) << tlist[i];
 //   }
 //   cout << "\n";
@@ -1789,11 +1785,12 @@ test_xiCH4_Na_Cl()
 int
 test_methaneSolubilityInLiquid()
 {
+  // The results must match Ref. 1 Table 4-8
   cout << "test_methaneSolubilityInLiquid\n";
 
-  // Set the NaCl concentration to test
+  // Set the NaCl concentration to test (mol/kg of SOLVENT)
   vector<Real>mnaclList;
-  mnaclList.push_back(0.0);
+  mnaclList.push_back(0.0);  // pure water
   mnaclList.push_back(1.0);
   mnaclList.push_back(2.0);
   mnaclList.push_back(4.0);
@@ -1810,11 +1807,15 @@ test_methaneSolubilityInLiquid()
   Real mch4;
 
   for (int k = 0; k < mnaclList.size(); ++k) {
-    Xnacl = mnaclList[k] / (55.56 + mnaclList[k]);  // Na and Cl
+    // Compute mol fraction of NaCl
+    // Note:
+    // - NaCl is expressed as molality (mol/kg of SOLVENT)
+    // - The concentration is multiplied by 2 because NaCl dissociate into Na+ and Cl- 
+    Xnacl = 2.0 * mnaclList[k] * H2O.molarMass / (1.0 + 2 * mnaclList[k] * H2O.molarMass);
     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
     cout << std::setprecision(6);
     cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); i++) {
+    for (int i = 0; i < tlist.size(); ++i) {
       cout << "," << std::setw(9) << tlist[i];
     }
     cout << "\n";
@@ -1874,7 +1875,7 @@ test_equilibriumMolFractions()
     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
     cout << std::setprecision(4);
     cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); i++) {
+    for (int i = 0; i < tlist.size(); ++i) {
       cout << "," << std::setw(9) << tlist[i];
     }
     cout << "\n";
@@ -1890,7 +1891,7 @@ test_equilibriumMolFractions()
     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
     cout << std::setprecision(4);
     cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); i++) {
+    for (int i = 0; i < tlist.size(); ++i) {
       cout << "," << std::setw(9) << tlist[i];
     }
     cout << "\n";
@@ -1947,7 +1948,7 @@ test_equilibriumMassFrac()
     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
     cout << std::setprecision(4);
     cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); i++) {
+    for (int i = 0; i < tlist.size(); ++i) {
       cout << "," << std::setw(9) << tlist[i];
     }
     cout << "\n";
@@ -1963,7 +1964,7 @@ test_equilibriumMassFrac()
     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
     cout << std::setprecision(4);
     cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); i++) {
+    for (int i = 0; i < tlist.size(); ++i) {
       cout << "," << std::setw(9) << tlist[i];
     }
     cout << "\n";
