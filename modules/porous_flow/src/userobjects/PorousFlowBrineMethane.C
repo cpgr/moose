@@ -35,7 +35,7 @@
 
 // Comment this out when integrating with MOOSE.
 // Uncomment to use this file by itself
-#define STANDALONE
+//#define STANDALONE
 
 //#define VERBOSE
 
