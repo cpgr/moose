@@ -8,6 +8,7 @@
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 
 #include "PorousFlowBrineMethaneTest.h"
+#include <vector>
 
 /**
  * Verify that the correct name is supplied
@@ -17,65 +18,88 @@ TEST_F(PorousFlowBrineMethaneTest, name) { EXPECT_EQ("brine-methane", _fp->fluid
 /*
  * Verify calculation of the equilibrium constants and their derivatives wrt temperature
  */
-// TEST_F(PorousFlowBrineCO2Test, equilibriumConstants)
+// TEST_F(PorousFlowBrineMethaneTest, equilibriumConstantsMethane)
 // {
 //   const Real T = 350.0;
 //   const Real dT = 1.0e-6;
 
-//   Real K0H2O, dK0H2O_dT, K0CO2, dK0CO2_dT;
-//   _fp->equilibriumConstantH2O(T, K0H2O, dK0H2O_dT);
-//   _fp->equilibriumConstantCO2(T, K0CO2, dK0CO2_dT);
+//   Real K0Methane, dK0Methane_dT;
+//   // _fp->equilibriumConstantH2O(T, K0H2O, dK0H2O_dT);
+//   _fp->equilibriumConstantMethane(T, K0Methane, dK0Methane_dT);
 
-//   ABS_TEST("K0H2O", K0H2O, 0.412597711705, 1.0e-10);
-//   ABS_TEST("K0CO2", K0CO2, 74.0435888596, 1.0e-10);
+//   // ABS_TEST("K0H2O", K0H2O, 0.412597711705, 1.0e-10);
+//   ABS_TEST("K0Methane", K0Methane, 74.0435888596, 1.0e-10);
 
-//   Real K0H2O_2, dK0H2O_2_dT, K0CO2_2, dK0CO2_2_dT;
-//   _fp->equilibriumConstantH2O(T + dT, K0H2O_2, dK0H2O_2_dT);
-//   _fp->equilibriumConstantCO2(T + dT, K0CO2_2, dK0CO2_2_dT);
+//   Real K0Methane_2, dK0Methane_2_dT;
+//   // _fp->equilibriumConstantH2O(T + dT, K0H2O_2, dK0H2O_2_dT);
+//   _fp->equilibriumConstantMethane(T + dT, K0Methane_2, dK0Methane_2_dT);
 
-//   Real dK0H2O_dT_fd = (K0H2O_2 - K0H2O) / dT;
-//   Real dK0CO2_dT_fd = (K0CO2_2 - K0CO2) / dT;
-//   REL_TEST("dK0H2O_dT", dK0H2O_dT, dK0H2O_dT_fd, 1.0e-6);
-//   REL_TEST("dK0CO2_dT", dK0CO2_dT, dK0CO2_dT_fd, 1.0e-6);
+//   // Real dK0H2O_dT_fd = (K0H2O_2 - K0H2O) / dT;
+//   Real dK0Methane_dT_fd = (K0Methane_2 - K0Methane) / dT;
+//   // REL_TEST("dK0H2O_dT", dK0H2O_dT, dK0H2O_dT_fd, 1.0e-6);
+//   REL_TEST("dK0Methane_dT", dK0Methane_dT, dK0Methane_dT_fd, 1.0e-6);
 // }
 
-// /*
-//  * Verify calculation of the fugacity coefficients and their derivatives wrt
-//  * pressure and temperature
-//  */
-// TEST_F(PorousFlowBrineCO2Test, fugacityCoefficients)
-// {
-//   const Real p = 40.0e6;
-//   const Real T = 350.0;
-//   const Real dp = 1.0e-1;
-//   const Real dT = 1.0e-6;
+/*
+ * Verify calculation of the fugacity coefficients and their derivatives wrt
+ * pressure and temperature.
+ * Fugacity is checked against Ref. Duan, Moller & Weare, Table 4, 
+ * at 4 corners of the table (combination of pressure/temperature min/max)
+ * and at the centre.
+ * Fugacity derivative is checked against the value at the centre of the table.
+ * Note that the pressure range is 1 ~ 10,000 bar
+ * and temperature range is 0 ~ 1200 degree celsius
+ */
+TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientMethane)
+{
+  Real P, t;
+  Real phi, dphi_dp, dphi_dT;
 
-//   Real phiH2O, dphiH2O_dp, dphiH2O_dT;
-//   Real phiCO2, dphiCO2_dp, dphiCO2_dT;
-//   _fp->fugacityCoefficientCO2(p, T, phiCO2, dphiCO2_dp, dphiCO2_dT);
-//   _fp->fugacityCoefficientH2O(p, T, phiH2O, dphiH2O_dp, dphiH2O_dT);
+  _fp->fugacityCoefficientMethane(barToPascal(1.0), celsiusToKelvin(0.0), phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(0.9977, phi, 1.0e-4) << "Min pressure and temperature";
 
-//   ABS_TEST("phiCO2 ", phiCO2, 0.40, 1.0e-2);
-//   ABS_TEST("phiH2O ", phiH2O, 0.09, 1.0e-2);
+  // Note that the reference says 29584.790, which I suspect is wrong
+  _fp->fugacityCoefficientMethane(barToPascal(1.0e4), celsiusToKelvin(0.0), phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(29548.790, phi, 1.0e-3) << "Max pressure and min temperature";
 
-//   Real phiH2O_2, dphiH2O_2_dp, dphiH2O_2_dT;
-//   Real phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT;
-//   _fp->fugacityCoefficientCO2(p + dp, T, phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT);
-//   _fp->fugacityCoefficientH2O(p + dp, T, phiH2O_2, dphiH2O_2_dp, dphiH2O_2_dT);
+  _fp->fugacityCoefficientMethane(barToPascal(1.0e4), celsiusToKelvin(1200.0), phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(11.158, phi, 1.0e-3) << "Max pressure and temperature";
 
-//   Real dphiH2O_dp_fd = (phiH2O_2 - phiH2O) / dp;
-//   Real dphiCO2_dp_fd = (phiCO2_2 - phiCO2) / dp;
-//   REL_TEST("dphiH2O_dp", dphiH2O_dp, dphiH2O_dp_fd, 1.0e-2);
-//   REL_TEST("dphiCO2_dp", dphiCO2_dp, dphiCO2_dp_fd, 1.0e-2);
+  _fp->fugacityCoefficientMethane(barToPascal(1.0), celsiusToKelvin(1200.0), phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(1.0002, phi, 1.0e-4) << "Min pressure and max temperature";
 
-//   _fp->fugacityCoefficientCO2(p, T + dT, phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT);
-//   _fp->fugacityCoefficientH2O(p, T + dT, phiH2O_2, dphiH2O_2_dp, dphiH2O_2_dT);
+  // Pressure and temperature are somewhere in the middle
+  P = 5000.0;
+  t = 600.0;
+  _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t), phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(6.7646, phi, 1.0e-4) << "Pressure: " << P << " bar, temperature: " << t << " deg C";
 
-//   Real dphiH2O_dT_fd = (phiH2O_2 - phiH2O) / dT;
-//   Real dphiCO2_dT_fd = (phiCO2_2 - phiCO2) / dT;
-//   REL_TEST("dphiH2O_dT", dphiH2O_dT, dphiH2O_dT_fd, 1.0e-2);
-//   REL_TEST("dphiCO2_dT", dphiCO2_dT, dphiCO2_dT_fd, 1.0e-2);
-// }
+  Real phi2, dphi_dp2, dphi_dT2;
+  
+  const Real dp = 0.1; // Pa
+  _fp->fugacityCoefficientMethane(barToPascal(P) + dp, celsiusToKelvin(t), phi2, dphi_dp2, dphi_dT2);
+  EXPECT_NEAR((phi2-phi)/dp, dphi_dp, 1.0e-4) << "Derivative wrt. pressure";
+
+  const Real dT = 1.0e-6; // K
+  _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t) + dT, phi2, dphi_dp2, dphi_dT2);
+  EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 1.0e-4) << "Derivative wrt. temperature";
+
+  // Real phiCO2, dphiCO2_dp, dphiCO2_dT;
+  // _fp->fugacityCoefficientCO2(p, T, phiCO2, dphiCO2_dp, dphiCO2_dT);
+
+  // ABS_TEST("phiCO2 ", phiCO2, 0.40, 1.0e-2);
+
+  // Real phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT;
+  // _fp->fugacityCoefficientCO2(p + dp, T, phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT);
+
+  // Real dphiCO2_dp_fd = (phiCO2_2 - phiCO2) / dp;
+  // REL_TEST("dphiCO2_dp", dphiCO2_dp, dphiCO2_dp_fd, 1.0e-2);
+
+  // _fp->fugacityCoefficientCO2(p, T + dT, phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT);
+
+  // Real dphiCO2_dT_fd = (phiCO2_2 - phiCO2) / dT;
+  // REL_TEST("dphiCO2_dT", dphiCO2_dT, dphiCO2_dT_fd, 1.0e-2);
+}
 
 // /*
 //  * Verify calculation of the activity coefficient and its derivatives wrt

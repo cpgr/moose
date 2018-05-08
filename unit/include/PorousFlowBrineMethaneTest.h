@@ -88,6 +88,10 @@ protected:
     _fp = &_fe_problem->getUserObject<PorousFlowBrineMethane>("fp");
   }
 
+  Real celsiusToKelvin(Real c) {return c + 273.15;}
+
+  Real barToPascal(Real b) {return b * 1.0e5;}
+
   MooseAppPtr _app;
   std::unique_ptr<MooseMesh> _mesh;
   std::unique_ptr<FEProblem> _fe_problem;
