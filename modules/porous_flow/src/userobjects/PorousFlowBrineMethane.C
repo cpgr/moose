@@ -35,13 +35,15 @@
 
 // Comment this out when integrating with MOOSE.
 // Uncomment to use this file by itself
-//#define STANDALONE
+// #define STANDALONE
 
 //#define VERBOSE
 
 #ifdef STANDALONE
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <math.h>
 #include <vector>
 #include <iomanip>
@@ -1835,6 +1837,121 @@ test_methaneSolubilityInLiquid()
 
 
 int
+test_methaneSolubilityInLiquid2()
+{
+  // The results must match Ref. 1 Table 4-8
+  cout << "test_methaneSolubilityInLiquid2\n";
+
+  const double maxRelDiff = 0.02;  // max relative difference
+  const double maxDiff = 1.0e-7;    // max difference
+  
+  std::string fileNamePre = "CH4SolubilityInBrine";
+  std::string fileNamePost = ".csv";
+  std::string fileName;
+
+  // Set the NaCl concentration to test (mol/kg of SOLVENT)
+  vector<Real>mnaclList;
+  mnaclList.push_back(0.0);  // pure water
+  mnaclList.push_back(1.0);
+  mnaclList.push_back(2.0);
+  mnaclList.push_back(4.0);
+  mnaclList.push_back(6.0);
+
+  vector<Real> plist;
+  testSetUpPressure(2000, plist);
+  vector<Real> tlist;
+  testSetUpTemperature(300, tlist);
+
+  Real Xnacl;
+  Real PPascal;
+  Real TKelvin;
+  Real mch4;
+
+  for (int k = 0; k < mnaclList.size(); ++k) {
+    // Compute mol fraction of NaCl
+    // Note:
+    // - NaCl is expressed as molality (mol/kg of SOLVENT)
+    // - The concentration is multiplied by 2 because NaCl dissociate into Na+ and Cl- 
+    Xnacl = 2.0 * mnaclList[k] * H2O.molarMass / (1.0 + 2 * mnaclList[k] * H2O.molarMass);
+    cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
+    cout << std::setprecision(6);
+    cout << std::setw(5) << "P";
+    for (int i = 0; i < tlist.size(); ++i) {
+      cout << "," << std::setw(9) << tlist[i];
+    }
+    cout << "\n";
+
+    std::ostringstream convert;
+    convert << k;
+    fileName = fileNamePre + convert.str() + fileNamePost;
+    cout << "Reference data file: " << fileName << "\n";
+    std::ifstream file(fileName);
+    if (!file.good()) {
+      cout << "ERROR in test_methaneSolubilityInLiquid2: cannot open file\n";
+      return -1;
+    }
+    std::string line;
+    std::getline(file, line);  // Read the header row
+    if (!file.good()) {
+      cout << "ERROR in test_methaneSolubilityInLiquid2: cannot read the row header\n";
+      return -2;
+    }
+    for (int i = 0; i < plist.size(); ++i) { // For each row
+      cout << std::setw(5) << plist[i];
+      std::getline(file, line);  // Read a row
+      if (!file.good()) {
+        cout << "ERROR in test_methaneSolubilityInLiquid2: cannot read row: " << i << "\n";
+        return -3;
+      }
+      std::stringstream iss(line);
+      std::string val;
+      std::getline(iss, val, ',');  // Read the header column
+      if (!iss.good()) {
+        cout << "ERROR in test_methaneSolubilityInLiquid2: cannot get the header column\n";
+        return -4;
+      }
+
+      for (int j = 0; j < tlist.size(); ++j) { // For each column
+        PPascal = pressureBarToPascal(plist[i]);
+        TKelvin = temperatureCelsiusToKelvin(tlist[j]);
+        mch4 = methaneSolubilityInLiquid(PPascal, TKelvin, Xnacl);
+        cout << "," << std::setw(9) << mch4;
+        std::getline(iss, val, ',');
+        // cout << "val: " << val << "\n";
+        if (val != "") {
+          std::stringstream convertor(val);
+          double refData;
+          convertor >> refData;
+          double diff = abs(mch4 - refData);
+          if (diff > 0.0) {
+            if (abs(refData) > 0.0) {
+              // Compute relative difference
+              double relDiff = diff / abs(refData);
+              if (relDiff > maxRelDiff) {
+                cout << "ERROR in test_methaneSolubilityInLiquid2: value deviates too much from reference\n";
+                cout << mch4 << " != " << refData << " (ref)\n";
+                cout << "Relative difference: " << relDiff << "\n";
+                return -5;
+              } // else small deviation
+            } else { // reference data is zero. Use absolute difference instead
+              if (diff > maxDiff) {
+                cout << "ERROR in test_methaneSolubilityInLiquid2: value deviates too much from reference\n";
+                cout << mch4 << " != " << refData << " (ref)\n";
+                return -6;
+              } // else small deviation
+            }
+          } // else exactly the same
+        } // else reference data is empty
+      } // next column
+      cout << "\n";
+    } // next row
+    cout << "\n";
+  } // next 
+  return 0;
+}
+
+
+int
 test_equilibriumMolFractions()
 {
   cout << "test_equilibriumMolFractions\n";
@@ -1988,8 +2105,8 @@ int main()
   int status;
 
   test_pureFugacityCoefficient(CH4, "CH4");
-  test_pureFugacityCoefficient(H2O, "H2O");
-  test_pureFugacityCoefficient(CO2, "CO2");
+  //test_pureFugacityCoefficient(H2O, "H2O");
+  //test_pureFugacityCoefficient(CO2, "CO2");
 
   test_waterliquidReducedDensityAtSaturation();
 
@@ -2003,7 +2120,8 @@ int main()
 
   // test_molFractionOfMethaneInLiquid();
 
-  test_methaneSolubilityInLiquid();
+  // test_methaneSolubilityInLiquid();
+  test_methaneSolubilityInLiquid2();
 
   // test_equilibriumMassFrac();
   // test_equilibriumMolFractions();
