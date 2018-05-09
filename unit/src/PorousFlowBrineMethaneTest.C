@@ -83,23 +83,12 @@ TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientMethane)
   const Real dT = 1.0e-6; // K
   _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t) + dT, phi2, dphi_dp2, dphi_dT2);
   EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 1.0e-4) << "Derivative wrt. temperature";
-
-  // Real phiCO2, dphiCO2_dp, dphiCO2_dT;
-  // _fp->fugacityCoefficientCO2(p, T, phiCO2, dphiCO2_dp, dphiCO2_dT);
-
-  // ABS_TEST("phiCO2 ", phiCO2, 0.40, 1.0e-2);
-
-  // Real phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT;
-  // _fp->fugacityCoefficientCO2(p + dp, T, phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT);
-
-  // Real dphiCO2_dp_fd = (phiCO2_2 - phiCO2) / dp;
-  // REL_TEST("dphiCO2_dp", dphiCO2_dp, dphiCO2_dp_fd, 1.0e-2);
-
-  // _fp->fugacityCoefficientCO2(p, T + dT, phiCO2_2, dphiCO2_2_dp, dphiCO2_2_dT);
-
-  // Real dphiCO2_dT_fd = (phiCO2_2 - phiCO2) / dT;
-  // REL_TEST("dphiCO2_dT", dphiCO2_dT, dphiCO2_dT_fd, 1.0e-2);
 }
+
+
+// TODO
+// Test fugacity coefficient for water. Reference?
+
 
 // /*
 //  * Verify calculation of the activity coefficient and its derivatives wrt

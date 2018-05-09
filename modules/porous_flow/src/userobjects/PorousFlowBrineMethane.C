@@ -615,7 +615,7 @@ waterVapourPressureAtSaturation(const Real TKelvin) {
 Real 
 waterliquidReducedDensityAtSaturation(const Real Tr) {
   // Compute water liquid density at saturation.
-  // Ref 3, Eq. 1
+  // Ref 3, Eq. 2
   // Input : Reduced temperature
   // Output: Reduced density
   // Note that when output is negative, water is not liquid
@@ -1095,8 +1095,14 @@ PorousFlowBrineMethane::activityCoefficient(Real pressure,
 }
 
 
+#ifdef STANDALONE
 Real
 methaneSolubilityInLiquid(const Real pressure, const Real temperature, const Real Xnacl)
+#else // MOOSE
+Real
+PorousFlowBrineMethane::methaneSolubilityInLiquid(
+    Real pressure, Real temperature, Real Xnacl) const
+#endif
 {
   // Compute methane solubility in liquid, based on Ref. 1, Eq. 8.
   // Input: pressure in Pascal, temperature in Kelvin, mol fraction of NaCl
@@ -1122,9 +1128,15 @@ methaneSolubilityInLiquid(const Real pressure, const Real temperature, const Rea
 }
 
 
+#ifdef STANDALONE
 void
-equilibriumMassFrac(const Real pressure, const Real temperature, const Real Xnacl,
+equilibriumMassFractions(const Real pressure, const Real temperature, const Real Xnacl,
     Real & wch4, Real & wh2o)
+#else
+void
+PorousFlowBrineMethane::equilibriumMassFractions(Real pressure, Real temperature, Real Xnacl,
+    Real & wch4, Real & wh2o) const
+#endif
 {
   // Compute mol fraction of CH4 in liquid phase and H2O in gas phase.
   // Ref. 1, Eq. 8 (derived from Eq. 3 & 7).
@@ -1145,10 +1157,11 @@ equilibriumMassFrac(const Real pressure, const Real temperature, const Real Xnac
   wh2o = Yh2o * H2O.molarMass / totalGasMolarMass;
 
   // Solubility of CH4 in liquid (mol/kg)
-  Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
-      - log(pureFugacityCoefficient(CH4, pressure, temperature))
-      + log(activityCoef(pressure, temperature, Xnacl));
-  Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
+  // Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
+  //     - log(pureFugacityCoefficient(CH4, pressure, temperature))
+  //     + log(activityCoef(pressure, temperature, Xnacl));
+  // Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
+  Real mch4 = methaneSolubilityInLiquid(pressure, temperature, Xnacl);
 
   Real massh2o = Xh2o * H2O.molarMass;
   Real massnacl = Xnacl * NaCl.molarMass;
@@ -1189,13 +1202,13 @@ PorousFlowBrineMethane::equilibriumMassFractions(Real pressure,
   // Perturbed values:
   Real Xch4p, Yh2op;
 
-  equilibriumMassFrac(pressure, temperature, Xnacl, Xch4, Yh2o);
+  equilibriumMassFractions(pressure, temperature, Xnacl, Xch4, Yh2o);
 
-  equilibriumMassFrac(pressure + 1.0, temperature, Xnacl, Xch4p, Yh2op);
+  equilibriumMassFractions(pressure + 1.0, temperature, Xnacl, Xch4p, Yh2op);
   dXch4_dp = Xch4p - Xch4;
   dYh2o_dp = Yh2op - Yh2o;
 
-  equilibriumMassFrac(pressure, temperature + 1.0, Xnacl, Xch4p, Yh2op);
+  equilibriumMassFractions(pressure, temperature + 1.0, Xnacl, Xch4p, Yh2op);
   dXch4_dT = Xch4p - Xch4;
   dYh2o_dT = Yh2op - Yh2o;
 }

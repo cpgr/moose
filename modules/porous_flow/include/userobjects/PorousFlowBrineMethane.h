@@ -68,6 +68,21 @@ public:
                                 Real & dxh2og_dT) const;
 
   /**
+   * Mass fractions of methane and brine
+   *
+   * @param pressure phase pressure (Pa)
+   * @param temperature phase temperature (C)
+   * @param xnacl NaCl mass fraction (kg/kg)
+   * @param[out] xch4l mass fraction of methane in liquid (kg/kg)
+   * @param[out] xh2og mass fraction of H2O in gas (kg/kg)
+   */
+  void equilibriumMassFractions(Real pressure,
+                                Real temperature,
+                                Real xnacl,
+                                Real & xch4l,
+                                Real & xh2og) const;
+
+  /**
    * Mass fractions of methane and H2O in both phases, as well as derivatives wrt
    * PorousFlow variables. Values depend on the phase state (liquid, gas or two phase)
    *
@@ -207,6 +222,16 @@ public:
    * @return total mass fraction z (-)
    */
   Real totalMassFraction(Real pressure, Real temperature, Real xnacl, Real saturation) const;
+
+  /**
+   * Compute methane solubility in liquid, based on Ref. 1, Eq. 8.
+   * 
+   * @param pressure gas pressure (Pa)
+   * @param temperature temperature (K)
+   * @param xnacl NaCl mol fraction (mol/kg)
+   * @return methane solubility in the liquid (mol/kg)
+   */
+  Real methaneSolubilityInLiquid(Real pressure, Real temperature, Real xnacl) const;
 
 protected:
   /// Check the input variables
