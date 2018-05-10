@@ -1033,25 +1033,6 @@ xiCH4_Na_Cl(const Real PBar, const Real TKelvin)
 }
 
 
-// Real 
-// molFractionOfMethaneInLiquid(const Real PPascal, const Real TKelvin, const Real Xnacl, 
-//     const Real Ych4)
-// {
-//   Real PBar = pressurePascalToBar(PPascal);
-//   // Mol fraction of methane in liquid: Xch4 calculated from Eq 3 by solving
-//   // for mch4 (moles/kg of CH4 in liquid) and dividing by _Mch4 (molar mass of methane)
-//   Real RHS = muCH4StandardLiquidByRT(PBar, TKelvin) 
-//       - log(pureFugacityCoefficient(CH4, PPascal, TKelvin))
-//       + 2.0 * lambdaCH4_Na(PBar, TKelvin) * Xnacl
-//       + xiCH4_Na_Cl(PBar, TKelvin) * Xnacl * Xnacl;
-  
-//   Real mch4 = Ych4 * PBar/ exp(RHS);
-//   return mch4;
-//   // Real Xch4 = CH4.molarMass / mch4;
-//   // return Xch4;
-// }
-
-
 #ifdef STANDALONE
 Real
 activityCoef(const Real pressure, const Real temperature, const Real Xnacl)
@@ -1240,10 +1221,11 @@ equilibriumMolFractions(const Real pressure, const Real temperature, const Real 
   // Real mnacl = Xnacl / (1.0 - Xnacl) / H2O.molarMass;
 
   // Solubility of CH4 in liquid (mol/kg)
-  Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
-      - log(pureFugacityCoefficient(CH4, pressure, temperature))
-      + log(activityCoef(pressure, temperature, Xnacl));
-  Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
+  // Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
+  //     - log(pureFugacityCoefficient(CH4, pressure, temperature))
+  //     + log(activityCoef(pressure, temperature, Xnacl));
+  // Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
+  Real mch4 = methaneSolubilityInLiquid(pressure, temperature, Xnacl);
 
   Real massh2o = Xh2o * H2O.molarMass;
   Real massnacl = Xnacl * NaCl.molarMass;

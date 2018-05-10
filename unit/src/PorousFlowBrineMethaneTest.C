@@ -90,6 +90,198 @@ TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientMethane)
 // Test fugacity coefficient for water. Reference?
 
 
+/* 
+ * Check the calculation of methane solubility in liquid by comparing the results with 
+ * Table 4 ~ 8 from Ref. Duan & Mao.
+ * Test for each table (which has a specific value of NaCl concentration) is done on 5 locations:
+ * 4 corners (combinations of min/max pressure and temperature) and somewhere in the middle. 
+ * Note that the values in the tables have 5 digits behind decimal point.
+ * When a check at a particular location passes for 
+ */
+TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
+{
+  const Real mh2o = 0.01801528; // Molar mass of H2O in kg/mol
+  const Real strictTolerance = 1.0e-5; // The same as values in the tables
+  const int n = 25; // 5 tables X 5 locations
+  
+  Real P[n];     // Pressure in Bar
+  Real T[n];     // Temperature in Kelvin
+  Real xnacl[n]; // NaCl concentration (mol/kg)
+  Real xch4[n];  // CH4 solubility in liquid (mol/kg)
+  Real tol[n];   // tolerance
+
+  // Compare with Table 4: pure water
+  P[0] = 1.0;
+  T[0] = 273.15;
+  xnacl[0] = 0.0;
+  xch4[0] = 0.00247;
+  tol[0] = strictTolerance;
+
+  P[1] = 2000.0;
+  T[1] = 333.15;
+  xnacl[1] = 0.0;
+  xch4[1] = 0.35486;
+  tol[1] = strictTolerance;
+
+  P[2] = 2000.0;
+  T[2] = 573.15;
+  xnacl[2] = 0.0;
+  xch4[2] = 2.83679;
+  tol[2] = 100.0 * strictTolerance;
+
+  P[3] = 100.0;
+  T[3] = 573.15;
+  xnacl[3] = 0.0;
+  xch4[3] = 0.02009;
+  tol[3] = 100.0 * strictTolerance;
+
+  P[4] = 1000.0;
+  T[4] = 423.15;
+  xnacl[4] = 0.0;
+  xch4[4] = 0.43466;
+  tol[4] = strictTolerance;
+
+  // Compare with Table 5: NaCl of 1 mol/kg
+  P[5] = 1.0;
+  T[5] = 273.15;
+  xnacl[5] = 1.0;
+  xch4[5] = 0.00177;
+  tol[5] = strictTolerance;
+
+  P[6] = 2000.0;
+  T[6] = 333.15;
+  xnacl[6] = 1.0;
+  xch4[6] = 0.27167;
+  tol[6] = strictTolerance;
+
+  P[7] = 2000.0;
+  T[7] = 573.15;
+  xnacl[7] = 1.0;
+  xch4[7] = 2.36348;
+  tol[7] = 100.0 * strictTolerance;
+
+  P[8] = 100.0;
+  T[8] = 573.15;
+  xnacl[8] = 1.0;
+  xch4[8] = 0.04693;
+  tol[8] = 10.0 * strictTolerance;
+
+  P[9] = 1000.0;
+  T[9] = 423.15;
+  xnacl[9] = 1.0;
+  xch4[9] = 0.35113;
+  tol[9] = strictTolerance;
+
+  // Compare with Table 6: NaCl of 2 mol/kg
+  P[10] = 1.0;
+  T[10] = 273.15;
+  xnacl[10] = 2.0;
+  xch4[10] = 0.00127;
+  tol[10] = strictTolerance;
+
+  P[11] = 2000.0;
+  T[11] = 333.15;
+  xnacl[11] = 2.0;
+  xch4[11] = 0.2092;
+  tol[11] = 10.0 * strictTolerance;
+
+  P[12] = 2000.0;
+  T[12] = 573.15;
+  xnacl[12] = 2.0;
+  xch4[12] = 1.97693;
+  tol[12] = 100.0 * strictTolerance;
+
+  P[13] = 100.0;
+  T[13] = 573.15;
+  xnacl[13] = 2.0;
+  xch4[13] = 0.05986;
+  tol[13] = 100.0 * strictTolerance;
+
+  P[14] = 1000.0;
+  T[14] = 423.15;
+  xnacl[14] = 2.0;
+  xch4[14] = 0.28535;
+  tol[14] = strictTolerance;
+
+  // Compare with Table 7: NaCl of 4 mol/kg
+  P[15] = 1.0;
+  T[15] = 273.15;
+  xnacl[15] = 4.0;
+  xch4[15] = 0.00067;
+  tol[15] = strictTolerance;
+
+  P[16] = 2000.0;
+  T[16] = 303.15;
+  xnacl[16] = 4.0;
+  xch4[16] = 0.09776;
+  tol[16] = strictTolerance;
+
+  P[17] = 2000.0;
+  T[17] = 573.15;
+  xnacl[17] = 4.0;
+  xch4[17] = 1.39884;
+  tol[17] = 1000.0 * strictTolerance;
+
+  P[18] = 100.0;
+  T[18] = 573.15;
+  xnacl[18] = 4.0;
+  xch4[18] = 0.06309;
+  tol[18] = 1000.0 * strictTolerance;
+
+  P[19] = 1000.0;
+  T[19] = 423.15;
+  xnacl[19] = 4.0;
+  xch4[19] = 0.19183;
+  tol[19] = 10.0 * strictTolerance;
+
+  // Compare with Table 8: NaCl of 6 mol/kg
+  P[20] = 1.0;
+  T[20] = 273.15;
+  xnacl[20] = 6.0;
+  xch4[20] = 0.00036;
+  tol[20] = strictTolerance;
+
+  P[21] = 2000.0;
+  T[21] = 303.15;
+  xnacl[21] = 6.0;
+  xch4[21] = 0.05366;
+  tol[21] = strictTolerance;
+
+  P[22] = 2000.0;
+  T[22] = 573.15;
+  xnacl[22] = 6.0;
+  xch4[22] = 1.00244;
+  tol[22] = 100.0 * strictTolerance;
+
+  P[23] = 100.0;
+  T[23] = 573.15;
+  xnacl[23] = 6.0;
+  xch4[23] = 0.05306;
+  tol[23] = 10.0 * strictTolerance;
+
+  P[24] = 1000.0;
+  T[24] = 423.15;
+  xnacl[24] = 6.0;
+  xch4[24] = 0.13205;
+  tol[24] = strictTolerance;
+  
+  Real X;
+  for (int i = 0; i < n; ++i) {
+    X = 2.0 * xnacl[i] * mh2o / (1.0 + 2.0 * xnacl[i] * mh2o);
+    EXPECT_NEAR(xch4[i], _fp->methaneSolubilityInLiquid(barToPascal(P[i]), T[i], X), tol[i]) << 
+      "Entry number " << i << ", P: " << P[i] << " bar, T: " << T[i] << " K, xnacl: " << xnacl[i] << " mol/kg\n";
+  }
+  
+  // const Real dp = 0.1; // Pa
+  // _fp->fugacityCoefficientMethane(barToPascal(P) + dp, celsiusToKelvin(t), phi2, dphi_dp2, dphi_dT2);
+  // EXPECT_NEAR((phi2-phi)/dp, dphi_dp, 1.0e-4) << "Derivative wrt. pressure";
+
+  // const Real dT = 1.0e-6; // K
+  // _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t) + dT, phi2, dphi_dp2, dphi_dT2);
+  // EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 1.0e-4) << "Derivative wrt. temperature";
+}
+
+
 // /*
 //  * Verify calculation of the activity coefficient and its derivatives wrt
 //  * pressure and temperature
