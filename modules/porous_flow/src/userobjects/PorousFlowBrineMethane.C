@@ -1322,7 +1322,8 @@ PorousFlowBrineMethane::fugacityCoefficientH2O(
       a6*PBar*PBar/temperature);
 
   // The derivative of fugacity coefficient wrt pressure
-  dfh2o_dp = fh2o * (a2 + 2.0*a3*PBar + a4*temperature + a5/temperature + 2.0*a6*PBar/temperature);
+  // Note that the factor 1.0E-5 is to convert the value to per Pascal of pressure change (instead of bar).
+  dfh2o_dp = fh2o * (a2 + 2.0*a3*PBar + a4*temperature + (a5 + 2.0*a6*PBar)/temperature) * 1.0E-5;
 
   // The derivative of fugacity coefficient wrt temperature
   Real inv_temp_squared = 1.0 / (temperature*temperature);

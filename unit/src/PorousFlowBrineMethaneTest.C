@@ -41,19 +41,25 @@ TEST_F(PorousFlowBrineMethaneTest, name) { EXPECT_EQ("brine-methane", _fp->fluid
 // }
 
 /*
- * Verify calculation of the fugacity coefficients and their derivatives wrt
- * pressure and temperature.
- * Fugacity is checked against Ref. Duan, Moller & Weare, Table 4, 
- * at 4 corners of the table (combination of pressure/temperature min/max)
- * and at the centre.
+ * Verify calculation of the fugacity coefficients of methane 
+ * and their derivatives wrt pressure and temperature.
+ * Fugacity is checked against values in Table 4, at 4 corners of the table 
+ * (combination of pressure/temperature min/max) and at somewhere in the middle.
  * Fugacity derivative is checked against the value at the centre of the table.
- * Note that the pressure range is 1 ~ 10,000 bar
- * and temperature range is 0 ~ 1200 degree celsius
+ * Pressure range: 1 ~ 10,000 bar
+ * Temperature range: 0 ~ 1200 degree celsius
+ * The number of digits behind decimal point varies between 3 and 4 in the table.
+ * Reference:
+ * An equation of state for the CH4-CO2-H2O system: I. Pure systems from 
+ * 0 to 1000 degree C and 0 to 8000 bar, 
+ * Z. Duan, N, Moller, JH. Weare,
+ * Geochimica et Cosmochimica Acta Vol. 56, 1992, pp. 2605-2617.
  */
 TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientMethane)
 {
   Real P, t;
   Real phi, dphi_dp, dphi_dT;
+  Real phi2, dphi_dp2, dphi_dT2;
 
   _fp->fugacityCoefficientMethane(barToPascal(1.0), celsiusToKelvin(0.0), phi, dphi_dp, dphi_dT);
   EXPECT_NEAR(0.9977, phi, 1.0e-4) << "Min pressure and temperature";
@@ -73,37 +79,83 @@ TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientMethane)
   t = 600.0;
   _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t), phi, dphi_dp, dphi_dT);
   EXPECT_NEAR(6.7646, phi, 1.0e-4) << "Pressure: " << P << " bar, temperature: " << t << " deg C";
-
-  Real phi2, dphi_dp2, dphi_dT2;
   
-  const Real dp = 0.1; // Pa
+  const Real dp = 1.0; // Pa
   _fp->fugacityCoefficientMethane(barToPascal(P) + dp, celsiusToKelvin(t), phi2, dphi_dp2, dphi_dT2);
   EXPECT_NEAR((phi2-phi)/dp, dphi_dp, 1.0e-4) << "Derivative wrt. pressure";
 
-  const Real dT = 1.0e-6; // K
+  const Real dT = 1.0; // K
   _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t) + dT, phi2, dphi_dp2, dphi_dT2);
   EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 1.0e-4) << "Derivative wrt. temperature";
 }
 
 
-// TODO
-// Test fugacity coefficient for water. Reference?
+/*
+ * Verify calculation of the fugacity coefficients of water and their derivatives wrt
+ * pressure and temperature.
+ * Values are compared against precomputed values using the same function.
+ * Pressure range: 1 ~ 2000 bar
+ * Temperature range: 273 ~ 523 Kelvin
+ */
+TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientH2O)
+{
+  const Real tolerance = 1.0e-5; // absolute tolerance
+
+  Real phi, dphi_dp, dphi_dT;
+  Real phi2, dphi_dp2, dphi_dT2;
+
+  _fp->fugacityCoefficientH2O(barToPascal(1.0), 273.15, phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(0.98226511105978742, phi, tolerance) << "Min pressure and temperature";
+
+  // Note that the reference says 29584.790, which I suspect is wrong
+  _fp->fugacityCoefficientH2O(barToPascal(2000.0), 273.15, phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(6.0379021049117689, phi, tolerance) << "Max pressure and min temperature";
+
+  _fp->fugacityCoefficientH2O(barToPascal(2000.0), 523.15, phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(0.82959242425207924, phi, tolerance) << "Max pressure and temperature";
+
+  _fp->fugacityCoefficientH2O(barToPascal(1.0), 523.15, phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(0.98494687092214472, phi, tolerance) << "Min pressure and max temperature";
+
+  // Pressure and temperature are somewhere in the middle
+  Real P = 1000.0;
+  Real T = 398.15;
+  _fp->fugacityCoefficientH2O(barToPascal(P), T, phi, dphi_dp, dphi_dT);
+  EXPECT_NEAR(0.66770302582191587, phi, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
+  
+  const Real dp = 1.0; // Pa
+  _fp->fugacityCoefficientH2O(barToPascal(P) + dp, T, phi2, dphi_dp2, dphi_dT2);
+  EXPECT_NEAR((phi2-phi)/dp, dphi_dp, tolerance) << "Derivative wrt. pressure";
+
+  const Real dT = 1.0; // K
+  _fp->fugacityCoefficientH2O(barToPascal(P), T + dT, phi2, dphi_dp2, dphi_dT2);
+  EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 10.0 * tolerance) << "Derivative wrt. temperature";
+}
 
 
 /* 
  * Check the calculation of methane solubility in liquid by comparing the results with 
- * Table 4 ~ 8 from Ref. Duan & Mao.
+ * Table 4 ~ 8 from the reference (shown below).
  * Test for each table (which has a specific value of NaCl concentration) is done on 5 locations:
  * 4 corners (combinations of min/max pressure and temperature) and somewhere in the middle. 
  * Note that the values in the tables have 5 digits behind decimal point.
- * When a check at a particular location passes for 
+ * By default, the values are compared using strict tolerance, where the function is required to
+ * reproduce the values in the table exactly. In many locations this is not realistic, 
+ * so the tolerance is made larger.
+ * Pressure range: 1 ~ 2000 bar
+ * Temperature range: 273 ~ 523 Kelvin
+ * Reference:
+ * A thermodynamics model for calculating methane solubility, density and gas phase
+ * composition of methane-bearing aqueous fluids from 273 to 523 K and from 1 to 2000 bar,
+ * Z. Duan and S. Mao, 
+ * Geochimica et Cosmochimica Acta 70, 2006, pp. 3369-3386.
  */
 TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
 {
   const Real mh2o = 0.01801528; // Molar mass of H2O in kg/mol
   const Real strictTolerance = 1.0e-5; // The same as values in the tables
   const int n = 25; // 5 tables X 5 locations
-  
+
   Real P[n];     // Pressure in Bar
   Real T[n];     // Temperature in Kelvin
   Real xnacl[n]; // NaCl concentration (mol/kg)
@@ -271,14 +323,6 @@ TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
     EXPECT_NEAR(xch4[i], _fp->methaneSolubilityInLiquid(barToPascal(P[i]), T[i], X), tol[i]) << 
       "Entry number " << i << ", P: " << P[i] << " bar, T: " << T[i] << " K, xnacl: " << xnacl[i] << " mol/kg\n";
   }
-  
-  // const Real dp = 0.1; // Pa
-  // _fp->fugacityCoefficientMethane(barToPascal(P) + dp, celsiusToKelvin(t), phi2, dphi_dp2, dphi_dT2);
-  // EXPECT_NEAR((phi2-phi)/dp, dphi_dp, 1.0e-4) << "Derivative wrt. pressure";
-
-  // const Real dT = 1.0e-6; // K
-  // _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t) + dT, phi2, dphi_dp2, dphi_dT2);
-  // EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 1.0e-4) << "Derivative wrt. temperature";
 }
 
 
@@ -309,6 +353,49 @@ TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
 //   Real dgamma_dT_fd = (gamma_2 - gamma) / dT;
 //   REL_TEST("dgamma_dT", dgamma_dT, dgamma_dT_fd, 1.0e-6);
 // }
+
+/*
+ * Verify calculation of the activitty coefficient and its derivatives wrt
+ * pressure and temperature.
+ * Values are compared against precomputed values using the same function.
+ * Pressure range: 1 ~ 2000 bar
+ * Temperature range: 273 ~ 523 Kelvin
+ */
+TEST_F(PorousFlowBrineMethaneTest, activityCoefficient)
+{
+  const Real tolerance = 1.0e-5; // absolute tolerance
+  const Real xnacl = 0.1; 
+  Real gamma, dgamma_dp, dgamma_dT;
+  Real gamma2, dgamma_dp2, dgamma_dT2;
+
+  _fp->activityCoefficient(barToPascal(1.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(2.7739050439816912, gamma, tolerance) << "Min pressure and temperature";
+
+  // Note that the reference says 29584.790, which I suspect is wrong
+  _fp->activityCoefficient(barToPascal(2000.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(3.4857366863558608, gamma, tolerance) << "Max pressure and min temperature";
+
+  _fp->activityCoefficient(barToPascal(2000.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.7527494176406562, gamma, tolerance) << "Max pressure and temperature";
+
+  _fp->activityCoefficient(barToPascal(1.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.8615175599120284, gamma, tolerance) << "Min pressure and max temperature";
+
+  // Pressure and temperature are somewhere in the middle
+  Real P = 1000.0; // bar
+  Real T = 398.15; // Kelvin
+  _fp->activityCoefficient(barToPascal(P), T, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.9302180048382156, gamma, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
+  
+  const Real dp = 1.0; // Pa
+  _fp->activityCoefficient(barToPascal(P) + dp, T, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
+  EXPECT_NEAR((gamma2-gamma)/dp, dgamma_dp, tolerance) << "Derivative wrt. pressure";
+
+  const Real dT = 1.0; // K
+  _fp->activityCoefficient(barToPascal(P), T + dT, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
+  EXPECT_NEAR((gamma2-gamma)/dT, dgamma_dT, tolerance) << "Derivative wrt. temperature";
+}
+
 
 // /*
 //  * Verify calculation of the partial density of CO2 and its derivative wrt temperature
