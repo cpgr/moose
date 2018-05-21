@@ -202,22 +202,28 @@ temperatureKelvinToCelsius(const Real TKelvin) {
   return TKelvin - 273.15;
 }
 
-Real brineMassToMolFraction(const Real massFrac) {
-  Real nnacl = massFrac / NaCl.molarMass * 1000.0;
-  return (nnacl / (nnacl + (1.0 - massFrac) / H2O.molarMass * 1000.0));
+Real PorousFlowBrineMethane::brineMassToMolFraction(const Real massFrac) const {
+  // Real nnacl = massFrac / NaCl.molarMass * 1000.0;
+  // return (nnacl / (nnacl + (1.0 - massFrac) / H2O.molarMass * 1000.0));
+  Real nnacl = massFrac / _Mnacl * 1000.0;
+  return (nnacl / (nnacl + (1.0 - massFrac) / _Mh2o * 1000.0));
 }
 
-Real brineMolToMassFraction(const Real molFrac) {
-  Real mnacl = molFrac * NaCl.molarMass * 1000.0;
-  return (mnacl / (mnacl + (1.0 - molFrac) * H2O.molarMass * 1000.0));
+Real PorousFlowBrineMethane::brineMolToMassFraction(const Real molFrac) const {
+  // Real mnacl = molFrac * NaCl.molarMass * 1000.0;
+  // return (mnacl / (mnacl + (1.0 - molFrac) * H2O.molarMass * 1000.0));
+  Real mnacl = molFrac * _Mnacl * 1000.0;
+  return (mnacl / (mnacl + (1.0 - molFrac) * _Mh2o * 1000.0));
 }
 
-Real brineMolFractionToMolality(const Real molFrac) {
-  return (molFrac / ((1.0 - molFrac) * H2O.molarMass * 1000.0));
+Real PorousFlowBrineMethane::brineMolFractionToMolality(const Real molFrac) const {
+  // return (molFrac / ((1.0 - molFrac) * H2O.molarMass * 1000.0));
+  return (molFrac / ((1.0 - molFrac) * _Mh2o * 1000.0));
 }
 
-Real brineMolalityToMolFraction(const Real molality) {
-  Real nnacl = molality * H2O.molarMass * 1000.0;
+Real PorousFlowBrineMethane::brineMolalityToMolFraction(const Real molality) const {
+  // Real nnacl = molality * H2O.molarMass * 1000.0;
+  Real nnacl = molality * _Mh2o * 1000.0;
   return (nnacl / (nnacl + 1.0));
 }
 
@@ -885,7 +891,7 @@ pureFugacityCoefficient(
 
 
 Real
-fugacityCoefficientH2O(
+fugacityCoefficientH2OInCH4System(
     const Real PPascal, const Real TKelvin)
 {
   // Fugacity coefficient in the gas phase for CH4-H2O system.
@@ -895,14 +901,14 @@ fugacityCoefficientH2O(
   // Check valid input range
   if ((TKelvin < 273.0) || (TKelvin > 574.16)) {
 #ifdef VERBOSE
-    cout << "ERROR in fugacityCoefficientH2O: temperature is beyond valid range\n";
+    cout << "ERROR in fugacityCoefficientH2OInCH4System: temperature is beyond valid range\n";
 #endif
     return 0.0;
   }
   Real PBar = pressurePascalToBar(PPascal);
   if ((PBar < 0.999) || (PBar > 2000.01)) {
 #ifdef VERBOSE
-    cout << "ERROR in fugacityCoefficientH2O: pressure is beyond valid range\n";
+    cout << "ERROR in fugacityCoefficientH2OInCH4System: pressure is beyond valid range\n";
 #endif
     return 0.0;
   }
@@ -922,7 +928,7 @@ fugacityCoefficientH2O(
 
 
 Real
-molFractionOfWaterInGas(const Real PPascal, const Real TKelvin, const Real Xh2o)
+PorousFlowBrineMethane::molFractionOfWaterInGas(const Real PPascal, const Real TKelvin, const Real Xh2o) const
 {
   // Compute mass fraction of water in gas, as in Ref. 1, Eq 5
   // Input: pressure in Pascal, temperature in Kelvin, mol fraction of H2O in liquid.
@@ -937,7 +943,7 @@ molFractionOfWaterInGas(const Real PPascal, const Real TKelvin, const Real Xh2o)
 #ifdef VERBOSE
   cout << "Water vapour reduced pressure at saturation: " << Psh2oBar << "\n";
 #endif
-  Real fh2o = fugacityCoefficientH2O(PPascal, TKelvin);
+  Real fh2o = fugacityCoefficientH2OInCH4System(PPascal, TKelvin);
 #ifdef VERBOSE
   cout << "Fugacity coefficient: " << fh2o << "\n";
 #endif
@@ -947,7 +953,8 @@ molFractionOfWaterInGas(const Real PPascal, const Real TKelvin, const Real Xh2o)
   cout << "water density: " << densityh2o << "\n";
 #endif
   // Molar volume of liquid water (dm^3/mole)
-  Real Vlh2o = H2O.molarMass / densityh2o * 1.0e3;  // dm^3/mole
+  // Real Vlh2o = H2O.molarMass / densityh2o * 1.0e3;  // dm^3/mole: check!
+  Real Vlh2o = _Mh2o / densityh2o * 1.0e3;  // dm^3/mole: check!
   Real PBar = pressurePascalToBar(PPascal);
 
   Real Yh2o = Xh2o * Psh2oBar / (fh2o * PBar) * exp(Vlh2o * (PBar - Psh2oBar) / (R_bar * TKelvin));
@@ -1082,7 +1089,8 @@ Real PorousFlowBrineMethane::activityCoefficientMolFraction(Real pressure, Real 
   // Real PBar = pressurePascalToBar(pressure);
   // Molality of NaCl in liquid 
   // Note the constant 2 is due to NaCl dissociation
-  Real bnacl = xnacl / (2.0 * H2O.molarMass * (1.0 - xnacl));
+  // Real bnacl = xnacl / (2.0 * H2O.molarMass * (1.0 - xnacl));
+  Real bnacl = xnacl / (2.0 * _Mh2o * (1.0 - xnacl));
 
   // PorousFlowBrineMethane::activityCoefficientMolality(pressure, temperature, bnacl);
   Real PBar = pressurePascalToBar(pressure);
@@ -1129,13 +1137,14 @@ Real PorousFlowBrineMethane::methaneSolubilityInLiquid(
 
   Real PBar = pressurePascalToBar(pressure);
   
-  Real xnacl = 2.0 * bnacl * H2O.molarMass / (1.0 + 2.0 * bnacl * H2O.molarMass);
+  // Real xnacl = 2.0 * bnacl * H2O.molarMass / (1.0 + 2.0 * bnacl * H2O.molarMass);
+  Real xnacl = 2.0 * bnacl * _Mh2o / (1.0 + 2.0 * bnacl * _Mh2o);
 
   // Approximate mol fraction of water in liquid for CH4-H2O-NaCl system.
   // Note:
   // - For the case of CH4-H2O system (ie. no NaCl), it reduces to just 1.0
   // - The fraction of NaCl is multiplied by 2, because NaCl dissociates into Na+ and Cl-
-  Real Xh2o = 1.0 - 2.0*xnacl;  
+  Real Xh2o = 1.0 - 2.0 * xnacl;  
   // Mol fraction of water in gas: Yh2o given by Ref. 1, Eq 5
   Real Yh2o = molFractionOfWaterInGas(pressure, temperature, Xh2o);  
   // Mol fraction of CH4 in gas
@@ -1175,22 +1184,28 @@ PorousFlowBrineMethane::equilibriumMassFractions(Real pressure, Real temperature
   // Mol fraction of CH4 in gas
   Real Ych4 = 1.0 - Yh2o;
   // Total molar mass of gas: CH4, H2O (gas)
-  Real totalGasMolarMass = Ych4 * CH4.molarMass + Yh2o * H2O.molarMass;
+  // Real totalGasMolarMass = Ych4 * CH4.molarMass + Yh2o * H2O.molarMass;
+  Real totalGasMolarMass = Ych4 * _Mch4 + Yh2o * _Mh2o;
   // Mass fraction of water in gas
-  wh2o = Yh2o * H2O.molarMass / totalGasMolarMass;
+  // wh2o = Yh2o * H2O.molarMass / totalGasMolarMass;
+  wh2o = Yh2o * _Mh2o / totalGasMolarMass;
 
   Real mch4 = methaneSolubilityInLiquid(pressure, temperature, Xnacl);
 
-  Real massh2o = Xh2o * H2O.molarMass;
-  Real massnacl = Xnacl * NaCl.molarMass;
+  // Real massh2o = Xh2o * H2O.molarMass;
+  // Real massnacl = Xnacl * NaCl.molarMass;
+  Real massh2o = Xh2o * _Mh2o;
+  Real massnacl = Xnacl * _Mnacl;
   Real totalMass = massh2o + massnacl;  // Assume mass of CH4 in liquid is negligible
 
   // Mol fraction of CH4 in liquid
   Real Xch4 = mch4 * totalMass;  
   // Total molar mass of liquid: H2O, NaCl, CH4 (gas)
-  Real totalLiquidMolarMass = Xh2o * H2O.molarMass + Xnacl * NaCl.molarMass + Xch4 * CH4.molarMass;
+  // Real totalLiquidMolarMass = Xh2o * H2O.molarMass + Xnacl * NaCl.molarMass + Xch4 * CH4.molarMass;
+  Real totalLiquidMolarMass = Xh2o * _Mh2o + Xnacl * _Mnacl + Xch4 * _Mch4;
   // Mass fraction of CH4 in liquid
-  wch4 = Xch4 * CH4.molarMass / totalLiquidMolarMass;
+  // wch4 = Xch4 * CH4.molarMass / totalLiquidMolarMass;
+  wch4 = Xch4 * _Mch4 / totalLiquidMolarMass;
 }
 
 
@@ -1249,18 +1264,15 @@ equilibriumMolFractions(const Real pressure, const Real temperature, const Real 
   // Mol fraction of water in gas: Yh2o given by Ref. 1, Eq 5
   Yh2o = molFractionOfWaterInGas(pressure, temperature, Xh2o);
 
-  // const Real molarMassNa = 22.9898e-3;  // kg/mol
-  // const Real molarMassCl = 35.453e-3;
-  
   // Mol fraction of CH4 in gas
   Real Ych4 = 1.0 - Yh2o;
-  // Molality of NaCl in liquid
-  // Real mnacl = Xnacl / (1.0 - Xnacl) / H2O.molarMass;
 
   Real mch4 = methaneSolubilityInLiquid(pressure, temperature, Xnacl);
 
-  Real massh2o = Xh2o * H2O.molarMass;
-  Real massnacl = Xnacl * NaCl.molarMass;
+  // Real massh2o = Xh2o * H2O.molarMass;
+  // Real massnacl = Xnacl * NaCl.molarMass;
+  Real massh2o = Xh2o * _Mh2o;
+  Real massnacl = Xnacl * _Mnacl;
   Real totalMass = massh2o + massnacl;  // Assume mass of CH4 in liquid is negligible
 
   Xch4 = mch4 * totalMass;  // mol fraction of CH4 in liquid
@@ -1312,12 +1324,10 @@ PorousFlowBrineMethane::fugacityCoefficientMethane(
 
 
 #ifdef STANDALONE
-void
-fugacityCoefficientH2O(
+void fugacityCoefficientH2O(
     const Real pressure, const Real temperature, Real & fh2o, Real & dfh2o_dp, Real & dfh2o_dT)
 #else // MOOSE
-void
-PorousFlowBrineMethane::fugacityCoefficientH2O(
+void PorousFlowBrineMethane::fugacityCoefficientH2O(
     Real pressure, Real temperature, Real & fh2o, Real & dfh2o_dp, Real & dfh2o_dT) const
 #endif
 {

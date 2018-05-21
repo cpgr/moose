@@ -33,6 +33,14 @@ class PorousFlowBrineMethane : public PorousFlowFluidStateBase
 public:
   PorousFlowBrineMethane(const InputParameters & parameters);
 
+  Real brineMassToMolFraction(const Real massFrac) const;
+
+  Real brineMolToMassFraction(const Real molFrac) const;
+
+  Real brineMolFractionToMolality(const Real molFrac) const;
+
+  Real brineMolalityToMolFraction(const Real molality) const;
+
   /**
    * Name of FluidState
    * @return brine-methane
@@ -162,6 +170,8 @@ public:
    */
   void fugacityCoefficientH2O(
       Real pressure, Real temperature, Real & fh2o, Real & dfh2o_dp, Real & dfh2o_dT) const;
+
+  Real molFractionOfWaterInGas(const Real pressure, const Real temperature, const Real xh2o) const;
 
   /**
    * Activity coefficient for methane in brine
