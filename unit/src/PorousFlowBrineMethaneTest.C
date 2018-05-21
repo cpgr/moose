@@ -359,7 +359,7 @@ TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
  * Pressure range: 1 ~ 2000 bar
  * Temperature range: 273 ~ 523 Kelvin
  */
-TEST_F(PorousFlowBrineMethaneTest, DISABLED_activityCoefficient)
+TEST_F(PorousFlowBrineMethaneTest, activityCoefficient)
 {
   const Real tolerance = 1.0e-5; // absolute tolerance
   const Real xnacl = 0.1; 
@@ -367,23 +367,23 @@ TEST_F(PorousFlowBrineMethaneTest, DISABLED_activityCoefficient)
   Real gamma2, dgamma_dp2, dgamma_dT2;
 
   _fp->activityCoefficient(barToPascal(1.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(2.7739050439816912, gamma, tolerance) << "Min pressure and temperature";
+  EXPECT_NEAR(1.0020994748494119, gamma, tolerance) << "Min pressure and temperature";
 
   // Note that the reference says 29584.790, which I suspect is wrong
   _fp->activityCoefficient(barToPascal(2000.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(3.4857366863558608, gamma, tolerance) << "Max pressure and min temperature";
+  EXPECT_NEAR(1.0025573852149807, gamma, tolerance) << "Max pressure and min temperature";
 
   _fp->activityCoefficient(barToPascal(2000.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.7527494176406562, gamma, tolerance) << "Max pressure and temperature";
+  EXPECT_NEAR(1.0011798286032654, gamma, tolerance) << "Max pressure and temperature";
 
   _fp->activityCoefficient(barToPascal(1.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.8615175599120284, gamma, tolerance) << "Min pressure and max temperature";
+  EXPECT_NEAR(1.001300390721471, gamma, tolerance) << "Min pressure and max temperature";
 
   // Pressure and temperature are somewhere in the middle
   Real P = 1000.0; // bar
   Real T = 398.15; // Kelvin
   _fp->activityCoefficient(barToPascal(P), T, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.9302180048382156, gamma, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
+  EXPECT_NEAR(1.0013729694162714, gamma, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
   
   const Real dp = 1.0; // Pa
   _fp->activityCoefficient(barToPascal(P) + dp, T, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
