@@ -168,21 +168,25 @@ public:
    *
    * @param pressure phase pressure (Pa)
    * @param temperature phase temperature (K)
-   * @param xnacl salt mass fraction (kg/kg)
-   * @param[out] gamma activity coefficient for Methane in brine (output)
-   * @param[out] dgamma_dp derivative of activity coefficient wrt pressure
-   * @param[out] dgamma_dT derivative of activity coefficient wrt temperature
+   * @param bnacl molality of salt (mol/kg)
    */
-  // Real activityCoefficient(Real pressure,
-  //                          Real temperature,
-  //                          Real xnacl) const;
+  Real activityCoefficientMolality(Real pressure, Real temperature, Real bnacl) const;
 
   /**
    * Activity coefficient for methane in brine
    *
    * @param pressure phase pressure (Pa)
    * @param temperature phase temperature (K)
-   * @param xnacl salt mass fraction (kg/kg)
+   * @param xnacl mol fraction (g/g)
+   */
+  Real activityCoefficientMolFraction(Real pressure, Real temperature, Real xnacl) const;
+
+  /**
+   * Activity coefficient for methane in brine, with molality as NaCl concentration.
+   *
+   * @param pressure phase pressure (Pa)
+   * @param temperature phase temperature (K)
+   * @param xnacl salt mass fraction (g/g)
    * @param[out] gamma activity coefficient for Methane in brine (output)
    * @param[out] dgamma_dp derivative of activity coefficient wrt pressure
    * @param[out] dgamma_dT derivative of activity coefficient wrt temperature
@@ -228,10 +232,10 @@ public:
    * 
    * @param pressure gas pressure (Pa)
    * @param temperature temperature (K)
-   * @param xnacl NaCl mol fraction (mol/kg)
+   * @param xnacl NaCl molality (mol/kg)
    * @return methane solubility in the liquid (mol/kg)
    */
-  Real methaneSolubilityInLiquid(Real pressure, Real temperature, Real xnacl) const;
+  Real methaneSolubilityInLiquid(Real pressure, Real temperature, Real bnacl) const;
 
 protected:
   /// Check the input variables

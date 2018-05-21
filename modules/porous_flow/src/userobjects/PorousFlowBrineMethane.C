@@ -175,7 +175,7 @@ molecule_s H2O = {
 
 
 molecule_s NaCl = {
-  58.4e-3,
+  58.44e-3,
   0.0,
   0.0,
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -183,23 +183,42 @@ molecule_s NaCl = {
 
 
 Real 
-pressureBarToPascal (const Real PBar) {
+pressureBarToPascal(const Real PBar) {
   return PBar * 1.0e5;
 }
 
 Real 
-pressurePascalToBar (const Real PPascal) {
+pressurePascalToBar(const Real PPascal) {
   return PPascal * 1.0e-5;
 }
 
 Real 
-temperatureCelsiusToKelvin (const Real tCelsius) {
+temperatureCelsiusToKelvin(const Real tCelsius) {
   return tCelsius + 273.15;
 }
 
 Real 
-temperatureKelvinToCelsius (const Real TKelvin) {
+temperatureKelvinToCelsius(const Real TKelvin) {
   return TKelvin - 273.15;
+}
+
+Real brineMassToMolFraction(const Real massFrac) {
+  Real nnacl = massFrac / NaCl.molarMass * 1000.0;
+  return (nnacl / (nnacl + (1.0 - massFrac) / H2O.molarMass * 1000.0));
+}
+
+Real brineMolToMassFraction(const Real molFrac) {
+  Real mnacl = molFrac * NaCl.molarMass * 1000.0;
+  return (mnacl / (mnacl + (1.0 - molFrac) * H2O.molarMass * 1000.0));
+}
+
+Real brineMolFractionToMolality(const Real molFrac) {
+  return (molFrac / ((1.0 - molFrac) * H2O.molarMass * 1000.0));
+}
+
+Real brineMolalityToMolFraction(const Real molality) {
+  Real nnacl = molality * H2O.molarMass * 1000.0;
+  return (nnacl / (nnacl + 1.0));
 }
 
 
@@ -1034,11 +1053,25 @@ xiCH4_Na_Cl(const Real PBar, const Real TKelvin)
 
 
 #ifdef STANDALONE
-Real
-activityCoef(const Real pressure, const Real temperature, const Real Xnacl)
+Real activityCoefficientMolality(const Real pressure, const Real temperature, const Real bnacl)
 #else
-Real
-activityCoef(Real pressure, Real temperature, Real Xnacl)
+Real PorousFlowBrineMethane::activityCoefficientMolality(Real pressure, Real temperature, Real bnacl) const
+#endif
+{
+  // Compute activity coefficient of methane in brine.
+  // Ref. 1 Eq. 7, with the term for CH4-Cl set to zero.
+  // Input: pressure in Pascal, temperature in Kelvin, molality of NaCl
+  // Output: activity coefficient
+  Real PBar = pressurePascalToBar(pressure);
+  return std::exp(2.0 * lambdaCH4_Na(PBar, temperature) * bnacl
+      + xiCH4_Na_Cl(PBar, temperature) * bnacl * bnacl);
+}
+
+
+#ifdef STANDALONE
+Real activityCoefficientMolFraction(const Real pressure, const Real temperature, const Real xnacl)
+#else
+Real PorousFlowBrineMethane::activityCoefficientMolFraction(Real pressure, Real temperature, Real xnacl) const
 #endif
 {
   // Compute activity coefficient of methane in brine.
@@ -1046,23 +1079,23 @@ activityCoef(Real pressure, Real temperature, Real Xnacl)
   // Input: pressure in Pascal, temperature in Kelvin, mol fraction of NaCl
   // Output: activity coefficient
 
-  Real PBar = pressurePascalToBar(pressure);
+  // Real PBar = pressurePascalToBar(pressure);
   // Molality of NaCl in liquid 
   // Note the constant 2 is due to NaCl dissociation
-  Real mnacl = Xnacl / (2.0 * H2O.molarMass * (1.0 - Xnacl));
+  Real bnacl = xnacl / (2.0 * H2O.molarMass * (1.0 - xnacl));
 
-  return std::exp(2.0 * lambdaCH4_Na(PBar, temperature) * mnacl
-      + xiCH4_Na_Cl(PBar, temperature) * mnacl * mnacl);
+  // PorousFlowBrineMethane::activityCoefficientMolality(pressure, temperature, bnacl);
+  Real PBar = pressurePascalToBar(pressure);
+  return std::exp(2.0 * lambdaCH4_Na(PBar, temperature) * bnacl
+      + xiCH4_Na_Cl(PBar, temperature) * bnacl * bnacl);
 }
 
 
 #ifdef STANDALONE
-void
-activityCoefficient(const Real pressure, const Real temperature, const Real xnacl,
+void activityCoefficient(const Real pressure, const Real temperature, const Real xnacl,
     Real & gamma, Real & dgamma_dp, Real & dgamma_dT)
 #else // MOOSE
-void
-PorousFlowBrineMethane::activityCoefficient(Real pressure,
+void PorousFlowBrineMethane::activityCoefficient(Real pressure,
                                             Real temperature,
                                             Real xnacl,
                                             Real & gamma,
@@ -1070,39 +1103,48 @@ PorousFlowBrineMethane::activityCoefficient(Real pressure,
                                             Real & dgamma_dT) const
 #endif
 {
-  gamma = activityCoef(pressure, temperature, xnacl);
-  dgamma_dp = activityCoef(pressure + 1.0, temperature, xnacl) - gamma;
-  dgamma_dT = activityCoef(pressure, temperature + 1.0, xnacl) - gamma;
+  Real bnacl = brineMolFractionToMolality(xnacl);
+  // Real bnacl = brineMolFractionToMolality( brineMassToMolFraction(xnacl));
+  // Real bnacl = xnacl / (2.0 * H2O.molarMass * (1.0 - xnacl));
+  gamma = activityCoefficientMolality(pressure, temperature, bnacl);
+  dgamma_dp = activityCoefficientMolality(pressure + 1.0, temperature, bnacl) - gamma;
+  dgamma_dT = activityCoefficientMolality(pressure, temperature + 1.0, bnacl) - gamma;
+
+  // gamma = activityCoefficientMolFraction(pressure, temperature, xnacl);
+  // dgamma_dp = activityCoefficientMolFraction(pressure + 1.0, temperature, xnacl) - gamma;
+  // dgamma_dT = activityCoefficientMolFraction(pressure, temperature + 1.0, xnacl) - gamma;
 }
 
 
 #ifdef STANDALONE
-Real
-methaneSolubilityInLiquid(const Real pressure, const Real temperature, const Real Xnacl)
+Real methaneSolubilityInLiquid(const Real pressure, const Real temperature, const Real bnacl)
 #else // MOOSE
-Real
-PorousFlowBrineMethane::methaneSolubilityInLiquid(
-    Real pressure, Real temperature, Real Xnacl) const
+Real PorousFlowBrineMethane::methaneSolubilityInLiquid(
+    Real pressure, Real temperature, Real bnacl) const
 #endif
 {
   // Compute methane solubility in liquid, based on Ref. 1, Eq. 8.
-  // Input: pressure in Pascal, temperature in Kelvin, mol fraction of NaCl
+  // Input: pressure in Pascal, temperature in Kelvin, NaCl molality
   // Output: methane solubility in the liquid (mol/kg).
 
   Real PBar = pressurePascalToBar(pressure);
+  
+  Real xnacl = 2.0 * bnacl * H2O.molarMass / (1.0 + 2.0 * bnacl * H2O.molarMass);
+
   // Approximate mol fraction of water in liquid for CH4-H2O-NaCl system.
   // Note:
   // - For the case of CH4-H2O system (ie. no NaCl), it reduces to just 1.0
   // - The fraction of NaCl is multiplied by 2, because NaCl dissociates into Na+ and Cl-
-  Real Xh2o = 1.0 - 2.0*Xnacl;  
+  Real Xh2o = 1.0 - 2.0*xnacl;  
   // Mol fraction of water in gas: Yh2o given by Ref. 1, Eq 5
   Real Yh2o = molFractionOfWaterInGas(pressure, temperature, Xh2o);  
   // Mol fraction of CH4 in gas
   Real Ych4 = 1.0 - Yh2o;
+
   // Solubility of CH4 in liquid (mol/kg)
   Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
       - log(pureFugacityCoefficient(CH4, pressure, temperature))
-      + log(activityCoef(pressure, temperature, Xnacl));
+      + log(activityCoefficientMolality(pressure, temperature, bnacl));
   Real mch4 = std::max(0.0, Ych4 * PBar / exp(RHS));  // Filter out negative result
 
   return mch4;
@@ -1137,11 +1179,6 @@ PorousFlowBrineMethane::equilibriumMassFractions(Real pressure, Real temperature
   // Mass fraction of water in gas
   wh2o = Yh2o * H2O.molarMass / totalGasMolarMass;
 
-  // Solubility of CH4 in liquid (mol/kg)
-  // Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
-  //     - log(pureFugacityCoefficient(CH4, pressure, temperature))
-  //     + log(activityCoef(pressure, temperature, Xnacl));
-  // Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
   Real mch4 = methaneSolubilityInLiquid(pressure, temperature, Xnacl);
 
   Real massh2o = Xh2o * H2O.molarMass;
@@ -1220,11 +1257,6 @@ equilibriumMolFractions(const Real pressure, const Real temperature, const Real 
   // Molality of NaCl in liquid
   // Real mnacl = Xnacl / (1.0 - Xnacl) / H2O.molarMass;
 
-  // Solubility of CH4 in liquid (mol/kg)
-  // Real RHS = muCH4StandardLiquidByRT(PBar, temperature) 
-  //     - log(pureFugacityCoefficient(CH4, pressure, temperature))
-  //     + log(activityCoef(pressure, temperature, Xnacl));
-  // Real mch4 = std::max(0.0, Ych4 * PBar/ exp(RHS));  // Filter out negative result
   Real mch4 = methaneSolubilityInLiquid(pressure, temperature, Xnacl);
 
   Real massh2o = Xh2o * H2O.molarMass;
