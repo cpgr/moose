@@ -14,6 +14,13 @@
 
 #include "libmesh/string_to_enum.h"
 
+registerMooseAction("ChemicalReactionsApp", AddGeochemicalDatabaseSpeciesAction, "add_kernel");
+registerMooseAction("ChemicalReactionsApp", AddGeochemicalDatabaseSpeciesAction, "add_aux_kernel");
+registerMooseAction("ChemicalReactionsApp", AddGeochemicalDatabaseSpeciesAction, "add_variable");
+registerMooseAction("ChemicalReactionsApp",
+                    AddGeochemicalDatabaseSpeciesAction,
+                    "add_aux_variable");
+
 template <>
 InputParameters
 validParams<AddGeochemicalDatabaseSpeciesAction>()

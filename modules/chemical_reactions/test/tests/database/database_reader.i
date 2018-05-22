@@ -9,9 +9,8 @@
 []
 
 [ReactionNetwork]
-   primary_species = 'H+ Ca++ HCO3-'
   [./GeochemicalDatabase]
-    filename = ../../../database/eq36.dat
+    filename = '../../../database/eq36.dat'
     primary_species = 'H+ Ca++ HCO3-'
     secondary_species = 'OH- CaOH+ CO3-- CaHCO3+ CaCO3(aq) CO2(aq)'
     mineral_species = 'Calcite'
@@ -33,6 +32,11 @@
     type = ConstantIC
     variable = HCO3-
     value = 1e-7
+  [../]
+  [./Calcite]
+    type = ConstantIC
+    variable = Calcite
+    value = 1e-3
   [../]
 []
 

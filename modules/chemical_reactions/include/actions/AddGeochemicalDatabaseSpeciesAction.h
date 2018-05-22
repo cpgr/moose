@@ -28,9 +28,21 @@ public:
   virtual void act() override;
 
 private:
+  /**
+   * Removes H2O species from list of species
+   * As H2O isn't explicitly used in the calculations, all references
+   * to this species can be removed from the list of species in all
+   * reactions
+   * @param species vector of species (equilibrium or mineral)
+   */
   template <typename T>
   void removeH2O(std::vector<T> & species);
 
+  /**
+   * Check that all primary species required in each equilibrium or
+   * mineral species have been included in the list of primary species
+   * @param species vector of species (equilibrium or mineral)
+   */
   template <typename T>
   void checkPrimarySpecies(std::vector<T> & species);
 
@@ -60,7 +72,7 @@ private:
   std::vector<GeochemicalDatabaseEquilibriumSpecies> _equilibrium_species;
   /// Mineral species data read from the database
   std::vector<GeochemicalDatabaseMineralSpecies> _mineral_species;
-  /// Conversion from C to K
+  /// Conversion from temperature in C to K
   const Real _T_c2k;
 };
 

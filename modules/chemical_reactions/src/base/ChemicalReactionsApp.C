@@ -40,6 +40,7 @@ associateSyntaxInner(Syntax & syntax, ActionFactory & /*action_factory*/)
   registerSyntax("AddSecondarySpeciesAction", "ReactionNetwork/SolidKineticReactions");
   registerSyntax("AddCoupledEqSpeciesAction", "ReactionNetwork/AqueousEquilibriumReactions");
   registerSyntax("AddCoupledSolidKinSpeciesAction", "ReactionNetwork/SolidKineticReactions");
+  registerSyntax("AddGeochemicalDatabaseSpeciesAction", "ReactionNetwork/GeochemicalDatabase");
 }
 
 void
