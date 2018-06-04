@@ -40,6 +40,78 @@ TEST_F(PorousFlowBrineMethaneTest, name) { EXPECT_EQ("brine-methane", _fp->fluid
 //   REL_TEST("dK0Methane_dT", dK0Methane_dT, dK0Methane_dT_fd, 1.0e-6);
 // }
 
+
+// /*
+//  * Verify calculation of the activity coefficient and its derivatives wrt
+//  * pressure and temperature
+//  */
+// TEST_F(PorousFlowBrineCO2Test, activityCoefficient)
+// {
+//   const Real p = 10.0e6;
+//   const Real T = 350.0;
+//   const Real xnacl = 0.1;
+//   const Real dp = 1.0e-1;
+//   const Real dT = 1.0e-6;
+
+//   Real gamma, dgamma_dp, dgamma_dT;
+//   _fp->activityCoefficient(p, T, xnacl, gamma, dgamma_dp, dgamma_dT);
+//   ABS_TEST("gamma", gamma, 1.43, 1.0e-2);
+
+//   Real gamma_2, dgamma_2_dp, dgamma_2_dT;
+//   _fp->activityCoefficient(p + dp, T, xnacl, gamma_2, dgamma_2_dp, dgamma_2_dT);
+
+//   Real dgamma_dp_fd = (gamma_2 - gamma) / dp;
+//   REL_TEST("dgamma_dp", dgamma_dp, dgamma_dp_fd, 1.0e-6);
+
+//   _fp->activityCoefficient(p, T + dT, xnacl, gamma_2, dgamma_2_dp, dgamma_2_dT);
+
+//   Real dgamma_dT_fd = (gamma_2 - gamma) / dT;
+//   REL_TEST("dgamma_dT", dgamma_dT, dgamma_dT_fd, 1.0e-6);
+// }
+
+/*
+ * Verify calculation of the activitty coefficient and its derivatives wrt
+ * pressure and temperature.
+ * Values are compared against precomputed values using the same function.
+ * Pressure range: 1 ~ 2000 bar
+ * Temperature range: 273 ~ 523 Kelvin
+ */
+TEST_F(PorousFlowBrineMethaneTest, activityCoefficient)
+{
+  const Real tolerance = 1.0e-5; // absolute tolerance
+  const Real xnacl = 0.1; 
+  Real gamma, dgamma_dp, dgamma_dT;
+  Real gamma2, dgamma_dp2, dgamma_dT2;
+
+  _fp->activityCoefficient(barToPascal(1.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.0020994748494119, gamma, tolerance) << "Min pressure and temperature";
+
+  // Note that the reference says 29584.790, which I suspect is wrong
+  _fp->activityCoefficient(barToPascal(2000.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.0025573852149807, gamma, tolerance) << "Max pressure and min temperature";
+
+  _fp->activityCoefficient(barToPascal(2000.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.0011798286032654, gamma, tolerance) << "Max pressure and temperature";
+
+  _fp->activityCoefficient(barToPascal(1.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.001300390721471, gamma, tolerance) << "Min pressure and max temperature";
+
+  // Pressure and temperature are somewhere in the middle
+  Real P = 1000.0; // bar
+  Real T = 398.15; // Kelvin
+  _fp->activityCoefficient(barToPascal(P), T, xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.0013729694162714, gamma, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
+  
+  // const Real dp = 1.0; // Pa
+  _fp->activityCoefficient(barToPascal(P) + dp, T, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
+  EXPECT_NEAR((gamma2-gamma)/dp, dgamma_dp, tolerance) << "Derivative wrt. pressure";
+
+  // const Real dT = 1.0; // K
+  _fp->activityCoefficient(barToPascal(P), T + dT, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
+  EXPECT_NEAR((gamma2-gamma)/dT, dgamma_dT, tolerance) << "Derivative wrt. temperature";
+}
+
+
 /*
  * Verify calculation of the fugacity coefficients of methane 
  * and their derivatives wrt pressure and temperature.
@@ -80,11 +152,11 @@ TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientMethane)
   _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t), phi, dphi_dp, dphi_dT);
   EXPECT_NEAR(6.7646, phi, 1.0e-4) << "Pressure: " << P << " bar, temperature: " << t << " deg C";
   
-  const Real dp = 1.0; // Pa
+  // const Real dp = 1.0; // Pa
   _fp->fugacityCoefficientMethane(barToPascal(P) + dp, celsiusToKelvin(t), phi2, dphi_dp2, dphi_dT2);
   EXPECT_NEAR((phi2-phi)/dp, dphi_dp, 1.0e-4) << "Derivative wrt. pressure";
 
-  const Real dT = 1.0; // K
+  // const Real dT = 1.0; // K
   _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t) + dT, phi2, dphi_dp2, dphi_dT2);
   EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 1.0e-4) << "Derivative wrt. temperature";
 }
@@ -123,11 +195,11 @@ TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientH2O)
   _fp->fugacityCoefficientH2O(barToPascal(P), T, phi, dphi_dp, dphi_dT);
   EXPECT_NEAR(0.66770302582191587, phi, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
   
-  const Real dp = 1.0; // Pa
+  // const Real dp = 1.0; // Pa
   _fp->fugacityCoefficientH2O(barToPascal(P) + dp, T, phi2, dphi_dp2, dphi_dT2);
   EXPECT_NEAR((phi2-phi)/dp, dphi_dp, tolerance) << "Derivative wrt. pressure";
 
-  const Real dT = 1.0; // K
+  // const Real dT = 1.0; // K
   _fp->fugacityCoefficientH2O(barToPascal(P), T + dT, phi2, dphi_dp2, dphi_dT2);
   EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 10.0 * tolerance) << "Derivative wrt. temperature";
 }
@@ -321,77 +393,6 @@ TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
     EXPECT_NEAR(bch4[i], _fp->methaneSolubilityInLiquid(barToPascal(P[i]), T[i], bnacl[i]), tol[i]) << 
       "Entry number " << i << ", P: " << P[i] << " bar, T: " << T[i] << " K, bnacl: " << bnacl[i] << " mol/kg\n";
   }
-}
-
-
-// /*
-//  * Verify calculation of the activity coefficient and its derivatives wrt
-//  * pressure and temperature
-//  */
-// TEST_F(PorousFlowBrineCO2Test, activityCoefficient)
-// {
-//   const Real p = 10.0e6;
-//   const Real T = 350.0;
-//   const Real xnacl = 0.1;
-//   const Real dp = 1.0e-1;
-//   const Real dT = 1.0e-6;
-
-//   Real gamma, dgamma_dp, dgamma_dT;
-//   _fp->activityCoefficient(p, T, xnacl, gamma, dgamma_dp, dgamma_dT);
-//   ABS_TEST("gamma", gamma, 1.43, 1.0e-2);
-
-//   Real gamma_2, dgamma_2_dp, dgamma_2_dT;
-//   _fp->activityCoefficient(p + dp, T, xnacl, gamma_2, dgamma_2_dp, dgamma_2_dT);
-
-//   Real dgamma_dp_fd = (gamma_2 - gamma) / dp;
-//   REL_TEST("dgamma_dp", dgamma_dp, dgamma_dp_fd, 1.0e-6);
-
-//   _fp->activityCoefficient(p, T + dT, xnacl, gamma_2, dgamma_2_dp, dgamma_2_dT);
-
-//   Real dgamma_dT_fd = (gamma_2 - gamma) / dT;
-//   REL_TEST("dgamma_dT", dgamma_dT, dgamma_dT_fd, 1.0e-6);
-// }
-
-/*
- * Verify calculation of the activitty coefficient and its derivatives wrt
- * pressure and temperature.
- * Values are compared against precomputed values using the same function.
- * Pressure range: 1 ~ 2000 bar
- * Temperature range: 273 ~ 523 Kelvin
- */
-TEST_F(PorousFlowBrineMethaneTest, activityCoefficient)
-{
-  const Real tolerance = 1.0e-5; // absolute tolerance
-  const Real xnacl = 0.1; 
-  Real gamma, dgamma_dp, dgamma_dT;
-  Real gamma2, dgamma_dp2, dgamma_dT2;
-
-  _fp->activityCoefficient(barToPascal(1.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.0020994748494119, gamma, tolerance) << "Min pressure and temperature";
-
-  // Note that the reference says 29584.790, which I suspect is wrong
-  _fp->activityCoefficient(barToPascal(2000.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.0025573852149807, gamma, tolerance) << "Max pressure and min temperature";
-
-  _fp->activityCoefficient(barToPascal(2000.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.0011798286032654, gamma, tolerance) << "Max pressure and temperature";
-
-  _fp->activityCoefficient(barToPascal(1.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.001300390721471, gamma, tolerance) << "Min pressure and max temperature";
-
-  // Pressure and temperature are somewhere in the middle
-  Real P = 1000.0; // bar
-  Real T = 398.15; // Kelvin
-  _fp->activityCoefficient(barToPascal(P), T, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.0013729694162714, gamma, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
-  
-  const Real dp = 1.0; // Pa
-  _fp->activityCoefficient(barToPascal(P) + dp, T, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
-  EXPECT_NEAR((gamma2-gamma)/dp, dgamma_dp, tolerance) << "Derivative wrt. pressure";
-
-  const Real dT = 1.0; // K
-  _fp->activityCoefficient(barToPascal(P), T + dT, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
-  EXPECT_NEAR((gamma2-gamma)/dT, dgamma_dT, tolerance) << "Derivative wrt. temperature";
 }
 
 

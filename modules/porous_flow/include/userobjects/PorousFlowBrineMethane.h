@@ -33,19 +33,39 @@ class PorousFlowBrineMethane : public PorousFlowFluidStateBase
 public:
   PorousFlowBrineMethane(const InputParameters & parameters);
 
-  Real brineMassToMolFraction(const Real massFrac) const;
-
-  Real brineMolToMassFraction(const Real molFrac) const;
-
-  Real brineMolFractionToMolality(const Real molFrac) const;
-
-  Real brineMolalityToMolFraction(const Real molality) const;
-
   /**
    * Name of FluidState
    * @return brine-methane
    */
   virtual std::string fluidStateName() const;
+
+  /**
+   * Convert NaCl mass fraction to mol fraction in brine solution
+   * @param massFrac NaCl mass fraction (g/g)
+   * @return NaCl mol fraction (mol/mol)
+   */
+  Real brineMassToMolFraction(const Real massFrac) const;
+
+  /**
+   * Convert NaCl mol fraction to mass fraction in brine solution
+   * @param molFrac NaCl mol fraction (mol/mol)
+   * @return NaCl mass fraction (g/g)
+   */
+  Real brineMolToMassFraction(const Real molFrac) const;
+
+  /**
+   * Convert NaCl mol fraction to molality in brine solution
+   * @param molFrac NaCl mol fraction (mol/mol)
+   * @return NaCl molality (mol/kg of H2O)
+   */
+  Real brineMolFractionToMolality(const Real molFrac) const;
+
+  /**
+   * Convert NaCl molality to mol fraction in brine solution
+   * @param molality NaCl molality (mol/kg of H2O)
+   * @return NaCl mol fraction (mol/mol)
+   */
+  Real brineMolalityToMolFraction(const Real molality) const;
 
   void thermophysicalProperties(Real pressure,
                                 Real temperature,

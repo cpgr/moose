@@ -182,6 +182,13 @@ molecule_s NaCl = {
 };
 
 
+// Perturbation for the computation of derivatives
+const Real dp = 1.0e-2;  // Pressure in Pascal
+const Real dT = 1.0e-6;  // Temperature in Kelvin
+
+
+// Functions
+
 Real 
 pressureBarToPascal(const Real PBar) {
   return PBar * 1.0e5;
@@ -1115,8 +1122,8 @@ void PorousFlowBrineMethane::activityCoefficient(Real pressure,
   // Real bnacl = brineMolFractionToMolality( brineMassToMolFraction(xnacl));
   // Real bnacl = xnacl / (2.0 * H2O.molarMass * (1.0 - xnacl));
   gamma = activityCoefficientMolality(pressure, temperature, bnacl);
-  dgamma_dp = activityCoefficientMolality(pressure + 1.0, temperature, bnacl) - gamma;
-  dgamma_dT = activityCoefficientMolality(pressure, temperature + 1.0, bnacl) - gamma;
+  dgamma_dp = (activityCoefficientMolality(pressure + dp, temperature, bnacl) - gamma) / dp;
+  dgamma_dT = (activityCoefficientMolality(pressure, temperature + dT, bnacl) - gamma) / dT;
 
   // gamma = activityCoefficientMolFraction(pressure, temperature, xnacl);
   // dgamma_dp = activityCoefficientMolFraction(pressure + 1.0, temperature, xnacl) - gamma;
@@ -1161,12 +1168,10 @@ Real PorousFlowBrineMethane::methaneSolubilityInLiquid(
 
 
 #ifdef STANDALONE
-void
-equilibriumMassFractions(const Real pressure, const Real temperature, const Real Xnacl,
+void equilibriumMassFractions(const Real pressure, const Real temperature, const Real Xnacl,
     Real & wch4, Real & wh2o)
 #else
-void
-PorousFlowBrineMethane::equilibriumMassFractions(Real pressure, Real temperature, Real Xnacl,
+void PorousFlowBrineMethane::equilibriumMassFractions(Real pressure, Real temperature, Real Xnacl,
     Real & wch4, Real & wh2o) const
 #endif
 {
@@ -1237,13 +1242,13 @@ PorousFlowBrineMethane::equilibriumMassFractions(Real pressure,
 
   equilibriumMassFractions(pressure, temperature, Xnacl, Xch4, Yh2o);
 
-  equilibriumMassFractions(pressure + 1.0, temperature, Xnacl, Xch4p, Yh2op);
-  dXch4_dp = Xch4p - Xch4;
-  dYh2o_dp = Yh2op - Yh2o;
+  equilibriumMassFractions(pressure + dp, temperature, Xnacl, Xch4p, Yh2op);
+  dXch4_dp = (Xch4p - Xch4) / dp;
+  dYh2o_dp = (Yh2op - Yh2o) / dp;
 
-  equilibriumMassFractions(pressure, temperature + 1.0, Xnacl, Xch4p, Yh2op);
-  dXch4_dT = Xch4p - Xch4;
-  dYh2o_dT = Yh2op - Yh2o;
+  equilibriumMassFractions(pressure, temperature + dT, Xnacl, Xch4p, Yh2op);
+  dXch4_dT = (Xch4p - Xch4) / dT;
+  dYh2o_dT = (Yh2op - Yh2o) / dT;
 }
 
 
@@ -1292,13 +1297,13 @@ equilibriumMolFractionsAndDerivatives(
 
   equilibriumMolFractions(PPascal, TKelvin, Xnacl, Xch4, Yh2o);
 
-  equilibriumMolFractions(PPascal + 1.0, TKelvin, Xnacl, Xch4p, Yh2op);
-  dXch4_dp = Xch4p - Xch4;
-  dYh2o_dp = Yh2op - Yh2o;
+  equilibriumMolFractions(PPascal + dP, TKelvin, Xnacl, Xch4p, Yh2op);
+  dXch4_dp = (Xch4p - Xch4) / dp;
+  dYh2o_dp = (Yh2op - Yh2o) / dp;
 
-  equilibriumMolFractions(PPascal, TKelvin + 1.0, Xnacl, Xch4p, Yh2op);
-  dXch4_dT = Xch4p - Xch4;
-  dYh2o_dT = Yh2op - Yh2o;
+  equilibriumMolFractions(PPascal, TKelvin + dT, Xnacl, Xch4p, Yh2op);
+  dXch4_dT = (Xch4p - Xch4) / dT;
+  dYh2o_dT = (Yh2op - Yh2o) / dT;
 }
 #endif
 
@@ -1318,8 +1323,8 @@ PorousFlowBrineMethane::fugacityCoefficientMethane(
   // Output: fugacity, its derivative wrt pressure & temperature
 
   fch4 = pureFugacityCoefficient(CH4, pressure, temperature);
-  dfch4_dp = pureFugacityCoefficient(CH4, pressure + 1.0, temperature) - fch4;
-  dfch4_dT = pureFugacityCoefficient(CH4, pressure, temperature + 1.0) - fch4;
+  dfch4_dp = (pureFugacityCoefficient(CH4, pressure + dp, temperature) - fch4) / dp;
+  dfch4_dT = (pureFugacityCoefficient(CH4, pressure, temperature + dT) - fch4) / dT;
 }
 
 
