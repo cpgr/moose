@@ -415,43 +415,57 @@ TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
 //   REL_TEST("dpartial_density_dT", dpartial_density_dT, dpartial_density_dT_fd, 1.0e-6);
 // }
 
-// /*
-//  * Verify calculation of equilibrium mass fraction and derivatives
-//  */
-// TEST_F(PorousFlowBrineCO2Test, equilibriumMassFraction)
-// {
-//   const Real p = 1.0e6;
-//   const Real T = 350.0;
-//   const Real xnacl = 0.1;
-//   const Real dp = 1.0e-2;
-//   const Real dT = 1.0e-6;
+/*
+ * Verify calculation of equilibrium mass fraction and derivatives
+ */
+TEST_F(PorousFlowBrineMethaneTest, equilibriumMassFraction)
+{
+  const Real tolerance = 1.0e-5; // absolute tolerance
+  const Real xnacl = 0.1;
+  Real xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT;
+  Real xch4l2, dxch4l_dp2, dxch4l_dT2, xh2og2, dxh2og_dp2, dxh2og_dT2;
 
-//   Real Xco2, dXco2_dp, dXco2_dT, Yh2o, dYh2o_dp, dYh2o_dT;
-//   Real Xco21, dXco21_dp, dXco21_dT, Yh2o1, dYh2o1_dp, dYh2o1_dT;
-//   Real Xco22, dXco22_dp, dXco22_dT, Yh2o2, dYh2o2_dp, dYh2o2_dT;
-//   _fp->equilibriumMassFractions(p, T, xnacl, Xco2, dXco2_dp, dXco2_dT, Yh2o, dYh2o_dp, dYh2o_dT);
-//   _fp->equilibriumMassFractions(
-//       p - dp, T, xnacl, Xco21, dXco21_dp, dXco21_dT, Yh2o1, dYh2o1_dp, dYh2o1_dT);
-//   _fp->equilibriumMassFractions(
-//       p + dp, T, xnacl, Xco22, dXco22_dp, dXco22_dT, Yh2o2, dYh2o2_dp, dYh2o2_dT);
+  _fp->equilibriumMassFractions(barToPascal(1.0), 273.15, xnacl, 
+      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  EXPECT_NEAR(3.8368923015190934e-05, xch4l, tolerance) << "Min pressure and temperature";
+  EXPECT_NEAR(0.0055785722378023589, xh2og, tolerance) << "Min pressure and temperature";
 
-//   Real dXco2_dp_fd = (Xco22 - Xco21) / (2.0 * dp);
-//   Real dYh2o_dp_fd = (Yh2o2 - Yh2o1) / (2.0 * dp);
+  // Note that the reference says 29584.790, which I suspect is wrong
+  _fp->equilibriumMassFractions(barToPascal(2000.0), 273.15, xnacl, 
+      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  EXPECT_NEAR(0.005577672204430506, xch4l, tolerance) << "Max pressure and min temperature";
+  EXPECT_NEAR(0.0, xh2og, tolerance) << "Max pressure and min temperature";
 
-//   REL_TEST("dXco2_dp", dXco2_dp, dXco2_dp_fd, 1.0e-6);
-//   REL_TEST("dYh2o_dp", dYh2o_dp, dYh2o_dp_fd, 1.0e-6);
+  _fp->equilibriumMassFractions(barToPascal(2000.0), 523.15, xnacl, 
+      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  EXPECT_NEAR(0.026154706691632099, xch4l, tolerance) << "Max pressure and temperature";
+  EXPECT_NEAR(0.059096823676766705, xh2og, tolerance) << "Max pressure and temperature";
 
-//   _fp->equilibriumMassFractions(
-//       p, T - dT, xnacl, Xco21, dXco21_dp, dXco21_dT, Yh2o1, dYh2o1_dp, dYh2o1_dT);
-//   _fp->equilibriumMassFractions(
-//       p, T + dT, xnacl, Xco22, dXco22_dp, dXco22_dT, Yh2o2, dYh2o2_dp, dYh2o2_dT);
+  _fp->equilibriumMassFractions(barToPascal(1.0), 523.15, xnacl, 
+      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  EXPECT_NEAR(0.0, xch4l, tolerance) << "Min pressure and max temperature";
+  EXPECT_NEAR(1.0, xh2og, tolerance) << "Min pressure and max temperature";
 
-//   Real dXco2_dT_fd = (Xco22 - Xco21) / (2.0 * dT);
-//   Real dYh2o_dT_fd = (Yh2o2 - Yh2o1) / (2.0 * dT);
+  // Pressure and temperature are somewhere in the middle
+  Real P = 1000.0;
+  Real T = 398.15;
+  _fp->equilibriumMassFractions(barToPascal(P), T, xnacl, 
+      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  EXPECT_NEAR(0.0055752885952389348, xch4l, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
+  EXPECT_NEAR(0.0055645129878437024, xh2og, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
+  
+  // const Real dp = 1.0; // Pa
+  _fp->equilibriumMassFractions(barToPascal(P) + dp, T, xnacl, 
+      xch4l2, dxch4l_dp2, dxch4l_dT2, xh2og2, dxh2og_dp2, dxh2og_dT2);
+  EXPECT_NEAR((xch4l2-xch4l)/dp, dxch4l_dp, tolerance) << "Derivative wrt. pressure";
+  EXPECT_NEAR((xh2og2-xh2og)/dp, dxh2og_dp, tolerance) << "Derivative wrt. pressure";
 
-//   REL_TEST("dXco2_dT", dXco2_dT, dXco2_dT_fd, 1.0e-6);
-//   REL_TEST("dYh2o_dT", dYh2o_dT, dYh2o_dT_fd, 1.0e-6);
-// }
+  // const Real dT = 1.0; // K
+  _fp->equilibriumMassFractions(barToPascal(P), T + dT, xnacl, 
+      xch4l2, dxch4l_dp2, dxch4l_dT2, xh2og2, dxh2og_dp2, dxh2og_dT2);
+  EXPECT_NEAR((xch4l2-xch4l)/dT, dxch4l_dT, tolerance) << "Derivative wrt. temperature";
+  EXPECT_NEAR((xh2og2-xh2og)/dT, dxh2og_dT, tolerance) << "Derivative wrt. temperature";
+}
 
 // /*
 //  * Verify calculation of actual mass fraction and derivatives depending on value of
