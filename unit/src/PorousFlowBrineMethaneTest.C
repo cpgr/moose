@@ -745,71 +745,61 @@ TEST_F(PorousFlowBrineMethaneTest, liquidProperties)
   mu2 = fsp[0].viscosity;
 
   ABS_TEST("ddensity_dz", ddensity_dz, (rho1 - rho2) / (2.0 * dz), 1.0e-6);
-  EXPECT_NEAR(dviscosity_dz, (mu1 - mu2) / (2.0 * dz), 1.0e-6) << "dviscosity_dz" << viscosity << ", " << mu1 << ", " << mu2;
+  ABS_TEST("dviscosity_dz", dviscosity_dz, (mu1 - mu2) / (2.0 * dz), 1.0e-6);
 
-//   const Real dx = 1.0e-8;
-//   _fp->liquidProperties(p, T, xnacl + dx, fsp);
-//   mu1 = fsp[0].viscosity;
+  // Two-phase region
+  z = 0.045;
+  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
-//   _fp->liquidProperties(p, T, xnacl - dx, fsp);
-//   mu2 = fsp[0].viscosity;
+  // Verify fluid density and viscosity derivatives
+  _fp->liquidProperties(p, T, xnacl, fsp);
 
-//   ABS_TEST("dviscosity_dx", dviscosity_dz, (mu1 - mu2) / (2.0 * dx), 1.0e-6);
-//   EXPECT_NEAR(dviscosity_dz, (mu1 - mu2) / (2.0 * dx), 1.0e-6) << "dviscosity_dz" << viscosity << ", " << mu1 << ", " << mu2;
+  ddensity_dp = fsp[0].ddensity_dp;
+  ddensity_dT = fsp[0].ddensity_dT;
+  ddensity_dz = fsp[0].ddensity_dz;
+  dviscosity_dp = fsp[0].dviscosity_dp;
+  dviscosity_dT = fsp[0].dviscosity_dT;
+  dviscosity_dz = fsp[0].dviscosity_dz;
 
-//   // Two-phase region
-//   z = 0.045;
-//   _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
-//   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
+  _fp->massFractions(p + dp, T, xnacl, z, phase_state, fsp);
+  _fp->liquidProperties(p + dp, T, xnacl, fsp);
+  rho1 = fsp[0].density;
+  mu1 = fsp[0].viscosity;
 
-//   // Verify fluid density and viscosity derivatives
-//   _fp->liquidProperties(p, T, xnacl, fsp);
+  _fp->massFractions(p - dp, T, xnacl, z, phase_state, fsp);
+  _fp->liquidProperties(p - dp, T, xnacl, fsp);
+  rho2 = fsp[0].density;
+  mu2 = fsp[0].viscosity;
 
-//   ddensity_dp = fsp[0].ddensity_dp;
-//   ddensity_dT = fsp[0].ddensity_dT;
-//   ddensity_dz = fsp[0].ddensity_dz;
-//   dviscosity_dp = fsp[0].dviscosity_dp;
-//   dviscosity_dT = fsp[0].dviscosity_dT;
-//   dviscosity_dz = fsp[0].dviscosity_dz;
+  REL_TEST("ddensity_dp", ddensity_dp, (rho1 - rho2) / (2.0 * dp), 1.0e-4);
+  REL_TEST("dviscosity_dp", dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-5);
 
-//   _fp->massFractions(p + dp, T, xnacl, z, phase_state, fsp);
-//   _fp->liquidProperties(p + dp, T, xnacl, fsp);
-//   rho1 = fsp[0].density;
-//   mu1 = fsp[0].viscosity;
+  _fp->massFractions(p, T + dT, xnacl, z, phase_state, fsp);
+  _fp->liquidProperties(p, T + dT, xnacl, fsp);
+  rho1 = fsp[0].density;
+  mu1 = fsp[0].viscosity;
 
-//   _fp->massFractions(p - dp, T, xnacl, z, phase_state, fsp);
-//   _fp->liquidProperties(p - dp, T, xnacl, fsp);
-//   rho2 = fsp[0].density;
-//   mu2 = fsp[0].viscosity;
+  _fp->massFractions(p, T - dT, xnacl, z, phase_state, fsp);
+  _fp->liquidProperties(p, T - dT, xnacl, fsp);
+  rho2 = fsp[0].density;
+  mu2 = fsp[0].viscosity;
 
-//   REL_TEST("ddensity_dp", ddensity_dp, (rho1 - rho2) / (2.0 * dp), 1.0e-4);
-//   REL_TEST("dviscosity_dp", dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-5);
+  REL_TEST("ddensity_dT", ddensity_dT, (rho1 - rho2) / (2.0 * dT), 1.0e-6);
+  REL_TEST("dviscosity_dT", dviscosity_dT, (mu1 - mu2) / (2.0 * dT), 1.0e-6);
 
-//   _fp->massFractions(p, T + dT, xnacl, z, phase_state, fsp);
-//   _fp->liquidProperties(p, T + dT, xnacl, fsp);
-//   rho1 = fsp[0].density;
-//   mu1 = fsp[0].viscosity;
+  _fp->massFractions(p, T, xnacl, z + dz, phase_state, fsp);
+  _fp->liquidProperties(p, T, xnacl, fsp);
+  rho1 = fsp[0].density;
+  mu1 = fsp[0].viscosity;
 
-//   _fp->massFractions(p, T - dT, xnacl, z, phase_state, fsp);
-//   _fp->liquidProperties(p, T - dT, xnacl, fsp);
-//   rho2 = fsp[0].density;
-//   mu2 = fsp[0].viscosity;
+  _fp->massFractions(p, T, xnacl, z - dz, phase_state, fsp);
+  _fp->liquidProperties(p, T, xnacl, fsp);
+  rho2 = fsp[0].density;
+  mu2 = fsp[0].viscosity;
 
-//   REL_TEST("ddensity_dT", ddensity_dT, (rho1 - rho2) / (2.0 * dT), 1.0e-6);
-//   REL_TEST("dviscosity_dT", dviscosity_dT, (mu1 - mu2) / (2.0 * dT), 1.0e-6);
-
-//   _fp->massFractions(p, T, xnacl, z + dz, phase_state, fsp);
-//   _fp->liquidProperties(p, T, xnacl, fsp);
-//   rho1 = fsp[0].density;
-//   mu1 = fsp[0].viscosity;
-
-//   _fp->massFractions(p, T, xnacl, z - dz, phase_state, fsp);
-//   _fp->liquidProperties(p, T, xnacl, fsp);
-//   rho2 = fsp[0].density;
-//   mu2 = fsp[0].viscosity;
-
-//   ABS_TEST("ddensity_dz", ddensity_dz, (rho1 - rho2) / (2.0 * dz), 1.0e-6);
-//   ABS_TEST("dviscosity_dz", dviscosity_dz, (mu1 - mu2) / (2.0 * dz), 1.0e-6);
+  ABS_TEST("ddensity_dz", ddensity_dz, (rho1 - rho2) / (2.0 * dz), 1.0e-6);
+  ABS_TEST("dviscosity_dz", dviscosity_dz, (mu1 - mu2) / (2.0 * dz), 1.0e-6);
 }
 
 // /*
