@@ -102,7 +102,7 @@ protected:
   const Water97FluidProperties * _water_fp;
   const MethaneFluidProperties * _methane_fp;
 
-  // For the computation of derivatives
+  // Perturbation magnitude for the computation of derivatives
   const Real dp = 1.0e-2;  // Pressure in Pascal
   const Real dT = 1.0e-6;  // Temperature in Kelvin
 };

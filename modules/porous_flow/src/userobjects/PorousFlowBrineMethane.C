@@ -490,31 +490,49 @@ PorousFlowBrineMethane::liquidProperties(Real pressure,
 {
   FluidStateProperties & liquid = fsp[_aqueous_phase_number];
 
-  // The liquid density and viscosity should be calcualted here
+  // Compute liquid density
   Real liquid_density;
   Real dliquid_density_dp;
   Real dliquid_density_dT;
-  Real dliquid_density_dz;
+  Real dliquid_density_dx;
+
+  _brine_fp.rho_dpTx(pressure,
+                     temperature,
+                     xnacl,
+                     liquid_density,
+                     dliquid_density_dp,
+                     dliquid_density_dT,
+                     dliquid_density_dx);
+
+  // Compute liquid viscosity
+  // Note: brine viscosity (and derivatives) requires water density (and derivatives)
+  Real water_density, dwater_density_dp, dwater_density_dT;
+  _water_fp.rho_dpT(pressure, temperature, water_density, dwater_density_dp, dwater_density_dT);
 
   Real liquid_viscosity;
   Real dliquid_viscosity_drho;
   Real dliquid_viscosity_dT;
-  Real dliquid_viscosity_dz;
+  Real dliquid_viscosity_dx;
 
-  // Note: brine viscosity (and derivatives) requires water density (and derivatives)
-  Real water_density, dwater_density_dp, dwater_density_dT;
-  _water_fp.rho_dpT(pressure, temperature, water_density, dwater_density_dp, dwater_density_dT);
+  _brine_fp.mu_drhoTx(water_density,
+                      temperature,
+                      xnacl,
+                      dwater_density_dT,
+                      liquid_viscosity,
+                      dliquid_viscosity_drho,
+                      dliquid_viscosity_dT,
+                      dliquid_viscosity_dx);
 
   // Save the values to the FluidStateProperties object
   liquid.density = liquid_density;
   liquid.ddensity_dp = dliquid_density_dp;
   liquid.ddensity_dT = dliquid_density_dT;
-  liquid.ddensity_dz = dliquid_density_dz;
+  liquid.ddensity_dz = 0.0;
 
   liquid.viscosity = liquid_viscosity;
   liquid.dviscosity_dp = dliquid_viscosity_drho * dwater_density_dp;
   liquid.dviscosity_dT = dliquid_viscosity_dT;
-  liquid.dviscosity_dz = dliquid_viscosity_dz;
+  liquid.dviscosity_dz = 0.0;
 }
 #endif
 
