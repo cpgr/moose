@@ -564,12 +564,10 @@ PorousFlowBrineMethane::saturationTwoPhase(Real pressure,
   Real dXch4_dp = liquid.dmass_fraction_dp[_gas_fluid_component];
   Real dXch4_dT = liquid.dmass_fraction_dT[_gas_fluid_component];
 
-  // The liquid density should be calculated here
-  Real liquid_density;
-
-  Real dliquid_density_dp;
-
-  Real dliquid_density_dT;
+  // The effect of methane on liquid density is negligible, thus:
+  Real liquid_density = brine_density;
+  Real dliquid_density_dp = dbrine_density_dp;
+  Real dliquid_density_dT = dbrine_density_dT;
 
   Real Ych4 = gas.mass_fraction[_gas_fluid_component];
   Real dYch4_dp = gas.dmass_fraction_dp[_gas_fluid_component];

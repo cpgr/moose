@@ -802,88 +802,89 @@ TEST_F(PorousFlowBrineMethaneTest, liquidProperties)
   ABS_TEST("dviscosity_dz", dviscosity_dz, (mu1 - mu2) / (2.0 * dz), 1.0e-6);
 }
 
-// /*
-//  * Verify calculation of gas saturation and derivatives in the two-phase region
-//  */
-// TEST_F(PorousFlowBrineCO2Test, saturationTwoPhase)
-// {
-//   const Real p = 1.0e6;
-//   const Real T = 350.0;
-//   const Real xnacl = 0.1;
+/*
+ * Verify calculation of gas saturation and derivatives in the two-phase region
+ */
+TEST_F(PorousFlowBrineMethaneTest, saturationTwoPhase)
+{
+  const Real p = 1.0e6;
+  const Real T = 350.0;
+  const Real xnacl = 0.1;
 
-//   FluidStatePhaseEnum phase_state;
-//   std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
+  FluidStatePhaseEnum phase_state;
+  std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
 
-//   // In the two-phase region, the mass fractions are the equilibrium values, so
-//   // a temporary value of z can be used (as long as it corresponds to the two-phase
-//   // region)
-//   Real z = 0.45;
-//   _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
-//   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
+  // In the two-phase region, the mass fractions are the equilibrium values, so
+  // a temporary value of z can be used (as long as it corresponds to the two-phase
+  // region)
+  Real z = 0.45;
+  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
-//   // Calculate z that gives a saturation of 0.25
-//   Real gas_saturation = 0.25;
-//   Real liquid_pressure = p + _pc->capillaryPressure(1.0 - gas_saturation);
-//   // Calculate gas density and liquid density
-//   _fp->gasProperties(p, T, fsp);
-//   _fp->liquidProperties(liquid_pressure, T, xnacl, fsp);
+  // Calculate z that gives a saturation of 0.25
+  Real gas_saturation = 0.25;
+  Real liquid_pressure = p + _pc->capillaryPressure(1.0 - gas_saturation);
+  // Calculate gas density and liquid density
+  _fp->gasProperties(p, T, fsp);
+  _fp->liquidProperties(liquid_pressure, T, xnacl, fsp);
 
-//   // The mass fraction that corresponds to a gas_saturation = 0.25
-//   z = (gas_saturation * fsp[1].density * fsp[1].mass_fraction[1] +
-//        (1.0 - gas_saturation) * fsp[0].density * fsp[0].mass_fraction[1]) /
-//       (gas_saturation * fsp[1].density + (1.0 - gas_saturation) * fsp[0].density);
+  // The mass fraction that corresponds to a gas_saturation = 0.25
+  z = (gas_saturation * fsp[1].density * fsp[1].mass_fraction[1] +
+       (1.0 - gas_saturation) * fsp[0].density * fsp[0].mass_fraction[1]) /
+      (gas_saturation * fsp[1].density + (1.0 - gas_saturation) * fsp[0].density);
 
-//   // Calculate the gas saturation and derivatives
-//   _fp->saturationTwoPhase(p, T, xnacl, z, fsp);
+  // Calculate the gas saturation and derivatives
+  _fp->saturationTwoPhase(p, T, xnacl, z, fsp);
 
-//   ABS_TEST("gas saturation", fsp[1].saturation, gas_saturation, 1.0e-8);
+  // EXPECT_NEAR(fsp[1].saturation, gas_saturation, 1.0e-8) << z;
+  ABS_TEST("gas saturation", fsp[1].saturation, gas_saturation, 1.0e-8);
 
-//   // Test the derivatives
-//   const Real dp = 1.0e-1;
-//   gas_saturation = fsp[1].saturation;
-//   Real dgas_saturation_dp = fsp[1].dsaturation_dp;
-//   Real dgas_saturation_dT = fsp[1].dsaturation_dT;
-//   Real dgas_saturation_dz = fsp[1].dsaturation_dz;
+  // Test the derivatives
+  const Real dp = 1.0e-1;
+  gas_saturation = fsp[1].saturation;
+  Real dgas_saturation_dp = fsp[1].dsaturation_dp;
+  Real dgas_saturation_dT = fsp[1].dsaturation_dT;
+  Real dgas_saturation_dz = fsp[1].dsaturation_dz;
 
-//   _fp->massFractions(p + dp, T, xnacl, z, phase_state, fsp);
-//   _fp->gasProperties(p + dp, T, fsp);
-//   _fp->saturationTwoPhase(p + dp, T, xnacl, z, fsp);
-//   Real gsat1 = fsp[1].saturation;
+  _fp->massFractions(p + dp, T, xnacl, z, phase_state, fsp);
+  _fp->gasProperties(p + dp, T, fsp);
+  _fp->saturationTwoPhase(p + dp, T, xnacl, z, fsp);
+  Real gsat1 = fsp[1].saturation;
 
-//   _fp->massFractions(p - dp, T, xnacl, z, phase_state, fsp);
-//   _fp->gasProperties(p - dp, T, fsp);
-//   _fp->saturationTwoPhase(p - dp, T, xnacl, z, fsp);
-//   Real gsat2 = fsp[1].saturation;
+  _fp->massFractions(p - dp, T, xnacl, z, phase_state, fsp);
+  _fp->gasProperties(p - dp, T, fsp);
+  _fp->saturationTwoPhase(p - dp, T, xnacl, z, fsp);
+  Real gsat2 = fsp[1].saturation;
 
-//   REL_TEST("dgas_saturation_dp", dgas_saturation_dp, (gsat1 - gsat2) / (2.0 * dp), 1.0e-6);
+  REL_TEST("dgas_saturation_dp", dgas_saturation_dp, (gsat1 - gsat2) / (2.0 * dp), 1.0e-6);
 
-//   // Derivative wrt T
-//   const Real dT = 1.0e-4;
-//   _fp->massFractions(p, T + dT, xnacl, z, phase_state, fsp);
-//   _fp->gasProperties(p, T + dT, fsp);
-//   _fp->saturationTwoPhase(p, T + dT, xnacl, z, fsp);
-//   gsat1 = fsp[1].saturation;
+  // Derivative wrt T
+  const Real dT = 1.0e-4;
+  _fp->massFractions(p, T + dT, xnacl, z, phase_state, fsp);
+  _fp->gasProperties(p, T + dT, fsp);
+  _fp->saturationTwoPhase(p, T + dT, xnacl, z, fsp);
+  gsat1 = fsp[1].saturation;
 
-//   _fp->massFractions(p, T - dT, xnacl, z, phase_state, fsp);
-//   _fp->gasProperties(p, T - dT, fsp);
-//   _fp->saturationTwoPhase(p, T - dT, xnacl, z, fsp);
-//   gsat2 = fsp[1].saturation;
+  _fp->massFractions(p, T - dT, xnacl, z, phase_state, fsp);
+  _fp->gasProperties(p, T - dT, fsp);
+  _fp->saturationTwoPhase(p, T - dT, xnacl, z, fsp);
+  gsat2 = fsp[1].saturation;
 
-//   REL_TEST("dgas_saturation_dT", dgas_saturation_dT, (gsat1 - gsat2) / (2.0 * dT), 1.0e-6);
+  REL_TEST("dgas_saturation_dT", dgas_saturation_dT, (gsat1 - gsat2) / (2.0 * dT), 1.0e-6);
 
-//   // Derivative wrt z
-//   const Real dz = 1.0e-8;
+  // Derivative wrt z
+  const Real dz = 1.0e-8;
 
-//   _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
-//   _fp->gasProperties(p, T, fsp);
-//   _fp->saturationTwoPhase(p, T, xnacl, z + dz, fsp);
-//   gsat1 = fsp[1].saturation;
+  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  _fp->gasProperties(p, T, fsp);
+  _fp->saturationTwoPhase(p, T, xnacl, z + dz, fsp);
+  gsat1 = fsp[1].saturation;
 
-//   _fp->saturationTwoPhase(p, T, xnacl, z - dz, fsp);
-//   gsat2 = fsp[1].saturation;
+  _fp->saturationTwoPhase(p, T, xnacl, z - dz, fsp);
+  gsat2 = fsp[1].saturation;
 
-//   REL_TEST("dgas_saturation_dz", dgas_saturation_dz, (gsat1 - gsat2) / (2.0 * dz), 1.0e-6);
-// }
+  REL_TEST("dgas_saturation_dz", dgas_saturation_dz, (gsat1 - gsat2) / (2.0 * dz), 1.0e-6);
+}
 
 // /*
 //  * Verify calculation of total mass fraction given a gas saturation
