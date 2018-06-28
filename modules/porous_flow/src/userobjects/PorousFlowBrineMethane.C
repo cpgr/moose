@@ -68,10 +68,12 @@ const Real R_kPa = 8.3144598;    // kPa.l/(mol.K) = joule/(mol.K)
 const Real R_atm = 0.082057338;  // atm.l/(mol.K)
 
 struct molecule_s {
-  const Real molarMass;  // kg/mol
+  // const Real molarMass;  // kg/mol
   const Real TCCelsius;  // Critical temperature (Celsius)
   const Real PCBar;      // Critical pressure (bar)
   const Real a[15];      // EOS parameters ([Ref. 1], Table 3)
+
+  // Functions to return the values above in various units
 
   Real criticalTemperatureCelsius() const {
     return TCCelsius;
@@ -96,7 +98,7 @@ struct bracket_s {
 };
 
 molecule_s CH4 = {
-  16.04e-3,  // molar mass
+  // 16.04e-3,  // molar mass
   -82.55,    // Tc
   46.41,     // Pc
   {          // EOS parameters
@@ -122,7 +124,7 @@ molecule_s CH4 = {
 // Pt = 0.117; // bar
 
 molecule_s CO2 = {
-  44.01e-3,  // molar mass
+  // 44.01e-3,  // molar mass
   31.05,     // Tc
   73.825,    // Pc
   {          // EOS parameters
@@ -148,7 +150,7 @@ molecule_s CO2 = {
 // Pt = 5.1; // bar
 
 molecule_s H2O = {
-  18.01528e-3, // molar mass
+  // 18.01528e-3, // molar mass
   374.1, //373.946, //374.1,       // Tc
   221.19, //220.64, //221.19,      // Pc
   {            // EOS parameters
@@ -174,12 +176,12 @@ molecule_s H2O = {
 // Pt = 0.00611657; // bar
 
 
-molecule_s NaCl = {
-  58.44e-3,
-  0.0,
-  0.0,
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-};
+// molecule_s NaCl = {
+//   58.44e-3,
+//   0.0,
+//   0.0,
+//   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+// };
 
 
 // Perturbation for the computation of derivatives
@@ -210,26 +212,20 @@ temperatureKelvinToCelsius(const Real TKelvin) {
 }
 
 Real PorousFlowBrineMethane::brineMassToMolFraction(const Real massFrac) const {
-  // Real nnacl = massFrac / NaCl.molarMass * 1000.0;
-  // return (nnacl / (nnacl + (1.0 - massFrac) / H2O.molarMass * 1000.0));
   Real nnacl = massFrac / _Mnacl * 1000.0;
   return (nnacl / (nnacl + (1.0 - massFrac) / _Mh2o * 1000.0));
 }
 
 Real PorousFlowBrineMethane::brineMolToMassFraction(const Real molFrac) const {
-  // Real mnacl = molFrac * NaCl.molarMass * 1000.0;
-  // return (mnacl / (mnacl + (1.0 - molFrac) * H2O.molarMass * 1000.0));
   Real mnacl = molFrac * _Mnacl * 1000.0;
   return (mnacl / (mnacl + (1.0 - molFrac) * _Mh2o * 1000.0));
 }
 
 Real PorousFlowBrineMethane::brineMolFractionToMolality(const Real molFrac) const {
-  // return (molFrac / ((1.0 - molFrac) * H2O.molarMass * 1000.0));
   return (molFrac / ((1.0 - molFrac) * _Mh2o * 1000.0));
 }
 
 Real PorousFlowBrineMethane::brineMolalityToMolFraction(const Real molality) const {
-  // Real nnacl = molality * H2O.molarMass * 1000.0;
   Real nnacl = molality * _Mh2o * 1000.0;
   return (nnacl / (nnacl + 1.0));
 }

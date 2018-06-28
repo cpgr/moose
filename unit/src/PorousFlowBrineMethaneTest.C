@@ -15,59 +15,6 @@
  */
 TEST_F(PorousFlowBrineMethaneTest, name) { EXPECT_EQ("brine-methane", _fp->fluidStateName()); }
 
-/*
- * Verify calculation of the equilibrium constants and their derivatives wrt temperature
- */
-// TEST_F(PorousFlowBrineMethaneTest, equilibriumConstantsMethane)
-// {
-//   const Real T = 350.0;
-//   const Real dT = 1.0e-6;
-
-//   Real K0Methane, dK0Methane_dT;
-//   // _fp->equilibriumConstantH2O(T, K0H2O, dK0H2O_dT);
-//   _fp->equilibriumConstantMethane(T, K0Methane, dK0Methane_dT);
-
-//   // ABS_TEST("K0H2O", K0H2O, 0.412597711705, 1.0e-10);
-//   ABS_TEST("K0Methane", K0Methane, 74.0435888596, 1.0e-10);
-
-//   Real K0Methane_2, dK0Methane_2_dT;
-//   // _fp->equilibriumConstantH2O(T + dT, K0H2O_2, dK0H2O_2_dT);
-//   _fp->equilibriumConstantMethane(T + dT, K0Methane_2, dK0Methane_2_dT);
-
-//   // Real dK0H2O_dT_fd = (K0H2O_2 - K0H2O) / dT;
-//   Real dK0Methane_dT_fd = (K0Methane_2 - K0Methane) / dT;
-//   // REL_TEST("dK0H2O_dT", dK0H2O_dT, dK0H2O_dT_fd, 1.0e-6);
-//   REL_TEST("dK0Methane_dT", dK0Methane_dT, dK0Methane_dT_fd, 1.0e-6);
-// }
-
-
-// /*
-//  * Verify calculation of the activity coefficient and its derivatives wrt
-//  * pressure and temperature
-//  */
-// TEST_F(PorousFlowBrineCO2Test, activityCoefficient)
-// {
-//   const Real p = 10.0e6;
-//   const Real T = 350.0;
-//   const Real xnacl = 0.1;
-//   const Real dp = 1.0e-1;
-//   const Real dT = 1.0e-6;
-
-//   Real gamma, dgamma_dp, dgamma_dT;
-//   _fp->activityCoefficient(p, T, xnacl, gamma, dgamma_dp, dgamma_dT);
-//   ABS_TEST("gamma", gamma, 1.43, 1.0e-2);
-
-//   Real gamma_2, dgamma_2_dp, dgamma_2_dT;
-//   _fp->activityCoefficient(p + dp, T, xnacl, gamma_2, dgamma_2_dp, dgamma_2_dT);
-
-//   Real dgamma_dp_fd = (gamma_2 - gamma) / dp;
-//   REL_TEST("dgamma_dp", dgamma_dp, dgamma_dp_fd, 1.0e-6);
-
-//   _fp->activityCoefficient(p, T + dT, xnacl, gamma_2, dgamma_2_dp, dgamma_2_dT);
-
-//   Real dgamma_dT_fd = (gamma_2 - gamma) / dT;
-//   REL_TEST("dgamma_dT", dgamma_dT, dgamma_dT_fd, 1.0e-6);
-// }
 
 /*
  * Verify calculation of the activitty coefficient and its derivatives wrt
@@ -396,25 +343,6 @@ TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
 }
 
 
-// /*
-//  * Verify calculation of the partial density of CO2 and its derivative wrt temperature
-//  */
-// TEST_F(PorousFlowBrineCO2Test, partialDensity)
-// {
-//   const Real T = 473.15;
-//   const Real dT = 1.0e-6;
-
-//   Real partial_density, dpartial_density_dT;
-//   _fp->partialDensityCO2(T, partial_density, dpartial_density_dT);
-//   ABS_TEST("partialDensity", partial_density, 893.332, 1.0e-3);
-
-//   Real partial_density_2, dpartial_density_2_dT;
-//   _fp->partialDensityCO2(T + dT, partial_density_2, dpartial_density_2_dT);
-
-//   Real dpartial_density_dT_fd = (partial_density_2 - partial_density) / dT;
-//   REL_TEST("dpartial_density_dT", dpartial_density_dT, dpartial_density_dT_fd, 1.0e-6);
-// }
-
 /*
  * Verify calculation of equilibrium mass fraction and derivatives
  */
@@ -687,16 +615,12 @@ TEST_F(PorousFlowBrineMethaneTest, liquidProperties)
   Real liquid_density = fsp[0].density;
   Real liquid_viscosity = fsp[0].viscosity;
 
-//   Real co2_partial_density, dco2_partial_density_dT;
-//   _fp->partialDensityCO2(T, co2_partial_density, dco2_partial_density_dT);
   Real brine_density = _brine_fp->rho(p, T, xnacl);
-
-//   Real density = 1.0 / (z / co2_partial_density + (1.0 - z) / brine_density);
 
   Real water_density = _water_fp->rho(p, T);
   Real viscosity = _brine_fp->mu_from_rho_T(water_density, T, xnacl);
 
-//   ABS_TEST("liquid density", liquid_density, density, 1.0e-12);
+  ABS_TEST("liquid density", liquid_density, brine_density, 1.0e-12);
   ABS_TEST("liquid viscosity", liquid_viscosity, viscosity, 1.0e-12);
 //   EXPECT_NEAR(liquid_viscosity, viscosity, 1.0e-12) << "liquid viscosity";
 
@@ -886,28 +810,28 @@ TEST_F(PorousFlowBrineMethaneTest, saturationTwoPhase)
   REL_TEST("dgas_saturation_dz", dgas_saturation_dz, (gsat1 - gsat2) / (2.0 * dz), 1.0e-6);
 }
 
-// /*
-//  * Verify calculation of total mass fraction given a gas saturation
-//  */
-// TEST_F(PorousFlowBrineCO2Test, totalMassFraction)
-// {
-//   const Real p = 1.0e6;
-//   const Real T = 350.0;
-//   const Real xnacl = 0.1;
-//   const Real s = 0.2;
+/*
+ * Verify calculation of total mass fraction given a gas saturation
+ */
+TEST_F(PorousFlowBrineMethaneTest, totalMassFraction)
+{
+  const Real p = 1.0e6;
+  const Real T = 350.0;
+  const Real xnacl = 0.1;
+  const Real s = 0.2;
 
-//   Real z = _fp->totalMassFraction(p, T, xnacl, s);
+  Real z = _fp->totalMassFraction(p, T, xnacl, s);
 
-//   // Test that the saturation calculated in this fluid state using z is equal to s
-//   FluidStatePhaseEnum phase_state;
-//   std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
+  // Test that the saturation calculated in this fluid state using z is equal to s
+  FluidStatePhaseEnum phase_state;
+  std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
 
-//   _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
-//   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
+  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
-//   _fp->gasProperties(p, T, fsp);
-//   Real liquid_pressure = p + _pc->capillaryPressure(1.0 - s);
-//   _fp->liquidProperties(liquid_pressure, T, xnacl, fsp);
-//   _fp->saturationTwoPhase(p, T, xnacl, z, fsp);
-//   ABS_TEST("gas saturation", fsp[1].saturation, s, 1.0e-8);
-// }
+  _fp->gasProperties(p, T, fsp);
+  Real liquid_pressure = p + _pc->capillaryPressure(1.0 - s);
+  _fp->liquidProperties(liquid_pressure, T, xnacl, fsp);
+  _fp->saturationTwoPhase(p, T, xnacl, z, fsp);
+  ABS_TEST("gas saturation", fsp[1].saturation, s, 1.0e-8);
+}
