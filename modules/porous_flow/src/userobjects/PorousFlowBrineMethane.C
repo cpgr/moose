@@ -1462,363 +1462,275 @@ PorousFlowBrineMethane::totalMassFraction(Real pressure,
 void
 PorousFlowBrineMethane::checkVariables(Real pressure, Real temperature) const
 {
-  // The calculation of mass fractions is valid from 273K <= T <= 523K, and
-  // pressure less than 60 MPa
-  if (temperature < 273.0 || temperature > 523.0)
-    mooseError("PorousFlowBrineMethane: Temperature is outside range 285.15 K <= T "
-               "<= 373.15 K");
-
-  if (pressure > 2.0e8)
-    mooseError("PorousFlowBrineMethane: Pressure must be less than 200 MPa");
+  if (temperature < 273.15 || temperature > 523.15) {
+    mooseError("PorousFlowBrineMethane: Temperature is outside range 273.15 K <= T <= 523.15 K");
+  }
+  if (pressure <= 0.0 || pressure > 2.0e8) {
+    mooseError("PorousFlowBrineMethane: Pressure is outside range 0 MPa < P <= 200 MPa");
+  }
 }
 #endif
 
 
-#ifdef STANDALONE
+// #ifdef STANDALONE
 
-//------------------------------------------------------------------------------------
-// Test all functions in stand-alone mode
+// //------------------------------------------------------------------------------------
+// // Test all functions in stand-alone mode
 
-int
-test_waterliquidReducedDensityAtSaturation() 
-{
-  cout << "test_waterliquidReducedDensityAtSaturation: \n";
-
-  const Real criticalDensity = 322.0;
-  Real Tr;
-  Real reducedDensity, density;
-  cout << "Tr range from 0.0 to 1.0\n";
-  cout << "Reduced temperature (Temperature in Kelvin): Reduced density (Density in kg/m^3)\n";
-  for (int i = 0; i < 11; ++i) {
-    Real Tr = 0.1 * i;
-    reducedDensity = waterliquidReducedDensityAtSaturation(Tr);
-    density = reducedDensity * criticalDensity;
-    cout << Tr << " (" << Tr * H2O.criticalTemperatureKelvin() << "): " << 
-        reducedDensity << " (" << density << ")\n";
-  }
-  cout << "Temperature range from freezing point to boiling point\n";
-  // cout << "At freezing point (0 degree Celsius):\n";
-  cout << "Temperature in Celsius (Reduced temperature): Reduced density (Density in kg/m^3)\n";
-  for (int i = 0; i < 11; ++i) {
-    Real t = 10.0 * i;
-    Tr = temperatureCelsiusToKelvin(t) / H2O.criticalTemperatureKelvin();
-    reducedDensity = waterliquidReducedDensityAtSaturation(Tr);
-    density = reducedDensity * criticalDensity;
-    cout << t << " (" << Tr << "): " << 
-      reducedDensity << " (" << density << ")\n";
-  }
-  cout << "\n";
-  
-  return 0;
-}
-
-
-int
-test_waterVapourReducedPressureAtSaturation() 
-{
-  cout << "test_waterVapourReducedPressureAtSaturation: \n";
-
-  const Real criticalDensity = 322.0;
-  Real Tr;
-  Real reducedPressure, PBar;
-  cout << "Tr range from 0.0 to 1.0\n";
-  cout << "Reduced temperature (Temperature in Kelvin): Reduced pressure (Pressure in bar)\n";
-  for (int i = 0; i < 11; ++i) {
-    Real Tr = 0.1 * i;
-    reducedPressure = waterVapourReducedPressureAtSaturation(Tr);
-    PBar = reducedPressure * H2O.criticalPressureBar();
-    cout << Tr << " (" << Tr * H2O.criticalTemperatureKelvin() << "): " << 
-        reducedPressure << " (" << PBar << ")\n";
-  }
-  cout << "Temperature range from freezing point to boiling point\n";
-  // cout << "At freezing point (0 degree Celsius):\n";
-  cout << "Temperature in Celsius (Reduced temperature): Reduced pressure (Pressure in bar)\n";
-  for (int i = 0; i < 11; ++i) {
-    Real t = 10.0 * i;
-    Tr = temperatureCelsiusToKelvin(t) / H2O.criticalTemperatureKelvin();
-    reducedPressure = waterliquidReducedDensityAtSaturation(Tr);
-    PBar = reducedPressure * H2O.criticalPressureBar();
-    cout << t << " (" << Tr << "): " << 
-      reducedPressure << " (" << PBar << ")\n";
-  }
-  cout << "\n";
-
-  return 0;
-}
-
-
-int
-testSetUpPressure(const int max, vector<Real> & plist)
-{
-  // Set up the list of input pressure (bar)
-  plist.push_back(1.0);
-  if (max == 2000) {
-    // Range: 1~2000
-    plist.push_back(50.0);
-    plist.push_back(100.0);
-    plist.push_back(150.0);
-    for (int i = 2; i < 21; ++i) {
-      plist.push_back(i * 100.0);
-    }
-  } else if (max == 10000) {
-    // Range: 1~10000
-    plist.push_back(20.0);
-    plist.push_back(50.0);
-    for (int i = 1; i < 10; ++i) {
-      plist.push_back(i*100.0);
-    }
-    for (int i = 0; i < 20; ++i) {
-      plist.push_back(1000.0 + i*200.0);
-    }
-    for (int i = 0; i < 11; ++i) {
-      plist.push_back(5000.0 + i*500.0);
-    }
-  } else {
-    cout << "ERROR in testSetUpPressure: Illegal max value: " << max << "\n";
-    return -1;
-  }
-  // cout << "Pressure entries: " << plist.size() << "\n";
-  return 0;
-}
-
-
-int
-testSetUpTemperature(const int max, vector<Real> & tlist)
-{
-  // Set up the list of input temperature (celsius)
-  if (max == 300) {
-    for (int i = 0; i < 11; ++i) {
-      tlist.push_back(i * 30.0);
-    }
-  } else if (max == 1200) {
-    for (int i = 0; i < 7; ++i) {
-      tlist.push_back(i * 100.0);
-    }
-    for (int i = 0; i < 3; ++i) {
-      tlist.push_back(800 + i*200.0);
-    }
-  } else {
-    cout << "ERROR in testSetUpTemperature: Illegal max value: " << max << "\n";
-    return -1;
-  }
-  // cout << "Temperature entries: " << tlist.size() << "\n";
-  return 0;
-}
-
-
-int
-test_pureFugacityCoefficient(const molecule_s & m, const std::string name)
-{
-  cout << "test_fugacityCoefficient: " << name << "\n";
-
-  vector<Real> plist;
-  vector<Real> tlist;
-  Real PPascal;
-  Real TKelvin;
-  testSetUpPressure(10000, plist);
-  testSetUpTemperature(1200, tlist);
-  Real f[plist.size()][tlist.size()];
-  for (int i = 0; i < plist.size(); ++i) {
-    for (int j = 0; j < tlist.size(); ++j) {
-      PPascal = pressureBarToPascal(plist[i]);
-      TKelvin = temperatureCelsiusToKelvin(tlist[j]);
-      f[i][j] = pureFugacityCoefficient(m, PPascal, TKelvin);
-    }
-  }
-  cout << "\n";
-
-  cout << "Fugacity coefficient\n";
-  cout << std::setprecision(7);
-  cout << std::setw(5) << "P";
-  for (int i=0; i<tlist.size(); ++i) {
-    cout << "," << std::setw(11) << tlist[i];
-  }
-  cout << "\n";
-  for (int i = 0; i < plist.size(); ++i) {
-    cout << std::setw(5) << plist[i];
-    for (int j = 0; j < tlist.size(); ++j) {
-      cout << "," << std::setw(11) << f[i][j]; 
-    }
-    cout << "\n";
-  }
-  cout << "\n";
-  return 0;
-}
-
-
-int
-test_molFractionOfWaterInGas()
-{
-  cout << "test_molFractionOfWaterInGas:\n";
-
-  // Set up pressure list
-  vector<Real> plist;
-  plist.push_back(1.0);
-  plist.push_back(20.0);
-  plist.push_back(50.0);
-  for (int i=1; i<10; ++i) {
-    plist.push_back(i*100.0);
-  }
-  for (int i=0; i<6; ++i) {
-    plist.push_back(1000.0 + i*200.0);
-  }
-
-  // Set up temperature list to match experimental data shown in Ref. 1, Fig. 1
-  vector<Real> Tlist;
-  Real molalityNaCl;
-
-  for (int k = 0; k < 2; ++k) {
-    Tlist.clear();
-    if (k == 0) {
-      // No NaCl
-      molalityNaCl = 0.0;  // mol/kg
-      Tlist.push_back(278.0);  // Kelvin
-      Tlist.push_back(293.0);
-      Tlist.push_back(298.0);
-      Tlist.push_back(318.12);
-      Tlist.push_back(377.59);
-      Tlist.push_back(410.93);
-      Tlist.push_back(510.93);
-      Tlist.push_back(573.2);
-    } else {
-      // With NaCl
-      molalityNaCl = 3.0;
-      Tlist.push_back(298.0);
-      Tlist.push_back(511.0);
-    }
-
-    Real PPascal;
-    Real TKelvin;
-    Real Xh2oGas[plist.size()][Tlist.size()];   // Fraction of water in gas phase
-    // Molar fraction of NaCl in gas phase
-    Real XNaCl = molalityNaCl / (1.0/H2O.molarMass + molalityNaCl);
-    cout << "NaCl: molality: " << molalityNaCl << " mol/kg, mol fraction: " << XNaCl << "\n";
-    Real Xh2o = 1.0 - 2*XNaCl;  // Fraction of water in liquid
-    for (int i = 0; i < plist.size(); ++i) {
-      for (int j = 0; j < Tlist.size(); ++j) {
-        PPascal = pressureBarToPascal(plist[i]);
-        // TKelvin = temperatureCelsiusToKelvin(tlist[j]);
-        TKelvin = Tlist[j];
-        Xh2oGas[i][j] = molFractionOfWaterInGas(PPascal, TKelvin, Xh2o);
-      }
-    }
-
-    cout << "Fraction of water in gas for various pressure (bar) and temperature (K)\n";
-    cout << std::setprecision(5);
-    cout << std::setw(5) << "P";
-    for (int i = 0; i < Tlist.size(); ++i) {
-      cout << "," << std::setw(11) << Tlist[i];
-    }
-    cout << "\n";
-    for (int i = 0; i < plist.size(); ++i) {
-      cout << std::setw(5) << plist[i];
-      for (int j = 0; j < Tlist.size(); ++j) {
-        cout << "," << std::setw(11) << Xh2oGas[i][j]; 
-      }
-      cout << "\n";
-    }
-    cout << "\n";
-  }
-  return 0;
-}
-
-
-int
-test_muCH4StandardLiquidByRT()
-{
-  cout << "test_muCH4StandardLiquidByRT\n";
-
-  vector<Real> plist;
-  testSetUpPressure(2000, plist);
-  vector<Real> tlist;
-  testSetUpTemperature(300, tlist);
-  Real mu;
-  cout << std::setprecision(5);
-  cout << std::setw(5) << "P";
-  for (int i = 0; i < tlist.size(); ++i) {
-    cout << "," << std::setw(9) << tlist[i];
-  }
-  cout << "\n";
-  for (int i = 0; i < plist.size(); ++i) {
-    cout << std::setw(5) << plist[i];
-    for (int j = 0; j < tlist.size(); ++j) {
-      mu = muCH4StandardLiquidByRT(plist[i], temperatureCelsiusToKelvin(tlist[j]));
-      cout << "," << std::setw(9) << mu;
-    }
-    cout << "\n";
-  }
-  cout << "\n";
-}
-
-
-int
-test_lambdaCH4_Na()
-{
-  cout << "test_lambdaCH4_Na\n";
-
-  vector<Real> plist;
-  testSetUpPressure(2000, plist);
-  vector<Real> tlist;
-  testSetUpTemperature(300, tlist);
-  Real mu;
-  cout << std::setprecision(5);
-  cout << std::setw(5) << "P";
-  for (int i = 0; i < tlist.size(); ++i) {
-    cout << "," << std::setw(9) << tlist[i];
-  }
-  cout << "\n";
-  for (int i = 0; i < plist.size(); ++i) {
-    cout << std::setw(5) << plist[i];
-    for (int j = 0; j < tlist.size(); ++j) {
-      mu = lambdaCH4_Na(plist[i], temperatureCelsiusToKelvin(tlist[j]));
-      cout << "," << std::setw(9) << mu;
-    }
-    cout << "\n";
-  }
-  cout << "\n";
-}
-
-
-int
-test_xiCH4_Na_Cl()
-{
-  cout << "test_xiCH4_Na_Cl\n";
-
-  vector<Real> plist;
-  testSetUpPressure(2000, plist);
-  vector<Real> tlist;
-  testSetUpTemperature(300, tlist);
-  Real mu;
-  cout << std::setprecision(5);
-  cout << std::setw(5) << "P";
-  for (int i = 0; i < tlist.size(); ++i) {
-    cout << "," << std::setw(9) << tlist[i];
-  }
-  cout << "\n";
-  for (int i = 0; i < plist.size(); ++i) {
-    cout << std::setw(5) << plist[i];
-    for (int j = 0; j < tlist.size(); ++j) {
-      mu = xiCH4_Na_Cl(plist[i], temperatureCelsiusToKelvin(tlist[j]));
-      cout << "," << std::setw(9) << mu;
-    }
-    cout << "\n";
-  }
-  cout << "\n";
-}
-
-
-// int test_molFractionOfMethaneInLiquid() 
+// int
+// test_waterliquidReducedDensityAtSaturation() 
 // {
-//   cout << "test_molFractionOfMethaneInLiquid\n";
+//   cout << "test_waterliquidReducedDensityAtSaturation: \n";
+
+//   const Real criticalDensity = 322.0;
+//   Real Tr;
+//   Real reducedDensity, density;
+//   cout << "Tr range from 0.0 to 1.0\n";
+//   cout << "Reduced temperature (Temperature in Kelvin): Reduced density (Density in kg/m^3)\n";
+//   for (int i = 0; i < 11; ++i) {
+//     Real Tr = 0.1 * i;
+//     reducedDensity = waterliquidReducedDensityAtSaturation(Tr);
+//     density = reducedDensity * criticalDensity;
+//     cout << Tr << " (" << Tr * H2O.criticalTemperatureKelvin() << "): " << 
+//         reducedDensity << " (" << density << ")\n";
+//   }
+//   cout << "Temperature range from freezing point to boiling point\n";
+//   // cout << "At freezing point (0 degree Celsius):\n";
+//   cout << "Temperature in Celsius (Reduced temperature): Reduced density (Density in kg/m^3)\n";
+//   for (int i = 0; i < 11; ++i) {
+//     Real t = 10.0 * i;
+//     Tr = temperatureCelsiusToKelvin(t) / H2O.criticalTemperatureKelvin();
+//     reducedDensity = waterliquidReducedDensityAtSaturation(Tr);
+//     density = reducedDensity * criticalDensity;
+//     cout << t << " (" << Tr << "): " << 
+//       reducedDensity << " (" << density << ")\n";
+//   }
+//   cout << "\n";
+  
+//   return 0;
+// }
+
+
+// int
+// test_waterVapourReducedPressureAtSaturation() 
+// {
+//   cout << "test_waterVapourReducedPressureAtSaturation: \n";
+
+//   const Real criticalDensity = 322.0;
+//   Real Tr;
+//   Real reducedPressure, PBar;
+//   cout << "Tr range from 0.0 to 1.0\n";
+//   cout << "Reduced temperature (Temperature in Kelvin): Reduced pressure (Pressure in bar)\n";
+//   for (int i = 0; i < 11; ++i) {
+//     Real Tr = 0.1 * i;
+//     reducedPressure = waterVapourReducedPressureAtSaturation(Tr);
+//     PBar = reducedPressure * H2O.criticalPressureBar();
+//     cout << Tr << " (" << Tr * H2O.criticalTemperatureKelvin() << "): " << 
+//         reducedPressure << " (" << PBar << ")\n";
+//   }
+//   cout << "Temperature range from freezing point to boiling point\n";
+//   // cout << "At freezing point (0 degree Celsius):\n";
+//   cout << "Temperature in Celsius (Reduced temperature): Reduced pressure (Pressure in bar)\n";
+//   for (int i = 0; i < 11; ++i) {
+//     Real t = 10.0 * i;
+//     Tr = temperatureCelsiusToKelvin(t) / H2O.criticalTemperatureKelvin();
+//     reducedPressure = waterliquidReducedDensityAtSaturation(Tr);
+//     PBar = reducedPressure * H2O.criticalPressureBar();
+//     cout << t << " (" << Tr << "): " << 
+//       reducedPressure << " (" << PBar << ")\n";
+//   }
+//   cout << "\n";
+
+//   return 0;
+// }
+
+
+// int
+// testSetUpPressure(const int max, vector<Real> & plist)
+// {
+//   // Set up the list of input pressure (bar)
+//   plist.push_back(1.0);
+//   if (max == 2000) {
+//     // Range: 1~2000
+//     plist.push_back(50.0);
+//     plist.push_back(100.0);
+//     plist.push_back(150.0);
+//     for (int i = 2; i < 21; ++i) {
+//       plist.push_back(i * 100.0);
+//     }
+//   } else if (max == 10000) {
+//     // Range: 1~10000
+//     plist.push_back(20.0);
+//     plist.push_back(50.0);
+//     for (int i = 1; i < 10; ++i) {
+//       plist.push_back(i*100.0);
+//     }
+//     for (int i = 0; i < 20; ++i) {
+//       plist.push_back(1000.0 + i*200.0);
+//     }
+//     for (int i = 0; i < 11; ++i) {
+//       plist.push_back(5000.0 + i*500.0);
+//     }
+//   } else {
+//     cout << "ERROR in testSetUpPressure: Illegal max value: " << max << "\n";
+//     return -1;
+//   }
+//   // cout << "Pressure entries: " << plist.size() << "\n";
+//   return 0;
+// }
+
+
+// int
+// testSetUpTemperature(const int max, vector<Real> & tlist)
+// {
+//   // Set up the list of input temperature (celsius)
+//   if (max == 300) {
+//     for (int i = 0; i < 11; ++i) {
+//       tlist.push_back(i * 30.0);
+//     }
+//   } else if (max == 1200) {
+//     for (int i = 0; i < 7; ++i) {
+//       tlist.push_back(i * 100.0);
+//     }
+//     for (int i = 0; i < 3; ++i) {
+//       tlist.push_back(800 + i*200.0);
+//     }
+//   } else {
+//     cout << "ERROR in testSetUpTemperature: Illegal max value: " << max << "\n";
+//     return -1;
+//   }
+//   // cout << "Temperature entries: " << tlist.size() << "\n";
+//   return 0;
+// }
+
+
+// int
+// test_pureFugacityCoefficient(const molecule_s & m, const std::string name)
+// {
+//   cout << "test_fugacityCoefficient: " << name << "\n";
+
+//   vector<Real> plist;
+//   vector<Real> tlist;
+//   Real PPascal;
+//   Real TKelvin;
+//   testSetUpPressure(10000, plist);
+//   testSetUpTemperature(1200, tlist);
+//   Real f[plist.size()][tlist.size()];
+//   for (int i = 0; i < plist.size(); ++i) {
+//     for (int j = 0; j < tlist.size(); ++j) {
+//       PPascal = pressureBarToPascal(plist[i]);
+//       TKelvin = temperatureCelsiusToKelvin(tlist[j]);
+//       f[i][j] = pureFugacityCoefficient(m, PPascal, TKelvin);
+//     }
+//   }
+//   cout << "\n";
+
+//   cout << "Fugacity coefficient\n";
+//   cout << std::setprecision(7);
+//   cout << std::setw(5) << "P";
+//   for (int i=0; i<tlist.size(); ++i) {
+//     cout << "," << std::setw(11) << tlist[i];
+//   }
+//   cout << "\n";
+//   for (int i = 0; i < plist.size(); ++i) {
+//     cout << std::setw(5) << plist[i];
+//     for (int j = 0; j < tlist.size(); ++j) {
+//       cout << "," << std::setw(11) << f[i][j]; 
+//     }
+//     cout << "\n";
+//   }
+//   cout << "\n";
+//   return 0;
+// }
+
+
+// int
+// test_molFractionOfWaterInGas()
+// {
+//   cout << "test_molFractionOfWaterInGas:\n";
+
+//   // Set up pressure list
+//   vector<Real> plist;
+//   plist.push_back(1.0);
+//   plist.push_back(20.0);
+//   plist.push_back(50.0);
+//   for (int i=1; i<10; ++i) {
+//     plist.push_back(i*100.0);
+//   }
+//   for (int i=0; i<6; ++i) {
+//     plist.push_back(1000.0 + i*200.0);
+//   }
+
+//   // Set up temperature list to match experimental data shown in Ref. 1, Fig. 1
+//   vector<Real> Tlist;
+//   Real molalityNaCl;
+
+//   for (int k = 0; k < 2; ++k) {
+//     Tlist.clear();
+//     if (k == 0) {
+//       // No NaCl
+//       molalityNaCl = 0.0;  // mol/kg
+//       Tlist.push_back(278.0);  // Kelvin
+//       Tlist.push_back(293.0);
+//       Tlist.push_back(298.0);
+//       Tlist.push_back(318.12);
+//       Tlist.push_back(377.59);
+//       Tlist.push_back(410.93);
+//       Tlist.push_back(510.93);
+//       Tlist.push_back(573.2);
+//     } else {
+//       // With NaCl
+//       molalityNaCl = 3.0;
+//       Tlist.push_back(298.0);
+//       Tlist.push_back(511.0);
+//     }
+
+//     Real PPascal;
+//     Real TKelvin;
+//     Real Xh2oGas[plist.size()][Tlist.size()];   // Fraction of water in gas phase
+//     // Molar fraction of NaCl in gas phase
+//     Real XNaCl = molalityNaCl / (1.0/H2O.molarMass + molalityNaCl);
+//     cout << "NaCl: molality: " << molalityNaCl << " mol/kg, mol fraction: " << XNaCl << "\n";
+//     Real Xh2o = 1.0 - 2*XNaCl;  // Fraction of water in liquid
+//     for (int i = 0; i < plist.size(); ++i) {
+//       for (int j = 0; j < Tlist.size(); ++j) {
+//         PPascal = pressureBarToPascal(plist[i]);
+//         // TKelvin = temperatureCelsiusToKelvin(tlist[j]);
+//         TKelvin = Tlist[j];
+//         Xh2oGas[i][j] = molFractionOfWaterInGas(PPascal, TKelvin, Xh2o);
+//       }
+//     }
+
+//     cout << "Fraction of water in gas for various pressure (bar) and temperature (K)\n";
+//     cout << std::setprecision(5);
+//     cout << std::setw(5) << "P";
+//     for (int i = 0; i < Tlist.size(); ++i) {
+//       cout << "," << std::setw(11) << Tlist[i];
+//     }
+//     cout << "\n";
+//     for (int i = 0; i < plist.size(); ++i) {
+//       cout << std::setw(5) << plist[i];
+//       for (int j = 0; j < Tlist.size(); ++j) {
+//         cout << "," << std::setw(11) << Xh2oGas[i][j]; 
+//       }
+//       cout << "\n";
+//     }
+//     cout << "\n";
+//   }
+//   return 0;
+// }
+
+
+// int
+// test_muCH4StandardLiquidByRT()
+// {
+//   cout << "test_muCH4StandardLiquidByRT\n";
 
 //   vector<Real> plist;
 //   testSetUpPressure(2000, plist);
 //   vector<Real> tlist;
 //   testSetUpTemperature(300, tlist);
-//   Real XNaCl = 0.0;
-//   Real YCH4 = 1.0;
-//   Real PPascal;
-//   Real XCH4;
+//   Real mu;
 //   cout << std::setprecision(5);
 //   cout << std::setw(5) << "P";
 //   for (int i = 0; i < tlist.size(); ++i) {
@@ -1828,10 +1740,8 @@ test_xiCH4_Na_Cl()
 //   for (int i = 0; i < plist.size(); ++i) {
 //     cout << std::setw(5) << plist[i];
 //     for (int j = 0; j < tlist.size(); ++j) {
-//       PPascal = pressureBarToPascal(plist[i]);
-//       XCH4 = molFractionOfMethaneInLiquid(PPascal, temperatureCelsiusToKelvin(tlist[j]),
-//           XNaCl, YCH4);
-//       cout << "," << std::setw(9) << XCH4;
+//       mu = muCH4StandardLiquidByRT(plist[i], temperatureCelsiusToKelvin(tlist[j]));
+//       cout << "," << std::setw(9) << mu;
 //     }
 //     cout << "\n";
 //   }
@@ -1839,349 +1749,437 @@ test_xiCH4_Na_Cl()
 // }
 
 
-int
-test_methaneSolubilityInLiquid()
-{
-  // The results must match Ref. 1 Table 4-8
-  cout << "test_methaneSolubilityInLiquid\n";
+// int
+// test_lambdaCH4_Na()
+// {
+//   cout << "test_lambdaCH4_Na\n";
 
-  // Set the NaCl concentration to test (mol/kg of SOLVENT)
-  vector<Real>mnaclList;
-  mnaclList.push_back(0.0);  // pure water
-  mnaclList.push_back(1.0);
-  mnaclList.push_back(2.0);
-  mnaclList.push_back(4.0);
-  mnaclList.push_back(6.0);
-
-  vector<Real> plist;
-  testSetUpPressure(2000, plist);
-  vector<Real> tlist;
-  testSetUpTemperature(300, tlist);
-
-  Real Xnacl;
-  Real PPascal;
-  Real TKelvin;
-  Real mch4;
-
-  for (int k = 0; k < mnaclList.size(); ++k) {
-    // Compute mol fraction of NaCl
-    // Note:
-    // - NaCl is expressed as molality (mol/kg of SOLVENT)
-    // - The concentration is multiplied by 2 because NaCl dissociate into Na+ and Cl- 
-    Xnacl = 2.0 * mnaclList[k] * H2O.molarMass / (1.0 + 2 * mnaclList[k] * H2O.molarMass);
-    cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
-    cout << std::setprecision(6);
-    cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); ++i) {
-      cout << "," << std::setw(9) << tlist[i];
-    }
-    cout << "\n";
-    for (int i = 0; i < plist.size(); ++i) {
-      cout << std::setw(5) << plist[i];
-      for (int j = 0; j < tlist.size(); ++j) {
-        PPascal = pressureBarToPascal(plist[i]);
-        TKelvin = temperatureCelsiusToKelvin(tlist[j]);
-        mch4 = methaneSolubilityInLiquid(PPascal, TKelvin, Xnacl);
-        cout << "," << std::setw(9) << mch4;
-      }
-      cout << "\n";
-    }
-    cout << "\n";
-  }
-}
+//   vector<Real> plist;
+//   testSetUpPressure(2000, plist);
+//   vector<Real> tlist;
+//   testSetUpTemperature(300, tlist);
+//   Real mu;
+//   cout << std::setprecision(5);
+//   cout << std::setw(5) << "P";
+//   for (int i = 0; i < tlist.size(); ++i) {
+//     cout << "," << std::setw(9) << tlist[i];
+//   }
+//   cout << "\n";
+//   for (int i = 0; i < plist.size(); ++i) {
+//     cout << std::setw(5) << plist[i];
+//     for (int j = 0; j < tlist.size(); ++j) {
+//       mu = lambdaCH4_Na(plist[i], temperatureCelsiusToKelvin(tlist[j]));
+//       cout << "," << std::setw(9) << mu;
+//     }
+//     cout << "\n";
+//   }
+//   cout << "\n";
+// }
 
 
-int
-test_methaneSolubilityInLiquid2()
-{
-  // The results must match Ref. 1 Table 4-8
-  cout << "test_methaneSolubilityInLiquid2\n";
+// int
+// test_xiCH4_Na_Cl()
+// {
+//   cout << "test_xiCH4_Na_Cl\n";
 
-  const double maxRelDiff = 0.02;  // max relative difference
-  const double maxDiff = 1.0e-7;    // max difference
+//   vector<Real> plist;
+//   testSetUpPressure(2000, plist);
+//   vector<Real> tlist;
+//   testSetUpTemperature(300, tlist);
+//   Real mu;
+//   cout << std::setprecision(5);
+//   cout << std::setw(5) << "P";
+//   for (int i = 0; i < tlist.size(); ++i) {
+//     cout << "," << std::setw(9) << tlist[i];
+//   }
+//   cout << "\n";
+//   for (int i = 0; i < plist.size(); ++i) {
+//     cout << std::setw(5) << plist[i];
+//     for (int j = 0; j < tlist.size(); ++j) {
+//       mu = xiCH4_Na_Cl(plist[i], temperatureCelsiusToKelvin(tlist[j]));
+//       cout << "," << std::setw(9) << mu;
+//     }
+//     cout << "\n";
+//   }
+//   cout << "\n";
+// }
+
+
+// // int test_molFractionOfMethaneInLiquid() 
+// // {
+// //   cout << "test_molFractionOfMethaneInLiquid\n";
+
+// //   vector<Real> plist;
+// //   testSetUpPressure(2000, plist);
+// //   vector<Real> tlist;
+// //   testSetUpTemperature(300, tlist);
+// //   Real XNaCl = 0.0;
+// //   Real YCH4 = 1.0;
+// //   Real PPascal;
+// //   Real XCH4;
+// //   cout << std::setprecision(5);
+// //   cout << std::setw(5) << "P";
+// //   for (int i = 0; i < tlist.size(); ++i) {
+// //     cout << "," << std::setw(9) << tlist[i];
+// //   }
+// //   cout << "\n";
+// //   for (int i = 0; i < plist.size(); ++i) {
+// //     cout << std::setw(5) << plist[i];
+// //     for (int j = 0; j < tlist.size(); ++j) {
+// //       PPascal = pressureBarToPascal(plist[i]);
+// //       XCH4 = molFractionOfMethaneInLiquid(PPascal, temperatureCelsiusToKelvin(tlist[j]),
+// //           XNaCl, YCH4);
+// //       cout << "," << std::setw(9) << XCH4;
+// //     }
+// //     cout << "\n";
+// //   }
+// //   cout << "\n";
+// // }
+
+
+// int
+// test_methaneSolubilityInLiquid()
+// {
+//   // The results must match Ref. 1 Table 4-8
+//   cout << "test_methaneSolubilityInLiquid\n";
+
+//   // Set the NaCl concentration to test (mol/kg of SOLVENT)
+//   vector<Real>mnaclList;
+//   mnaclList.push_back(0.0);  // pure water
+//   mnaclList.push_back(1.0);
+//   mnaclList.push_back(2.0);
+//   mnaclList.push_back(4.0);
+//   mnaclList.push_back(6.0);
+
+//   vector<Real> plist;
+//   testSetUpPressure(2000, plist);
+//   vector<Real> tlist;
+//   testSetUpTemperature(300, tlist);
+
+//   Real Xnacl;
+//   Real PPascal;
+//   Real TKelvin;
+//   Real mch4;
+
+//   for (int k = 0; k < mnaclList.size(); ++k) {
+//     // Compute mol fraction of NaCl
+//     // Note:
+//     // - NaCl is expressed as molality (mol/kg of SOLVENT)
+//     // - The concentration is multiplied by 2 because NaCl dissociate into Na+ and Cl- 
+//     Xnacl = 2.0 * mnaclList[k] * H2O.molarMass / (1.0 + 2 * mnaclList[k] * H2O.molarMass);
+//     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
+//     cout << std::setprecision(6);
+//     cout << std::setw(5) << "P";
+//     for (int i = 0; i < tlist.size(); ++i) {
+//       cout << "," << std::setw(9) << tlist[i];
+//     }
+//     cout << "\n";
+//     for (int i = 0; i < plist.size(); ++i) {
+//       cout << std::setw(5) << plist[i];
+//       for (int j = 0; j < tlist.size(); ++j) {
+//         PPascal = pressureBarToPascal(plist[i]);
+//         TKelvin = temperatureCelsiusToKelvin(tlist[j]);
+//         mch4 = methaneSolubilityInLiquid(PPascal, TKelvin, Xnacl);
+//         cout << "," << std::setw(9) << mch4;
+//       }
+//       cout << "\n";
+//     }
+//     cout << "\n";
+//   }
+// }
+
+
+// int
+// test_methaneSolubilityInLiquid2()
+// {
+//   // The results must match Ref. 1 Table 4-8
+//   cout << "test_methaneSolubilityInLiquid2\n";
+
+//   const double maxRelDiff = 0.02;  // max relative difference
+//   const double maxDiff = 1.0e-7;    // max difference
   
-  std::string fileNamePre = "CH4SolubilityInBrine";
-  std::string fileNamePost = ".csv";
-  std::string fileName;
+//   std::string fileNamePre = "CH4SolubilityInBrine";
+//   std::string fileNamePost = ".csv";
+//   std::string fileName;
 
-  // Set the NaCl concentration to test (mol/kg of SOLVENT)
-  vector<Real>mnaclList;
-  mnaclList.push_back(0.0);  // pure water
-  mnaclList.push_back(1.0);
-  mnaclList.push_back(2.0);
-  mnaclList.push_back(4.0);
-  mnaclList.push_back(6.0);
+//   // Set the NaCl concentration to test (mol/kg of SOLVENT)
+//   vector<Real>mnaclList;
+//   mnaclList.push_back(0.0);  // pure water
+//   mnaclList.push_back(1.0);
+//   mnaclList.push_back(2.0);
+//   mnaclList.push_back(4.0);
+//   mnaclList.push_back(6.0);
 
-  vector<Real> plist;
-  testSetUpPressure(2000, plist);
-  vector<Real> tlist;
-  testSetUpTemperature(300, tlist);
+//   vector<Real> plist;
+//   testSetUpPressure(2000, plist);
+//   vector<Real> tlist;
+//   testSetUpTemperature(300, tlist);
 
-  Real Xnacl;
-  Real PPascal;
-  Real TKelvin;
-  Real mch4;
+//   Real Xnacl;
+//   Real PPascal;
+//   Real TKelvin;
+//   Real mch4;
 
-  for (int k = 0; k < mnaclList.size(); ++k) {
-    // Compute mol fraction of NaCl
-    // Note:
-    // - NaCl is expressed as molality (mol/kg of SOLVENT)
-    // - The concentration is multiplied by 2 because NaCl dissociate into Na+ and Cl- 
-    Xnacl = 2.0 * mnaclList[k] * H2O.molarMass / (1.0 + 2 * mnaclList[k] * H2O.molarMass);
-    cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
-    cout << std::setprecision(6);
-    cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); ++i) {
-      cout << "," << std::setw(9) << tlist[i];
-    }
-    cout << "\n";
+//   for (int k = 0; k < mnaclList.size(); ++k) {
+//     // Compute mol fraction of NaCl
+//     // Note:
+//     // - NaCl is expressed as molality (mol/kg of SOLVENT)
+//     // - The concentration is multiplied by 2 because NaCl dissociate into Na+ and Cl- 
+//     Xnacl = 2.0 * mnaclList[k] * H2O.molarMass / (1.0 + 2 * mnaclList[k] * H2O.molarMass);
+//     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
+//     cout << std::setprecision(6);
+//     cout << std::setw(5) << "P";
+//     for (int i = 0; i < tlist.size(); ++i) {
+//       cout << "," << std::setw(9) << tlist[i];
+//     }
+//     cout << "\n";
 
-    std::ostringstream convert;
-    convert << k;
-    fileName = fileNamePre + convert.str() + fileNamePost;
-    cout << "Reference data file: " << fileName << "\n";
-    std::ifstream file(fileName);
-    if (!file.good()) {
-      cout << "ERROR in test_methaneSolubilityInLiquid2: cannot open file\n";
-      return -1;
-    }
-    std::string line;
-    std::getline(file, line);  // Read the header row
-    if (!file.good()) {
-      cout << "ERROR in test_methaneSolubilityInLiquid2: cannot read the row header\n";
-      return -2;
-    }
-    for (int i = 0; i < plist.size(); ++i) { // For each row
-      cout << std::setw(5) << plist[i];
-      std::getline(file, line);  // Read a row
-      if (!file.good()) {
-        cout << "ERROR in test_methaneSolubilityInLiquid2: cannot read row: " << i << "\n";
-        return -3;
-      }
-      std::stringstream iss(line);
-      std::string val;
-      std::getline(iss, val, ',');  // Read the header column
-      if (!iss.good()) {
-        cout << "ERROR in test_methaneSolubilityInLiquid2: cannot get the header column\n";
-        return -4;
-      }
+//     std::ostringstream convert;
+//     convert << k;
+//     fileName = fileNamePre + convert.str() + fileNamePost;
+//     cout << "Reference data file: " << fileName << "\n";
+//     std::ifstream file(fileName);
+//     if (!file.good()) {
+//       cout << "ERROR in test_methaneSolubilityInLiquid2: cannot open file\n";
+//       return -1;
+//     }
+//     std::string line;
+//     std::getline(file, line);  // Read the header row
+//     if (!file.good()) {
+//       cout << "ERROR in test_methaneSolubilityInLiquid2: cannot read the row header\n";
+//       return -2;
+//     }
+//     for (int i = 0; i < plist.size(); ++i) { // For each row
+//       cout << std::setw(5) << plist[i];
+//       std::getline(file, line);  // Read a row
+//       if (!file.good()) {
+//         cout << "ERROR in test_methaneSolubilityInLiquid2: cannot read row: " << i << "\n";
+//         return -3;
+//       }
+//       std::stringstream iss(line);
+//       std::string val;
+//       std::getline(iss, val, ',');  // Read the header column
+//       if (!iss.good()) {
+//         cout << "ERROR in test_methaneSolubilityInLiquid2: cannot get the header column\n";
+//         return -4;
+//       }
 
-      for (int j = 0; j < tlist.size(); ++j) { // For each column
-        PPascal = pressureBarToPascal(plist[i]);
-        TKelvin = temperatureCelsiusToKelvin(tlist[j]);
-        mch4 = methaneSolubilityInLiquid(PPascal, TKelvin, Xnacl);
-        cout << "," << std::setw(9) << mch4;
-        std::getline(iss, val, ',');
-        // cout << "val: " << val << "\n";
-        if (val != "") {
-          std::stringstream convertor(val);
-          double refData;
-          convertor >> refData;
-          double diff = abs(mch4 - refData);
-          if (diff > 0.0) {
-            if (abs(refData) > 0.0) {
-              // Compute relative difference
-              double relDiff = diff / abs(refData);
-              if (relDiff > maxRelDiff) {
-                cout << "ERROR in test_methaneSolubilityInLiquid2: value deviates too much from reference\n";
-                cout << mch4 << " != " << refData << " (ref)\n";
-                cout << "Relative difference: " << relDiff << "\n";
-                return -5;
-              } // else small deviation
-            } else { // reference data is zero. Use absolute difference instead
-              if (diff > maxDiff) {
-                cout << "ERROR in test_methaneSolubilityInLiquid2: value deviates too much from reference\n";
-                cout << mch4 << " != " << refData << " (ref)\n";
-                return -6;
-              } // else small deviation
-            }
-          } // else exactly the same
-        } // else reference data is empty
-      } // next column
-      cout << "\n";
-    } // next row
-    cout << "\n";
-  } // next 
-  return 0;
-}
+//       for (int j = 0; j < tlist.size(); ++j) { // For each column
+//         PPascal = pressureBarToPascal(plist[i]);
+//         TKelvin = temperatureCelsiusToKelvin(tlist[j]);
+//         mch4 = methaneSolubilityInLiquid(PPascal, TKelvin, Xnacl);
+//         cout << "," << std::setw(9) << mch4;
+//         std::getline(iss, val, ',');
+//         // cout << "val: " << val << "\n";
+//         if (val != "") {
+//           std::stringstream convertor(val);
+//           double refData;
+//           convertor >> refData;
+//           double diff = abs(mch4 - refData);
+//           if (diff > 0.0) {
+//             if (abs(refData) > 0.0) {
+//               // Compute relative difference
+//               double relDiff = diff / abs(refData);
+//               if (relDiff > maxRelDiff) {
+//                 cout << "ERROR in test_methaneSolubilityInLiquid2: value deviates too much from reference\n";
+//                 cout << mch4 << " != " << refData << " (ref)\n";
+//                 cout << "Relative difference: " << relDiff << "\n";
+//                 return -5;
+//               } // else small deviation
+//             } else { // reference data is zero. Use absolute difference instead
+//               if (diff > maxDiff) {
+//                 cout << "ERROR in test_methaneSolubilityInLiquid2: value deviates too much from reference\n";
+//                 cout << mch4 << " != " << refData << " (ref)\n";
+//                 return -6;
+//               } // else small deviation
+//             }
+//           } // else exactly the same
+//         } // else reference data is empty
+//       } // next column
+//       cout << "\n";
+//     } // next row
+//     cout << "\n";
+//   } // next 
+//   return 0;
+// }
 
 
-int
-test_equilibriumMolFractions()
-{
-  cout << "test_equilibriumMolFractions\n";
+// int
+// test_equilibriumMolFractions()
+// {
+//   cout << "test_equilibriumMolFractions\n";
 
-  // Set the NaCl concentration to test
-  vector<Real>mnaclList;
-  mnaclList.push_back(0.0);
-  // mnaclList.push_back(1.0);
-  // mnaclList.push_back(2.0);
-  // mnaclList.push_back(4.0);
-  mnaclList.push_back(6.0);
+//   // Set the NaCl concentration to test
+//   vector<Real>mnaclList;
+//   mnaclList.push_back(0.0);
+//   // mnaclList.push_back(1.0);
+//   // mnaclList.push_back(2.0);
+//   // mnaclList.push_back(4.0);
+//   mnaclList.push_back(6.0);
 
-  vector<Real> plist;
-  testSetUpPressure(2000, plist);
-  vector<Real> tlist;
-  testSetUpTemperature(300, tlist);
+//   vector<Real> plist;
+//   testSetUpPressure(2000, plist);
+//   vector<Real> tlist;
+//   testSetUpTemperature(300, tlist);
 
-  Real Xnacl;
-  Real PPascal;
-  Real TKelvin;
+//   Real Xnacl;
+//   Real PPascal;
+//   Real TKelvin;
 
-  Real Xch4[plist.size()][tlist.size()];
-  Real Yh2o[plist.size()][tlist.size()];
+//   Real Xch4[plist.size()][tlist.size()];
+//   Real Yh2o[plist.size()][tlist.size()];
   
-  // For each value of NaCl concentration
-  for (int k = 0; k < mnaclList.size(); ++k) {
-    Xnacl = mnaclList[k] / (55.56 + mnaclList[k]);  // Na and Cl
-    for (int i = 0; i < plist.size(); ++i) {
-      for (int j = 0; j < tlist.size(); ++j) {
-        PPascal = pressureBarToPascal(plist[i]);
-        TKelvin = temperatureCelsiusToKelvin(tlist[j]);
-        equilibriumMolFractions(PPascal, TKelvin, Xnacl, Xch4[i][j], Yh2o[i][j]);
-      }
-    }
+//   // For each value of NaCl concentration
+//   for (int k = 0; k < mnaclList.size(); ++k) {
+//     Xnacl = mnaclList[k] / (55.56 + mnaclList[k]);  // Na and Cl
+//     for (int i = 0; i < plist.size(); ++i) {
+//       for (int j = 0; j < tlist.size(); ++j) {
+//         PPascal = pressureBarToPascal(plist[i]);
+//         TKelvin = temperatureCelsiusToKelvin(tlist[j]);
+//         equilibriumMolFractions(PPascal, TKelvin, Xnacl, Xch4[i][j], Yh2o[i][j]);
+//       }
+//     }
 
-    // Display the results
-    cout << "Mol fraction of methane in liquid\n";
-    cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
-    cout << std::setprecision(4);
-    cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); ++i) {
-      cout << "," << std::setw(9) << tlist[i];
-    }
-    cout << "\n";
-    for (int i = 0; i < plist.size(); ++i) {
-      cout << std::setw(5) << plist[i];
-      for (int j = 0; j < tlist.size(); ++j) {
-        cout << "," << std::setw(9) << Xch4[i][j];
-      }
-      cout << "\n";
-    }
-    cout << "\n";
-    cout << "Mol fraction of water in gas\n";
-    cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
-    cout << std::setprecision(4);
-    cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); ++i) {
-      cout << "," << std::setw(9) << tlist[i];
-    }
-    cout << "\n";
-    for (int i = 0; i < plist.size(); ++i) {
-      cout << std::setw(5) << plist[i];
-      for (int j = 0; j < tlist.size(); ++j) {
-        cout << "," << std::setw(9) << Yh2o[i][j];
-      }
-      cout << "\n";
-    }
-    cout << "\n";
-  }
-}
+//     // Display the results
+//     cout << "Mol fraction of methane in liquid\n";
+//     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
+//     cout << std::setprecision(4);
+//     cout << std::setw(5) << "P";
+//     for (int i = 0; i < tlist.size(); ++i) {
+//       cout << "," << std::setw(9) << tlist[i];
+//     }
+//     cout << "\n";
+//     for (int i = 0; i < plist.size(); ++i) {
+//       cout << std::setw(5) << plist[i];
+//       for (int j = 0; j < tlist.size(); ++j) {
+//         cout << "," << std::setw(9) << Xch4[i][j];
+//       }
+//       cout << "\n";
+//     }
+//     cout << "\n";
+//     cout << "Mol fraction of water in gas\n";
+//     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
+//     cout << std::setprecision(4);
+//     cout << std::setw(5) << "P";
+//     for (int i = 0; i < tlist.size(); ++i) {
+//       cout << "," << std::setw(9) << tlist[i];
+//     }
+//     cout << "\n";
+//     for (int i = 0; i < plist.size(); ++i) {
+//       cout << std::setw(5) << plist[i];
+//       for (int j = 0; j < tlist.size(); ++j) {
+//         cout << "," << std::setw(9) << Yh2o[i][j];
+//       }
+//       cout << "\n";
+//     }
+//     cout << "\n";
+//   }
+// }
 
 
-int
-test_equilibriumMassFrac()
-{
-  cout << "test_equilibriumMassFrac\n";
+// int
+// test_equilibriumMassFrac()
+// {
+//   cout << "test_equilibriumMassFrac\n";
 
-  // Set the NaCl concentration to test
-  vector<Real>mnaclList;
-  mnaclList.push_back(0.0);
-  // mnaclList.push_back(1.0);
-  // mnaclList.push_back(2.0);
-  // mnaclList.push_back(4.0);
-  mnaclList.push_back(6.0);
+//   // Set the NaCl concentration to test
+//   vector<Real>mnaclList;
+//   mnaclList.push_back(0.0);
+//   // mnaclList.push_back(1.0);
+//   // mnaclList.push_back(2.0);
+//   // mnaclList.push_back(4.0);
+//   mnaclList.push_back(6.0);
 
-  vector<Real> plist;
-  testSetUpPressure(2000, plist);
-  vector<Real> tlist;
-  testSetUpTemperature(300, tlist);
+//   vector<Real> plist;
+//   testSetUpPressure(2000, plist);
+//   vector<Real> tlist;
+//   testSetUpTemperature(300, tlist);
 
-  Real Xnacl;
-  Real PPascal;
-  Real TKelvin;
+//   Real Xnacl;
+//   Real PPascal;
+//   Real TKelvin;
 
-  Real Xch4[plist.size()][tlist.size()];
-  Real Yh2o[plist.size()][tlist.size()];
+//   Real Xch4[plist.size()][tlist.size()];
+//   Real Yh2o[plist.size()][tlist.size()];
   
-  // For each value of NaCl concentration
-  for (int k = 0; k < mnaclList.size(); ++k) {
-    Xnacl = mnaclList[k] / (55.56 + mnaclList[k]);  // Na and Cl
-    for (int i = 0; i < plist.size(); ++i) {
-      for (int j = 0; j < tlist.size(); ++j) {
-        PPascal = pressureBarToPascal(plist[i]);
-        TKelvin = temperatureCelsiusToKelvin(tlist[j]);
-        equilibriumMassFrac(PPascal, TKelvin, Xnacl, Xch4[i][j], Yh2o[i][j]);
-      }
-    }
+//   // For each value of NaCl concentration
+//   for (int k = 0; k < mnaclList.size(); ++k) {
+//     Xnacl = mnaclList[k] / (55.56 + mnaclList[k]);  // Na and Cl
+//     for (int i = 0; i < plist.size(); ++i) {
+//       for (int j = 0; j < tlist.size(); ++j) {
+//         PPascal = pressureBarToPascal(plist[i]);
+//         TKelvin = temperatureCelsiusToKelvin(tlist[j]);
+//         equilibriumMassFrac(PPascal, TKelvin, Xnacl, Xch4[i][j], Yh2o[i][j]);
+//       }
+//     }
 
-    // Display the results
-    cout << "Mass fraction of methane in liquid\n";
-    cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
-    cout << std::setprecision(4);
-    cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); ++i) {
-      cout << "," << std::setw(9) << tlist[i];
-    }
-    cout << "\n";
-    for (int i = 0; i < plist.size(); ++i) {
-      cout << std::setw(5) << plist[i];
-      for (int j = 0; j < tlist.size(); ++j) {
-        cout << "," << std::setw(9) << Xch4[i][j];
-      }
-      cout << "\n";
-    }
-    cout << "\n";
-    cout << "Mass fraction of water in gas\n";
-    cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
-    cout << std::setprecision(4);
-    cout << std::setw(5) << "P";
-    for (int i = 0; i < tlist.size(); ++i) {
-      cout << "," << std::setw(9) << tlist[i];
-    }
-    cout << "\n";
-    for (int i = 0; i < plist.size(); ++i) {
-      cout << std::setw(5) << plist[i];
-      for (int j = 0; j < tlist.size(); ++j) {
-        cout << "," << std::setw(9) << Yh2o[i][j];
-      }
-      cout << "\n";
-    }
-    cout << "\n";
-  }
-}
+//     // Display the results
+//     cout << "Mass fraction of methane in liquid\n";
+//     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
+//     cout << std::setprecision(4);
+//     cout << std::setw(5) << "P";
+//     for (int i = 0; i < tlist.size(); ++i) {
+//       cout << "," << std::setw(9) << tlist[i];
+//     }
+//     cout << "\n";
+//     for (int i = 0; i < plist.size(); ++i) {
+//       cout << std::setw(5) << plist[i];
+//       for (int j = 0; j < tlist.size(); ++j) {
+//         cout << "," << std::setw(9) << Xch4[i][j];
+//       }
+//       cout << "\n";
+//     }
+//     cout << "\n";
+//     cout << "Mass fraction of water in gas\n";
+//     cout << "NaCl concentration: " << mnaclList[k] << "mol/kg = " << Xnacl << "\n";
+//     cout << std::setprecision(4);
+//     cout << std::setw(5) << "P";
+//     for (int i = 0; i < tlist.size(); ++i) {
+//       cout << "," << std::setw(9) << tlist[i];
+//     }
+//     cout << "\n";
+//     for (int i = 0; i < plist.size(); ++i) {
+//       cout << std::setw(5) << plist[i];
+//       for (int j = 0; j < tlist.size(); ++j) {
+//         cout << "," << std::setw(9) << Yh2o[i][j];
+//       }
+//       cout << "\n";
+//     }
+//     cout << "\n";
+//   }
+// }
 
 
 
-int main()
-{
-  // Test all functions in standalone mode.
+// int main()
+// {
+//   // Test all functions in standalone mode.
 
-  int status;
+//   int status;
 
-  test_pureFugacityCoefficient(CH4, "CH4");
-  //test_pureFugacityCoefficient(H2O, "H2O");
-  //test_pureFugacityCoefficient(CO2, "CO2");
+//   test_pureFugacityCoefficient(CH4, "CH4");
+//   //test_pureFugacityCoefficient(H2O, "H2O");
+//   //test_pureFugacityCoefficient(CO2, "CO2");
 
-  test_waterliquidReducedDensityAtSaturation();
+//   test_waterliquidReducedDensityAtSaturation();
 
-  test_waterVapourReducedPressureAtSaturation();
+//   test_waterVapourReducedPressureAtSaturation();
 
-  test_molFractionOfWaterInGas();
+//   test_molFractionOfWaterInGas();
   
-  // test_muCH4StandardLiquidByRT();
-  // test_lambdaCH4_Na();
-  // test_xiCH4_Na_Cl(); // Not really needed (the results are uniform)
+//   // test_muCH4StandardLiquidByRT();
+//   // test_lambdaCH4_Na();
+//   // test_xiCH4_Na_Cl(); // Not really needed (the results are uniform)
 
-  // test_molFractionOfMethaneInLiquid();
+//   // test_molFractionOfMethaneInLiquid();
 
-  // test_methaneSolubilityInLiquid();
-  test_methaneSolubilityInLiquid2();
+//   // test_methaneSolubilityInLiquid();
+//   test_methaneSolubilityInLiquid2();
 
-  // test_equilibriumMassFrac();
-  // test_equilibriumMolFractions();
+//   // test_equilibriumMassFrac();
+//   // test_equilibriumMolFractions();
 
-  return 0;
-}
+//   return 0;
+// }
 
-#endif // STANDALONE
+// #endif // STANDALONE
