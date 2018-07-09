@@ -23,6 +23,28 @@ TEST_F(PorousFlowBrineMethaneTest, name) { EXPECT_EQ("brine-methane", _fp->fluid
  * Pressure range: 1 ~ 2000 bar
  * Temperature range: 273 ~ 523 Kelvin
  */
+TEST_F(PorousFlowBrineMethaneTest, brineMassToMolFraction)
+{
+  const Real tolerance = 1.0e-5; // absolute tolerance
+
+  Real molFraction = _fp->brineMassToMolFraction(0.0);
+  EXPECT_NEAR(0.0, molFraction, tolerance);
+
+  molFraction = _fp->brineMassToMolFraction(1.0);
+  EXPECT_NEAR(1.0, molFraction, tolerance);
+
+  molFraction = _fp->brineMassToMolFraction(0.5);
+  EXPECT_NEAR(0.23561955583457583, molFraction, tolerance);
+}
+
+
+/*
+ * Verify calculation of the activitty coefficient and its derivatives wrt
+ * pressure and temperature.
+ * Values are compared against precomputed values using the same function.
+ * Pressure range: 1 ~ 2000 bar
+ * Temperature range: 273 ~ 523 Kelvin
+ */
 TEST_F(PorousFlowBrineMethaneTest, activityCoefficient)
 {
   const Real tolerance = 1.0e-5; // absolute tolerance
