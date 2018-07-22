@@ -197,7 +197,15 @@ PorousFlowFluidState::computeQpProperties()
     _fluid_viscosity[_qp][ph] = _fsp[ph].viscosity;
     _fluid_enthalpy[_qp][ph] = _fsp[ph].enthalpy;
     _mass_frac[_qp][ph] = _fsp[ph].mass_fraction;
+
+    _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", pressure "
+             << _porepressure[_qp][ph] << std::endl;
+
+    _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", saturation "
+             << _saturation[_qp][ph] << std::endl;
   }
+
+  _console << "qpoint " << _q_point[_qp] << ", Z " << (*_Z[0])[_qp] << std::endl;
 
   // Derivative of saturation wrt variables
   for (unsigned int ph = 0; ph < _num_phases; ++ph)
@@ -398,6 +406,18 @@ PorousFlowFluidState::computeQpProperties()
           _fsp[_gas_phase_number].dmass_fraction_dX[_aqueous_fluid_component] * _grad_Xnacl_qp[_qp];
     }
   }
+
+  // REMOVE
+  _console << "_gas_gradp_qp " << _gas_gradp_qp[_qp] << std::endl;
+  for (unsigned int ph = 0; ph < _num_phases; ++ph)
+  {
+    _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", dp/dx "
+             << (*_gradp_qp)[_qp][ph] << std::endl;
+    _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", ds/dx "
+             << (*_grads_qp)[_qp][ph] << std::endl;
+  }
+
+  _console << "qpoint " << _q_point[_qp] << ", dZ/dx " << (*_gradZ_qp[0])[_qp] << std::endl;
 }
 
 void
