@@ -171,6 +171,14 @@ public:
    */
   void clearFluidStateProperties(std::vector<FluidStateProperties> & fsp) const;
 
+  /**
+   * Derivative of liquid pressure wrt gas pressure due to capillary pressure
+   * @param liquid_saturation liquid saturation
+   * @param dliquid_saturation_dp derivative of liquid saturation wrt gas pressure
+   * @return derivative of liquid pressure wrt gas pressure
+   */
+  Real dLiquidPressure_dGasPressure(Real liquid_saturation, Real dliquid_saturation_dp) const;
+
 protected:
   /// Number of phases
   unsigned int _num_phases;

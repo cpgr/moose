@@ -77,7 +77,7 @@ public:
    * @param[out] dxco2_dp derivative of mole fraction of CO2 in liquid wrt pressure
    * @param[out] dxco2_dT derivative of mole fraction of CO2 in liqiud wrt temperature
    * @param[out] dxco2_dX derivative of mole fraction of CO2 in liqiud wrt salt mass fraction
-   * @param[out] yh2o mass fraction of mole in gas
+   * @param[out] yh2o mole fraction of H2O in gas
    * @param[out] dyh2og_dp derivative of mole fraction of H2O in gas wrt pressure
    * @param[out] dyh2o_dT derivative of mole fraction of H2O in gas wrt temperature
    * @param[out] dyh2o_dX derivative of mole fraction of H2O in gas wrt salt mass fraction
@@ -130,7 +130,7 @@ public:
    * @param Xnacl NaCl mass fraction (kg/kg)
    * @param Z total mass fraction of CO2 component
    * @param[out] PhaseStateEnum current phase state
-   * @param[out] FluidStateMassFractions data structure
+   * @param[out] FluidStateProperties data structure
    */
   void massFractions(Real pressure,
                      Real temperature,
@@ -144,18 +144,24 @@ public:
    *
    * @param pressure gas pressure (Pa)
    * @param temperature temperature (K)
-   * @param[out] FluidStateDensity data structure
+   * @param[out] FluidStateProperties data structure
    */
   void
   gasProperties(Real pressure, Real temperature, std::vector<FluidStateProperties> & fsp) const;
 
   /**
    * Thermophysical properties of the liquid state
+   * Note: The pressure here is the liquid pressure, and the derivative wrt pressure is
+   * wrt to the liquid pressure. Secondly, the enthalpy includes a contribution due to the
+   * enthalpy of dissolution of the CO2 into the liquid phase. As a result, the derivatives
+   * can include a dependence on the capillary pressure, so this method is called after the
+   * saturation is calculated in twoPhaseProperties(). For the single phase liquid case,
+   * it is ok to call this method by itself, as gas saturation is initialized to zero.
    *
    * @param pressure liquid pressure (Pa)
    * @param temperature temperature (K)
    * @param Xnacl NaCl mass fraction (kg/kg)
-   * @param[out] FluidStateDensity data structure
+   * @param[out] FluidStateProperties data structure
    */
   void liquidProperties(Real pressure,
                         Real temperature,
@@ -163,15 +169,58 @@ public:
                         std::vector<FluidStateProperties> & fsp) const;
 
   /**
-   * Gas and liquid saturations for the two-phase region
+   * Density of the gas state (assumes no effect due to evaporation of brine)
+   *
+   * @param pressure pressure (Pa)
+   * @param temperature temperature (K)
+   * @return gas density (kg/m^3)
+   */
+  Real gasDensity(Real pressure, Real temperature) const;
+
+  /**
+   * Density of the liquid state
+   * Note: The pressure here is the liquid pressure. As a result, the derivatives can
+   * include a dependence on saturation due to the capillary pressure, so this
+   * method should be called after the saturation is calculated for the two phase case
+   * ie: after calling saturation(). For the single phase liquid case, it is ok to
+   * call this method by itself, as gas saturation is initialized to zero.
+   *
+   * @param pressure liquid pressure (Pa)
+   * @param temperature temperature (K)
+   * @param Xnacl NaCl mass fraction (kg/kg)
+   * @param Xco2 CO2 mass fraction in liquid (kg/kg)
+   * @param fsp FluidStateProperties data structure
+   * @return liquid density (kg/m^3)
+   */
+  Real liquidDensity(Real pressure, Real temperature, Real Xnacl, Real Xco2) const;
+  void liquidDensity(Real pressure,
+                     Real temperature,
+                     Real Xnacl,
+                     std::vector<FluidStateProperties> & fsp) const;
+
+  /**
+   * Gas saturation in the two-phase region
    *
    * @param pressure gas pressure (Pa)
    * @param temperature phase temperature (K)
    * @param Xnacl NaCl mass fraction (kg/kg)
    * @param Z total mass fraction of CO2 component
-   * @param[out] FluidStateSaturation data structure
+   * @param Xco2 CO2 mass fraction in liquid (kg/kg)
+   * @param Yco2 mass fraction of CO2 in gas (kg/kg)
+   * @return gas saturation (-)
    */
-  void saturationTwoPhase(Real pressure,
+  Real saturation(Real pressure, Real temperature, Real Xnacl, Real Z, Real Xco2, Real Yco2) const;
+
+  /**
+   * Gas and liquid properties for the two-phase region
+   *
+   * @param pressure gas pressure (Pa)
+   * @param temperature phase temperature (K)
+   * @param Xnacl NaCl mass fraction (kg/kg)
+   * @param Z total mass fraction of CO2 component
+   * @param[out] fsp FluidStateProperties data structure
+   */
+  void twoPhaseProperties(Real pressure,
                           Real temperature,
                           Real Xnacl,
                           Real Z,
@@ -344,6 +393,7 @@ public:
    * @param[out] partial molar density (kg/m^3)
    * @param[out] derivative of partial molar density wrt temperature
    */
+  Real partialDensityCO2(Real temperature) const;
   void
   partialDensityCO2(Real temperature, Real & partial_density, Real & dpartial_density_dT) const;
 

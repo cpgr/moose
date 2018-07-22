@@ -789,9 +789,9 @@ TEST_F(PorousFlowBrineCO2Test, saturationTwoPhase)
       (gas_saturation * fsp[1].density + (1.0 - gas_saturation) * fsp[0].density);
 
   // Calculate the gas saturation and derivatives
-  _fp->saturationTwoPhase(p, T, Xnacl, Z, fsp);
+  _fp->twoPhaseProperties(p, T, Xnacl, Z, fsp);
 
-  ABS_TEST(fsp[1].saturation, gas_saturation, 1.0e-8);
+  ABS_TEST(fsp[1].saturation, gas_saturation, 1.0e-6);
 
   // Test the derivatives
   const Real dp = 1.0e-1;
@@ -803,13 +803,11 @@ TEST_F(PorousFlowBrineCO2Test, saturationTwoPhase)
 
   // Derivative wrt pressure
   _fp->massFractions(p + dp, T, Xnacl, Z, phase_state, fsp);
-  _fp->gasProperties(p + dp, T, fsp);
-  _fp->saturationTwoPhase(p + dp, T, Xnacl, Z, fsp);
+  _fp->twoPhaseProperties(p + dp, T, Xnacl, Z, fsp);
   Real gsat1 = fsp[1].saturation;
 
   _fp->massFractions(p - dp, T, Xnacl, Z, phase_state, fsp);
-  _fp->gasProperties(p - dp, T, fsp);
-  _fp->saturationTwoPhase(p - dp, T, Xnacl, Z, fsp);
+  _fp->twoPhaseProperties(p - dp, T, Xnacl, Z, fsp);
   Real gsat2 = fsp[1].saturation;
 
   REL_TEST(dgas_saturation_dp, (gsat1 - gsat2) / (2.0 * dp), 1.0e-6);
@@ -817,40 +815,35 @@ TEST_F(PorousFlowBrineCO2Test, saturationTwoPhase)
   // Derivative wrt temperature
   const Real dT = 1.0e-4;
   _fp->massFractions(p, T + dT, Xnacl, Z, phase_state, fsp);
-  _fp->gasProperties(p, T + dT, fsp);
-  _fp->saturationTwoPhase(p, T + dT, Xnacl, Z, fsp);
+  _fp->twoPhaseProperties(p, T + dT, Xnacl, Z, fsp);
   gsat1 = fsp[1].saturation;
 
   _fp->massFractions(p, T - dT, Xnacl, Z, phase_state, fsp);
-  _fp->gasProperties(p, T - dT, fsp);
-  _fp->saturationTwoPhase(p, T - dT, Xnacl, Z, fsp);
+  _fp->twoPhaseProperties(p, T - dT, Xnacl, Z, fsp);
   gsat2 = fsp[1].saturation;
 
   REL_TEST(dgas_saturation_dT, (gsat1 - gsat2) / (2.0 * dT), 1.0e-6);
 
   // Derivative wrt Xnacl
-  const Real dx = 1.0e-8;
-  _fp->massFractions(p, T, Xnacl + dx, Z, phase_state, fsp);
-  _fp->gasProperties(p, T, fsp);
-  _fp->saturationTwoPhase(p, T, Xnacl + dx, Z, fsp);
+  const Real dX = 1.0e-8;
+  _fp->massFractions(p, T, Xnacl + dX, Z, phase_state, fsp);
+  _fp->twoPhaseProperties(p, T, Xnacl + dX, Z, fsp);
   gsat1 = fsp[1].saturation;
 
-  _fp->massFractions(p, T, Xnacl - dx, Z, phase_state, fsp);
-  _fp->gasProperties(p, T, fsp);
-  _fp->saturationTwoPhase(p, T, Xnacl - dx, Z, fsp);
+  _fp->massFractions(p, T, Xnacl - dX, Z, phase_state, fsp);
+  _fp->twoPhaseProperties(p, T, Xnacl - dX, Z, fsp);
   gsat2 = fsp[1].saturation;
 
-  REL_TEST(dgas_saturation_dX, (gsat1 - gsat2) / (2.0 * dx), 1.0e-6);
+  REL_TEST(dgas_saturation_dX, (gsat1 - gsat2) / (2.0 * dX), 1.0e-6);
 
   // Derivative wrt Z
   const Real dZ = 1.0e-8;
 
   _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
-  _fp->gasProperties(p, T, fsp);
-  _fp->saturationTwoPhase(p, T, Xnacl, Z + dZ, fsp);
+  _fp->twoPhaseProperties(p, T, Xnacl, Z + dZ, fsp);
   gsat1 = fsp[1].saturation;
 
-  _fp->saturationTwoPhase(p, T, Xnacl, Z - dZ, fsp);
+  _fp->twoPhaseProperties(p, T, Xnacl, Z - dZ, fsp);
   gsat2 = fsp[1].saturation;
 
   REL_TEST(dgas_saturation_dZ, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-6);
@@ -878,11 +871,8 @@ TEST_F(PorousFlowBrineCO2Test, totalMassFraction)
   _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
-  _fp->gasProperties(p, T, fsp);
-  Real liquid_pressure = p + _pc->capillaryPressure(1.0 - s);
-  _fp->liquidProperties(liquid_pressure, T, Xnacl, fsp);
-  _fp->saturationTwoPhase(p, T, Xnacl, Z, fsp);
-  ABS_TEST(fsp[1].saturation, s, 1.0e-8);
+  _fp->twoPhaseProperties(p, T, Xnacl, Z, fsp);
+  ABS_TEST(fsp[1].saturation, s, 1.0e-6);
 }
 
 /*

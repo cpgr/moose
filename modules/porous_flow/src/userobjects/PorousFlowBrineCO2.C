@@ -130,15 +130,8 @@ PorousFlowBrineCO2::thermophysicalProperties(Real pressure,
 
     case FluidStatePhaseEnum::TWOPHASE:
     {
-      // Calculate the gas properties
-      gasProperties(pressure, temperature, fsp);
-
-      // Calculate the saturation
-      saturationTwoPhase(pressure, temperature, Xnacl, Z, fsp);
-
-      // Calculate the liquid properties
-      Real liquid_pressure = pressure - _pc.capillaryPressure(1.0 - gas.saturation, qp);
-      liquidProperties(liquid_pressure, temperature, Xnacl, fsp);
+      // Calculate the gas and liquid properties in the two phase region
+      twoPhaseProperties(pressure, temperature, Xnacl, Z, fsp);
 
       break;
     }
@@ -315,6 +308,24 @@ PorousFlowBrineCO2::gasProperties(Real pressure,
   gas.denthalpy_dZ = 0.0;
 }
 
+Real
+PorousFlowBrineCO2::gasDensity(Real pressure, Real temperature) const
+{
+  return _co2_fp.rho_from_p_T(pressure, temperature);
+}
+
+Real
+PorousFlowBrineCO2::liquidDensity(Real pressure, Real temperature, Real Xnacl, Real Xco2) const
+{
+  // The liquid density includes the density increase due to dissolved CO2
+  const Real brine_density = _brine_fp.rho(pressure, temperature, Xnacl);
+
+  // The CO2 partial density
+  const Real co2_partial_density = partialDensityCO2(temperature);
+
+  return 1.0 / (Xco2 / co2_partial_density + (1.0 - Xco2) / brine_density);
+}
+
 void
 PorousFlowBrineCO2::liquidProperties(Real pressure,
                                      Real temperature,
@@ -322,6 +333,7 @@ PorousFlowBrineCO2::liquidProperties(Real pressure,
                                      std::vector<FluidStateProperties> & fsp) const
 {
   FluidStateProperties & liquid = fsp[_aqueous_phase_number];
+  FluidStateProperties & gas = fsp[_gas_phase_number];
 
   // The liquid density includes the density increase due to dissolved CO2
   Real brine_density, dbrine_density_dp, dbrine_density_dT, dbrine_density_dX;
@@ -335,10 +347,24 @@ PorousFlowBrineCO2::liquidProperties(Real pressure,
 
   // Mass fraction of CO2 in liquid phase
   const Real Xco2 = liquid.mass_fraction[_gas_fluid_component];
-  const Real dXco2_dp = liquid.dmass_fraction_dp[_gas_fluid_component];
+  const Real dXco2_dpg = liquid.dmass_fraction_dp[_gas_fluid_component];
   const Real dXco2_dT = liquid.dmass_fraction_dT[_gas_fluid_component];
   const Real dXco2_dZ = liquid.dmass_fraction_dZ[_gas_fluid_component];
   const Real dXco2_dX = liquid.dmass_fraction_dX[_gas_fluid_component];
+
+  // Gas pressure is a function of saturation, so the derivative wrt gas pressure
+  // depends on capillary pressure
+  const Real liquid_saturation = 1.0 - gas.saturation;
+  const Real dliquid_saturation_dpg = -gas.dsaturation_dp;
+  const Real dliquid_saturation_dZ = -gas.dsaturation_dZ;
+
+  const Real dPc_ds = _pc.dCapillaryPressure(liquid_saturation);
+
+  // Derivate of gas pressure wrt liquid pressure
+  const Real dpg_dp = 1.0 / (1.0 - dPc_ds * dliquid_saturation_dpg);
+
+  // Derivative of Xco2 wrt liquid pressure
+  const Real dXco2_dp = dXco2_dpg * dpg_dp;
 
   // The liquid density
   Real co2_partial_density, dco2_partial_density_dT;
@@ -357,8 +383,9 @@ PorousFlowBrineCO2::liquidProperties(Real pressure,
        Xco2 * dco2_partial_density_dT / co2_partial_density / co2_partial_density) *
       liquid_density * liquid_density;
 
-  const Real dliquid_density_dZ =
-      (dXco2_dZ / brine_density - dXco2_dZ / co2_partial_density) * liquid_density * liquid_density;
+  const Real dliquid_density_dZ = (dXco2_dZ + dPc_ds * dXco2_dp * dliquid_saturation_dZ) *
+                                  (1.0 / brine_density - 1.0 / co2_partial_density) *
+                                  liquid_density * liquid_density;
 
   const Real dliquid_density_dX =
       (dXco2_dX / brine_density + (1.0 - Xco2) * dbrine_density_dX / brine_density / brine_density -
@@ -386,8 +413,12 @@ PorousFlowBrineCO2::liquidProperties(Real pressure,
                    dbrine_enthalpy_dX);
 
   // Enthalpy of CO2
-  Real co2_enthalpy, dco2_enthalpy_dp, dco2_enthalpy_dT;
-  _co2_fp.h_from_p_T(pressure, temperature, co2_enthalpy, dco2_enthalpy_dp, dco2_enthalpy_dT);
+  const Real gas_pressure = pressure + _pc.capillaryPressure(liquid_saturation);
+  Real co2_enthalpy, dco2_enthalpy_dpg, dco2_enthalpy_dT;
+  _co2_fp.h_dpT(gas_pressure, temperature, co2_enthalpy, dco2_enthalpy_dpg, dco2_enthalpy_dT);
+
+  // The derivative of CO2 enthalpy wrt liquid pressure is
+  Real dco2_enthalpy_dp = dco2_enthalpy_dpg * dpg_dp;
 
   // Enthalpy of dissolution
   Real hdis, dhdis_dT;
@@ -399,7 +430,9 @@ PorousFlowBrineCO2::liquidProperties(Real pressure,
   const Real dliquid_enthalpy_dT = (1.0 - Xco2) * dbrine_enthalpy_dT +
                                    Xco2 * (dco2_enthalpy_dT + dhdis_dT) +
                                    dXco2_dT * (co2_enthalpy + hdis - brine_enthalpy);
-  const Real dliquid_enthalpy_dZ = dXco2_dZ * (co2_enthalpy + hdis - brine_enthalpy);
+  const Real dliquid_enthalpy_dZ = (dXco2_dZ + dPc_ds * dXco2_dp * dliquid_saturation_dZ) *
+                                       (co2_enthalpy + hdis - brine_enthalpy) +
+                                   Xco2 * dPc_ds * dco2_enthalpy_dp * dliquid_saturation_dZ;
   const Real dliquid_enthalpy_dX =
       (1.0 - Xco2) * dbrine_enthalpy_dX + dXco2_dX * (co2_enthalpy + hdis - brine_enthalpy);
 
@@ -423,58 +456,19 @@ PorousFlowBrineCO2::liquidProperties(Real pressure,
   liquid.denthalpy_dX = dliquid_enthalpy_dX;
 }
 
-void
-PorousFlowBrineCO2::saturationTwoPhase(Real pressure,
-                                       Real temperature,
-                                       Real Xnacl,
-                                       Real Z,
-                                       std::vector<FluidStateProperties> & fsp) const
+Real
+PorousFlowBrineCO2::saturation(
+    Real pressure, Real temperature, Real Xnacl, Real Z, Real Xco2, Real Yco2) const
 {
-  FluidStateProperties & liquid = fsp[_aqueous_phase_number];
-  FluidStateProperties & gas = fsp[_gas_phase_number];
+  // Approximate liquid density as saturation isn't known yet, by using the gas
+  // pressure rather than the liquid pressure. This does result in a small error
+  // in the calculated saturation, but this is below the error associated with
+  // the correlations. A more accurate saturation could be found iteraviely,
+  // at the cost of increased computational expense
 
-  // Approximate liquid density as saturation isn't known yet
-  Real brine_density, dbrine_density_dp, dbrine_density_dT, dbrine_density_dX;
-  _brine_fp.rho_dpTx(pressure,
-                     temperature,
-                     Xnacl,
-                     brine_density,
-                     dbrine_density_dp,
-                     dbrine_density_dT,
-                     dbrine_density_dX);
-
-  // Mass fraction of CO2 in liquid phase
-  const Real Xco2 = liquid.mass_fraction[_gas_fluid_component];
-  const Real dXco2_dp = liquid.dmass_fraction_dp[_gas_fluid_component];
-  const Real dXco2_dT = liquid.dmass_fraction_dT[_gas_fluid_component];
-  const Real dXco2_dX = liquid.dmass_fraction_dX[_gas_fluid_component];
-
-  // The liquid density
-  Real co2_partial_density, dco2_partial_density_dT;
-  partialDensityCO2(temperature, co2_partial_density, dco2_partial_density_dT);
-
-  const Real liquid_density = 1.0 / (Xco2 / co2_partial_density + (1.0 - Xco2) / brine_density);
-
-  const Real dliquid_density_dp =
-      (dXco2_dp / brine_density + (1.0 - Xco2) * dbrine_density_dp / brine_density / brine_density -
-       dXco2_dp / co2_partial_density) *
-      liquid_density * liquid_density;
-
-  const Real dliquid_density_dT =
-      (dXco2_dT / brine_density + (1.0 - Xco2) * dbrine_density_dT / brine_density / brine_density -
-       dXco2_dT / co2_partial_density +
-       Xco2 * dco2_partial_density_dT / co2_partial_density / co2_partial_density) *
-      liquid_density * liquid_density;
-
-  const Real dliquid_density_dX =
-      (dXco2_dX / brine_density + (1.0 - Xco2) * dbrine_density_dX / brine_density / brine_density -
-       dXco2_dX / co2_partial_density) *
-      liquid_density * liquid_density;
-
-  const Real Yco2 = gas.mass_fraction[_gas_fluid_component];
-  const Real dYco2_dp = gas.dmass_fraction_dp[_gas_fluid_component];
-  const Real dYco2_dT = gas.dmass_fraction_dT[_gas_fluid_component];
-  const Real dYco2_dX = gas.dmass_fraction_dX[_gas_fluid_component];
+  // The gas and liquid densities
+  const Real gas_density = gasDensity(pressure, temperature);
+  const Real liquid_density = liquidDensity(pressure, temperature, Xnacl, Xco2);
 
   // Set mass equilibrium constants used in the calculation of vapor mass fraction
   const Real K0 = Yco2 / Xco2;
@@ -482,54 +476,62 @@ PorousFlowBrineCO2::saturationTwoPhase(Real pressure,
   const Real vapor_mass_fraction = vaporMassFraction(Z, K0, K1);
 
   // The gas saturation in the two phase case
-  gas.saturation = vapor_mass_fraction * liquid_density /
-                   (gas.density + vapor_mass_fraction * (liquid_density - gas.density));
+  const Real saturation = vapor_mass_fraction * liquid_density /
+                          (gas_density + vapor_mass_fraction * (liquid_density - gas_density));
 
-  const Real dv_dZ = (K1 - K0) / ((K0 - 1.0) * (K1 - 1.0));
-  const Real denominator = (gas.density + vapor_mass_fraction * (liquid_density - gas.density)) *
-                           (gas.density + vapor_mass_fraction * (liquid_density - gas.density));
+  return saturation;
+}
 
-  const Real ds_dZ = gas.density * liquid_density * dv_dZ / denominator;
+void
+PorousFlowBrineCO2::twoPhaseProperties(Real pressure,
+                                       Real temperature,
+                                       Real Xnacl,
+                                       Real Z,
+                                       std::vector<FluidStateProperties> & fsp) const
+{
+  FluidStateProperties & gas = fsp[_gas_phase_number];
+  FluidStateProperties & liquid = fsp[_aqueous_fluid_component];
 
-  const Real dK0_dp = (Xco2 * dYco2_dp - Yco2 * dXco2_dp) / Xco2 / Xco2;
-  const Real dK0_dT = (Xco2 * dYco2_dT - Yco2 * dXco2_dT) / Xco2 / Xco2;
-  const Real dK0_dX = (Xco2 * dYco2_dX - Yco2 * dXco2_dX) / Xco2 / Xco2;
+  const Real Xco2 = liquid.mass_fraction[_gas_fluid_component];
+  const Real Yco2 = gas.mass_fraction[_gas_fluid_component];
 
-  const Real dK1_dp =
-      ((1.0 - Yco2) * dXco2_dp - (1.0 - Xco2) * dYco2_dp) / (1.0 - Xco2) / (1.0 - Xco2);
-  const Real dK1_dT =
-      ((1.0 - Yco2) * dXco2_dT - (1.0 - Xco2) * dYco2_dT) / (1.0 - Xco2) / (1.0 - Xco2);
-  const Real dK1_dX =
-      ((1.0 - Yco2) * dXco2_dX - (1.0 - Xco2) * dYco2_dX) / (1.0 - Xco2) / (1.0 - Xco2);
+  // Calculate all of the gas phase properties, as these don't depend on saturation
+  gasProperties(pressure, temperature, fsp);
 
-  const Real dv_dp =
-      Z * dK1_dp / (K1 - 1.0) / (K1 - 1.0) + (1.0 - Z) * dK0_dp / (K0 - 1.0) / (K0 - 1.0);
+  // The gas saturation in the two phase case
+  gas.saturation = saturation(pressure, temperature, Xnacl, Z, Xco2, Yco2);
 
-  Real ds_dp = gas.density * liquid_density * dv_dp +
-               vapor_mass_fraction * (1.0 - vapor_mass_fraction) *
-                   (gas.density * dliquid_density_dp - gas.ddensity_dp * liquid_density);
-  ds_dp /= denominator;
+  // The liquid pressure and properties can now be calculated
+  const Real liquid_pressure = pressure - _pc.capillaryPressure(1.0 - gas.saturation);
+  liquidProperties(liquid_pressure, temperature, Xnacl, fsp);
 
-  const Real dv_dT =
-      Z * dK1_dT / (K1 - 1.0) / (K1 - 1.0) + (1.0 - Z) * dK0_dT / (K0 - 1.0) / (K0 - 1.0);
+  // Derivatives of saturation wrt primary variables are approximated using finite
+  // differences. Note: must calculate change in mass fraction due to increased
+  // primary variable as well
+  const Real eps = 1.0e-6;
+  const Real dp = pressure * eps;
+  Real dXco2 = dp * liquid.dmass_fraction_dp[_gas_fluid_component];
+  Real dYco2 = dp * gas.dmass_fraction_dp[_gas_fluid_component];
+  Real s2 = saturation(pressure + dp, temperature, Xnacl, Z, Xco2 + dXco2, Yco2 + dYco2);
+  gas.dsaturation_dp = (s2 - gas.saturation) / dp;
 
-  Real ds_dT = gas.density * liquid_density * dv_dT +
-               vapor_mass_fraction * (1.0 - vapor_mass_fraction) *
-                   (gas.density * dliquid_density_dT - gas.ddensity_dT * liquid_density);
-  ds_dT /= denominator;
+  const Real dT = temperature * eps;
+  dXco2 = dT * liquid.dmass_fraction_dT[_gas_fluid_component];
+  dYco2 = dT * gas.dmass_fraction_dT[_gas_fluid_component];
+  s2 = saturation(pressure, temperature + dT, Xnacl, Z, Xco2 + dXco2, Yco2 + dYco2);
+  gas.dsaturation_dT = (s2 - gas.saturation) / dT;
 
-  const Real dv_dX =
-      Z * dK1_dX / (K1 - 1.0) / (K1 - 1.0) + (1.0 - Z) * dK0_dX / (K0 - 1.0) / (K0 - 1.0);
+  const Real dX = Xnacl * eps;
+  dXco2 = dX * liquid.dmass_fraction_dX[_gas_fluid_component];
+  dYco2 = dX * gas.dmass_fraction_dX[_gas_fluid_component];
+  s2 = saturation(pressure, temperature, Xnacl + dX, Z, Xco2 + dXco2, Yco2 + dYco2);
+  gas.dsaturation_dX = (s2 - gas.saturation) / dX;
 
-  Real ds_dX = gas.density * liquid_density * dv_dX + vapor_mass_fraction *
-                                                          (1.0 - vapor_mass_fraction) *
-                                                          (gas.density * dliquid_density_dX);
-  ds_dX /= denominator;
-
-  gas.dsaturation_dp = ds_dp;
-  gas.dsaturation_dT = ds_dT;
-  gas.dsaturation_dZ = ds_dZ;
-  gas.dsaturation_dX = ds_dX;
+  const Real dZ = Z * eps;
+  dXco2 = dZ * liquid.dmass_fraction_dZ[_gas_fluid_component];
+  dYco2 = dZ * gas.dmass_fraction_dZ[_gas_fluid_component];
+  s2 = saturation(pressure, temperature, Xnacl, Z + dZ, Xco2 + dXco2, Yco2 + dYco2);
+  gas.dsaturation_dZ = (s2 - gas.saturation) / dZ;
 }
 
 void
@@ -1400,6 +1402,18 @@ PorousFlowBrineCO2::solveEquilibriumMoleFractionHighTemp(
   xco2 = x;
 }
 
+Real
+PorousFlowBrineCO2::partialDensityCO2(Real temperature) const
+{
+  // This correlation uses temperature in C
+  const Real Tc = temperature - _T_c2k;
+
+  // The parial molar volume
+  const Real V = 37.51 - 9.585e-2 * Tc + 8.74e-4 * Tc * Tc - 5.044e-7 * Tc * Tc * Tc;
+
+  return 1.0e6 * _Mco2 / V;
+}
+
 void
 PorousFlowBrineCO2::partialDensityCO2(Real temperature,
                                       Real & partial_density,
@@ -1407,12 +1421,13 @@ PorousFlowBrineCO2::partialDensityCO2(Real temperature,
 {
   // This correlation uses temperature in C
   const Real Tc = temperature - _T_c2k;
-  // The parial molar volume
+
+  // The partial molar volume and derivative wrt temperature
   const Real V = 37.51 - 9.585e-2 * Tc + 8.74e-4 * Tc * Tc - 5.044e-7 * Tc * Tc * Tc;
   const Real dV_dT = -9.585e-2 + 1.748e-3 * Tc - 1.5132e-6 * Tc * Tc;
 
   partial_density = 1.0e6 * _Mco2 / V;
-  dpartial_density_dT = -1.0e6 * _Mco2 * dV_dT / V / V;
+  dpartial_density_dT = -partial_density * dV_dT / V;
 }
 
 Real

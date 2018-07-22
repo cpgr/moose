@@ -29,7 +29,7 @@ protected:
   {
     InputParameters pc_params = _factory.getValidParams("PorousFlowCapillaryPressureVG");
     pc_params.set<Real>("m") = 0.5;
-    pc_params.set<Real>("alpha") = 0.1;
+    pc_params.set<Real>("alpha") = 1.0e-4;
     _fe_problem->addUserObject("PorousFlowCapillaryPressureVG", "pc", pc_params);
     _pc = &_fe_problem->getUserObject<PorousFlowCapillaryPressureVG>("pc");
 

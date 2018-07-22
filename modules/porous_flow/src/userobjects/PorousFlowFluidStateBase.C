@@ -42,3 +42,11 @@ PorousFlowFluidStateBase::clearFluidStateProperties(std::vector<FluidStateProper
 {
   std::fill(fsp.begin(), fsp.end(), FluidStateProperties(_num_components));
 }
+
+Real
+PorousFlowFluidStateBase::dLiquidPressure_dGasPressure(Real liquid_saturation,
+                                                       Real dliquid_saturation_dp) const
+{
+  const Real dPc_ds = _pc.dCapillaryPressure(liquid_saturation);
+  return 1.0 - dPc_ds * dliquid_saturation_dp;
+}

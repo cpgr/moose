@@ -107,15 +107,8 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
 
     case FluidStatePhaseEnum::TWOPHASE:
     {
-      // Calculate the gas properties
-      gasProperties(pressure, temperature, fsp);
-
-      // Calculate the saturation
-      saturationTwoPhase(pressure, temperature, Z, fsp);
-
-      // Calculate the liquid properties
-      Real liquid_pressure = pressure - _pc.capillaryPressure(1.0 - gas.saturation, qp);
-      liquidProperties(liquid_pressure, temperature, fsp);
+      // Calculate the gas and liquid properties in the two phase region
+      twoPhaseProperties(pressure, temperature, Z, fsp);
 
       break;
     }
@@ -335,6 +328,7 @@ PorousFlowWaterNCG::liquidProperties(Real pressure,
                                      std::vector<FluidStateProperties> & fsp) const
 {
   FluidStateProperties & liquid = fsp[_aqueous_phase_number];
+  FluidStateProperties & gas = fsp[_gas_phase_number];
 
   // Calculate liquid density and viscosity if in the two phase or single phase
   // liquid region, assuming they are not affected by the presence of dissolved
@@ -369,14 +363,31 @@ PorousFlowWaterNCG::liquidProperties(Real pressure,
   _water_fp.h_from_p_T(
       pressure, temperature, water_enthalpy, dwater_enthalpy_dp, dwater_enthalpy_dT);
 
-  // Enthalpy of gaseous CO2
-  Real ncg_enthalpy, dncg_enthalpy_dp, dncg_enthalpy_dT;
-  _ncg_fp.h_from_p_T(pressure, temperature, ncg_enthalpy, dncg_enthalpy_dp, dncg_enthalpy_dT);
+  // Enthalpy of gaseous CO2 (there is a capillary pressure effect on the gas pressure)
+  const Real liquid_saturation = 1.0 - gas.saturation;
+  const Real dliquid_saturation_dpg = -gas.dsaturation_dp;
+  const Real dliquid_saturation_dZ = -gas.dsaturation_dZ;
+
+  // Gas pressure is a function of saturation
+  const Real gas_pressure = pressure + _pc.capillaryPressure(liquid_saturation);
+  const Real dPc_ds = _pc.dCapillaryPressure(liquid_saturation);
+
+  // Derivate of gas pressure wrt liquid pressure
+  const Real dpg_dp = 1.0 / (1.0 - dPc_ds * dliquid_saturation_dpg);
+
+  Real ncg_enthalpy, dncg_enthalpy_dpg, dncg_enthalpy_dT;
+  _ncg_fp.h_dpT(gas_pressure, temperature, ncg_enthalpy, dncg_enthalpy_dpg, dncg_enthalpy_dT);
+
+  // The derivative of NCG enthalpy wrt liquid pressure is
+  Real dncg_enthalpy_dp = dncg_enthalpy_dpg * dpg_dp;
 
   const Real Xncg = liquid.mass_fraction[_gas_fluid_component];
-  const Real dXncg_dp = liquid.dmass_fraction_dp[_gas_fluid_component];
+  const Real dXncg_dpg = liquid.dmass_fraction_dp[_gas_fluid_component];
   const Real dXncg_dT = liquid.dmass_fraction_dT[_gas_fluid_component];
   const Real dXncg_dZ = liquid.dmass_fraction_dZ[_gas_fluid_component];
+
+  // Derivative of Xncg wrt liquid pressure
+  const Real dXncg_dp = dXncg_dpg * dpg_dp;
 
   liquid.enthalpy = (1.0 - Xncg) * water_enthalpy + Xncg * (ncg_enthalpy + hdis);
   liquid.denthalpy_dp = (1.0 - Xncg) * dwater_enthalpy_dp - dXncg_dp * water_enthalpy +
@@ -384,11 +395,13 @@ PorousFlowWaterNCG::liquidProperties(Real pressure,
   liquid.denthalpy_dT = (1.0 - Xncg) * dwater_enthalpy_dT - dXncg_dT * water_enthalpy +
                         Xncg * dncg_enthalpy_dT + dXncg_dT * (ncg_enthalpy + hdis) +
                         Xncg * dhdis_dT;
-  liquid.denthalpy_dZ = dXncg_dZ * (ncg_enthalpy + hdis - water_enthalpy);
+  liquid.denthalpy_dZ = (dXncg_dZ + dPc_ds * dXncg_dp * dliquid_saturation_dZ) *
+                            (ncg_enthalpy + hdis - water_enthalpy) +
+                        Xncg * dPc_ds * dncg_enthalpy_dp * dliquid_saturation_dZ;
 }
 
 void
-PorousFlowWaterNCG::saturationTwoPhase(Real pressure,
+PorousFlowWaterNCG::twoPhaseProperties(Real pressure,
                                        Real temperature,
                                        Real Z,
                                        std::vector<FluidStateProperties> & fsp) const
@@ -405,6 +418,9 @@ PorousFlowWaterNCG::saturationTwoPhase(Real pressure,
   const Real dYncg_dp = gas.dmass_fraction_dp[_gas_fluid_component];
   const Real dYncg_dT = gas.dmass_fraction_dT[_gas_fluid_component];
 
+  // Calculate all of the gas phase properties, as these don't depend on saturation
+  gasProperties(pressure, temperature, fsp);
+
   // Calculate the vapor mass fraction
   const Real K0 = Yncg / Xncg;
   const Real K1 = (1.0 - Yncg) / (1.0 - Xncg);
@@ -412,7 +428,7 @@ PorousFlowWaterNCG::saturationTwoPhase(Real pressure,
 
   // Liquid density is a function of gas saturation through the capillary pressure
   // curve, so approximate liquid pressure as gas pressure
-  const Real liquid_pressure = pressure;
+  Real liquid_pressure = pressure;
 
   Real liquid_density, liquid_ddensity_dp, liquid_ddensity_dT;
   _water_fp.rho_from_p_T(
@@ -422,6 +438,11 @@ PorousFlowWaterNCG::saturationTwoPhase(Real pressure,
   gas.saturation = vapor_mass_fraction * liquid_density /
                    (gas.density + vapor_mass_fraction * (liquid_density - gas.density));
 
+  // The liquid pressure and properties can now be calculated
+  liquid_pressure = pressure - _pc.capillaryPressure(1.0 - gas.saturation);
+  liquidProperties(liquid_pressure, temperature, fsp);
+
+  // Derivatives of saturation wrt primary variables
   const Real dv_dZ = (K1 - K0) / ((K0 - 1.0) * (K1 - 1.0));
   const Real denominator = (gas.density + vapor_mass_fraction * (liquid_density - gas.density)) *
                            (gas.density + vapor_mass_fraction * (liquid_density - gas.density));
