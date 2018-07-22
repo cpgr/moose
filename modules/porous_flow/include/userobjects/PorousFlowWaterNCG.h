@@ -74,7 +74,7 @@ public:
    * @param temperature phase temperature (C)
    * @param Z total mass fraction of NCG component
    * @param[out] PhaseStateEnum current phase state
-   * @param[out] FluidStateMassFractions data structure
+   * @param[out] FluidStateProperties data structure
    */
   void massFractions(Real pressure,
                      Real temperature,
@@ -83,34 +83,40 @@ public:
                      std::vector<FluidStateProperties> & fsp) const;
 
   /**
-   * Gas density
+   * Gas properties - density, viscosity and enthalpy
    *
    * @param pressure gas pressure (Pa)
    * @param temperature temperature (C)
-   * @param[out] FluidStateDensity data structure
+   * @param[out] FluidStateProperties data structure
    */
   void
   gasProperties(Real pressure, Real temperature, std::vector<FluidStateProperties> & fsp) const;
 
   /**
-   * Liquid density
+   * Liquid properties - density, viscosity and enthalpy
+   * Note: The pressure here is the liquid pressure. In this class, enthalpy includes a
+   * contribution due to the enthalpy of dissolution of the NCG into the liquid phase. As
+   * a result, the derivatives can include a dependence on the capillary pressure, so this
+   * method should be called after the saturation is calculated for the two phase case
+   * ie: after calling saturationTwoPhase(). For the single phase liquid case, it is ok to
+   * call this method by itself, as gas saturation is initialized to zero.
    *
    * @param pressure liquid pressure (Pa)
    * @param temperature temperature (C)
-   * @param[out] FluidStateDensity data structure
+   * @param[out] FluidStateProperties data structure
    */
   void
   liquidProperties(Real pressure, Real temperature, std::vector<FluidStateProperties> & fsp) const;
 
   /**
-   * Gas and liquid saturation in the two-phase region
+   * Gas and liquid properties in the two-phase region
    *
    * @param pressure gas pressure (Pa)
    * @param temperature phase temperature (C)
    * @param Z total mass fraction of NCG component
-   * @param[out] FluidStateSaturation data structure
+   * @param[out] FluidStateProperties data structure
    */
-  void saturationTwoPhase(Real pressure,
+  void twoPhaseProperties(Real pressure,
                           Real temperature,
                           Real Z,
                           std::vector<FluidStateProperties> & fsp) const;
