@@ -8,13 +8,13 @@
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 
 #include "PorousFlowBrineMethaneTest.h"
+#include "FluidPropertiesTestUtils.h"
 #include <vector>
 
 /**
  * Verify that the correct name is supplied
  */
 TEST_F(PorousFlowBrineMethaneTest, name) { EXPECT_EQ("brine-methane", _fp->fluidStateName()); }
-
 
 /*
  * Verify calculation of the activitty coefficient and its derivatives wrt
@@ -37,7 +37,6 @@ TEST_F(PorousFlowBrineMethaneTest, brineMassToMolFraction)
   EXPECT_NEAR(0.23561955583457583, molFraction, tolerance);
 }
 
-
 /*
  * Verify calculation of the activitty coefficient and its derivatives wrt
  * pressure and temperature.
@@ -48,51 +47,51 @@ TEST_F(PorousFlowBrineMethaneTest, brineMassToMolFraction)
 TEST_F(PorousFlowBrineMethaneTest, activityCoefficient)
 {
   const Real tolerance = 1.0e-5; // absolute tolerance
-  const Real xnacl = 0.1; 
+  const Real Xnacl = 0.1;
   Real gamma, dgamma_dp, dgamma_dT;
   Real gamma2, dgamma_dp2, dgamma_dT2;
 
-  _fp->activityCoefficient(barToPascal(1.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  _fp->activityCoefficient(barToPascal(1.0), 273.15, Xnacl, gamma, dgamma_dp, dgamma_dT);
   EXPECT_NEAR(1.0020994748494119, gamma, tolerance) << "Min pressure and temperature";
 
   // Note that the reference says 29584.790, which I suspect is wrong
-  _fp->activityCoefficient(barToPascal(2000.0), 273.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  _fp->activityCoefficient(barToPascal(2000.0), 273.15, Xnacl, gamma, dgamma_dp, dgamma_dT);
   EXPECT_NEAR(1.0025573852149807, gamma, tolerance) << "Max pressure and min temperature";
 
-  _fp->activityCoefficient(barToPascal(2000.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  _fp->activityCoefficient(barToPascal(2000.0), 523.15, Xnacl, gamma, dgamma_dp, dgamma_dT);
   EXPECT_NEAR(1.0011798286032654, gamma, tolerance) << "Max pressure and temperature";
 
-  _fp->activityCoefficient(barToPascal(1.0), 523.15, xnacl, gamma, dgamma_dp, dgamma_dT);
+  _fp->activityCoefficient(barToPascal(1.0), 523.15, Xnacl, gamma, dgamma_dp, dgamma_dT);
   EXPECT_NEAR(1.001300390721471, gamma, tolerance) << "Min pressure and max temperature";
 
   // Pressure and temperature are somewhere in the middle
   Real P = 1000.0; // bar
   Real T = 398.15; // Kelvin
-  _fp->activityCoefficient(barToPascal(P), T, xnacl, gamma, dgamma_dp, dgamma_dT);
-  EXPECT_NEAR(1.0013729694162714, gamma, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
-  
+  _fp->activityCoefficient(barToPascal(P), T, Xnacl, gamma, dgamma_dp, dgamma_dT);
+  EXPECT_NEAR(1.0013729694162714, gamma, tolerance)
+      << "Pressure: " << P << " bar, temperature: " << T << " K";
+
   // const Real dp = 1.0; // Pa
-  _fp->activityCoefficient(barToPascal(P) + dp, T, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
-  EXPECT_NEAR((gamma2-gamma)/dp, dgamma_dp, tolerance) << "Derivative wrt. pressure";
+  _fp->activityCoefficient(barToPascal(P) + dp, T, Xnacl, gamma2, dgamma_dp2, dgamma_dT2);
+  EXPECT_NEAR((gamma2 - gamma) / dp, dgamma_dp, tolerance) << "Derivative wrt. pressure";
 
   // const Real dT = 1.0; // K
-  _fp->activityCoefficient(barToPascal(P), T + dT, xnacl, gamma2, dgamma_dp2, dgamma_dT2);
-  EXPECT_NEAR((gamma2-gamma)/dT, dgamma_dT, tolerance) << "Derivative wrt. temperature";
+  _fp->activityCoefficient(barToPascal(P), T + dT, Xnacl, gamma2, dgamma_dp2, dgamma_dT2);
+  EXPECT_NEAR((gamma2 - gamma) / dT, dgamma_dT, tolerance) << "Derivative wrt. temperature";
 }
 
-
 /*
- * Verify calculation of the fugacity coefficients of methane 
+ * Verify calculation of the fugacity coefficients of methane
  * and their derivatives wrt pressure and temperature.
- * Fugacity is checked against values in Table 4, at 4 corners of the table 
+ * Fugacity is checked against values in Table 4, at 4 corners of the table
  * (combination of pressure/temperature min/max) and at somewhere in the middle.
  * Fugacity derivative is checked against the value at the centre of the table.
  * Pressure range: 1 ~ 10,000 bar
  * Temperature range: 0 ~ 1200 degree celsius
  * The number of digits behind decimal point varies between 3 and 4 in the table.
  * Reference:
- * An equation of state for the CH4-CO2-H2O system: I. Pure systems from 
- * 0 to 1000 degree C and 0 to 8000 bar, 
+ * An equation of state for the CH4-CO2-H2O system: I. Pure systems from
+ * 0 to 1000 degree C and 0 to 8000 bar,
  * Z. Duan, N, Moller, JH. Weare,
  * Geochimica et Cosmochimica Acta Vol. 56, 1992, pp. 2605-2617.
  */
@@ -109,7 +108,8 @@ TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientMethane)
   _fp->fugacityCoefficientMethane(barToPascal(1.0e4), celsiusToKelvin(0.0), phi, dphi_dp, dphi_dT);
   EXPECT_NEAR(29548.790, phi, 1.0e-3) << "Max pressure and min temperature";
 
-  _fp->fugacityCoefficientMethane(barToPascal(1.0e4), celsiusToKelvin(1200.0), phi, dphi_dp, dphi_dT);
+  _fp->fugacityCoefficientMethane(
+      barToPascal(1.0e4), celsiusToKelvin(1200.0), phi, dphi_dp, dphi_dT);
   EXPECT_NEAR(11.158, phi, 1.0e-3) << "Max pressure and temperature";
 
   _fp->fugacityCoefficientMethane(barToPascal(1.0), celsiusToKelvin(1200.0), phi, dphi_dp, dphi_dT);
@@ -120,16 +120,17 @@ TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientMethane)
   t = 600.0;
   _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t), phi, dphi_dp, dphi_dT);
   EXPECT_NEAR(6.7646, phi, 1.0e-4) << "Pressure: " << P << " bar, temperature: " << t << " deg C";
-  
+
   // const Real dp = 1.0; // Pa
-  _fp->fugacityCoefficientMethane(barToPascal(P) + dp, celsiusToKelvin(t), phi2, dphi_dp2, dphi_dT2);
-  EXPECT_NEAR((phi2-phi)/dp, dphi_dp, 1.0e-4) << "Derivative wrt. pressure";
+  _fp->fugacityCoefficientMethane(
+      barToPascal(P) + dp, celsiusToKelvin(t), phi2, dphi_dp2, dphi_dT2);
+  EXPECT_NEAR((phi2 - phi) / dp, dphi_dp, 1.0e-4) << "Derivative wrt. pressure";
 
   // const Real dT = 1.0; // K
-  _fp->fugacityCoefficientMethane(barToPascal(P), celsiusToKelvin(t) + dT, phi2, dphi_dp2, dphi_dT2);
-  EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 1.0e-4) << "Derivative wrt. temperature";
+  _fp->fugacityCoefficientMethane(
+      barToPascal(P), celsiusToKelvin(t) + dT, phi2, dphi_dp2, dphi_dT2);
+  EXPECT_NEAR((phi2 - phi) / dT, dphi_dT, 1.0e-4) << "Derivative wrt. temperature";
 }
-
 
 /*
  * Verify calculation of the fugacity coefficients of water and their derivatives wrt
@@ -162,40 +163,40 @@ TEST_F(PorousFlowBrineMethaneTest, fugacityCoefficientH2O)
   Real P = 1000.0;
   Real T = 398.15;
   _fp->fugacityCoefficientH2O(barToPascal(P), T, phi, dphi_dp, dphi_dT);
-  EXPECT_NEAR(0.66770302582191587, phi, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
-  
+  EXPECT_NEAR(0.66770302582191587, phi, tolerance)
+      << "Pressure: " << P << " bar, temperature: " << T << " K";
+
   // const Real dp = 1.0; // Pa
   _fp->fugacityCoefficientH2O(barToPascal(P) + dp, T, phi2, dphi_dp2, dphi_dT2);
-  EXPECT_NEAR((phi2-phi)/dp, dphi_dp, tolerance) << "Derivative wrt. pressure";
+  EXPECT_NEAR((phi2 - phi) / dp, dphi_dp, tolerance) << "Derivative wrt. pressure";
 
   // const Real dT = 1.0; // K
   _fp->fugacityCoefficientH2O(barToPascal(P), T + dT, phi2, dphi_dp2, dphi_dT2);
-  EXPECT_NEAR((phi2-phi)/dT, dphi_dT, 10.0 * tolerance) << "Derivative wrt. temperature";
+  EXPECT_NEAR((phi2 - phi) / dT, dphi_dT, 10.0 * tolerance) << "Derivative wrt. temperature";
 }
 
-
-/* 
- * Check the calculation of methane solubility in liquid by comparing the results with 
+/*
+ * Check the calculation of methane solubility in liquid by comparing the results with
  * Table 4 ~ 8 from the reference (shown below).
  * Test for each table (which has a specific value of NaCl concentration) is done on 5 locations:
- * 4 corners (combinations of min/max pressure and temperature) and somewhere in the middle. 
+ * 4 corners (combinations of min/max pressure and temperature) and somewhere in the middle.
  * Note that the values in the tables have 5 digits behind decimal point.
  * By default, the values are compared using strict tolerance, where the function is required to
- * reproduce the values in the table exactly. In many locations this is not realistic, 
+ * reproduce the values in the table exactly. In many locations this is not realistic,
  * so the tolerance is made larger.
  * Pressure range: 1 ~ 2000 bar
  * Temperature range: 273 ~ 523 Kelvin
  * Reference:
  * A thermodynamics model for calculating methane solubility, density and gas phase
  * composition of methane-bearing aqueous fluids from 273 to 523 K and from 1 to 2000 bar,
- * Z. Duan and S. Mao, 
+ * Z. Duan and S. Mao,
  * Geochimica et Cosmochimica Acta 70, 2006, pp. 3369-3386.
  */
 TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
 {
-  const Real mh2o = 0.01801528; // Molar mass of H2O in kg/mol
+  const Real mh2o = 0.01801528;        // Molar mass of H2O in kg/mol
   const Real strictTolerance = 1.0e-5; // The same as values in the tables
-  const int n = 25; // 5 tables X 5 locations
+  const int n = 25;                    // 5 tables X 5 locations
 
   Real P[n];     // Pressure in Bar
   Real T[n];     // Temperature in Kelvin
@@ -357,13 +358,14 @@ TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
   bnacl[24] = 6.0;
   bch4[24] = 0.13205;
   tol[24] = strictTolerance;
-  
-  for (int i = 0; i < n; ++i) {
-    EXPECT_NEAR(bch4[i], _fp->methaneSolubilityInLiquid(barToPascal(P[i]), T[i], bnacl[i]), tol[i]) << 
-      "Entry number " << i << ", P: " << P[i] << " bar, T: " << T[i] << " K, bnacl: " << bnacl[i] << " mol/kg\n";
+
+  for (int i = 0; i < n; ++i)
+  {
+    EXPECT_NEAR(bch4[i], _fp->methaneSolubilityInLiquid(barToPascal(P[i]), T[i], bnacl[i]), tol[i])
+        << "Entry number " << i << ", P: " << P[i] << " bar, T: " << T[i]
+        << " K, bnacl: " << bnacl[i] << " mol/kg\n";
   }
 }
-
 
 /*
  * Verify calculation of equilibrium mass fraction and derivatives
@@ -371,50 +373,66 @@ TEST_F(PorousFlowBrineMethaneTest, methaneSolubilityInLiquid)
 TEST_F(PorousFlowBrineMethaneTest, equilibriumMassFraction)
 {
   const Real tolerance = 1.0e-5; // absolute tolerance
-  const Real xnacl = 0.1;
+  const Real Xnacl = 0.1;
   Real xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT;
   Real xch4l2, dxch4l_dp2, dxch4l_dT2, xh2og2, dxh2og_dp2, dxh2og_dT2;
 
-  _fp->equilibriumMassFractions(barToPascal(1.0), 273.15, xnacl, 
-      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  _fp->equilibriumMassFractions(
+      barToPascal(1.0), 273.15, Xnacl, xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
   EXPECT_NEAR(3.8368923015190934e-05, xch4l, tolerance) << "Min pressure and temperature";
   EXPECT_NEAR(0.0055785722378023589, xh2og, tolerance) << "Min pressure and temperature";
 
   // Note that the reference says 29584.790, which I suspect is wrong
-  _fp->equilibriumMassFractions(barToPascal(2000.0), 273.15, xnacl, 
-      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  _fp->equilibriumMassFractions(
+      barToPascal(2000.0), 273.15, Xnacl, xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
   EXPECT_NEAR(0.005577672204430506, xch4l, tolerance) << "Max pressure and min temperature";
   EXPECT_NEAR(0.0, xh2og, tolerance) << "Max pressure and min temperature";
 
-  _fp->equilibriumMassFractions(barToPascal(2000.0), 523.15, xnacl, 
-      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  _fp->equilibriumMassFractions(
+      barToPascal(2000.0), 523.15, Xnacl, xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
   EXPECT_NEAR(0.026154706691632099, xch4l, tolerance) << "Max pressure and temperature";
   EXPECT_NEAR(0.059096823676766705, xh2og, tolerance) << "Max pressure and temperature";
 
-  _fp->equilibriumMassFractions(barToPascal(1.0), 523.15, xnacl, 
-      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  _fp->equilibriumMassFractions(
+      barToPascal(1.0), 523.15, Xnacl, xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
   EXPECT_NEAR(0.0, xch4l, tolerance) << "Min pressure and max temperature";
   EXPECT_NEAR(1.0, xh2og, tolerance) << "Min pressure and max temperature";
 
   // Pressure and temperature are somewhere in the middle
   Real P = 1000.0;
   Real T = 398.15;
-  _fp->equilibriumMassFractions(barToPascal(P), T, xnacl, 
-      xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
-  EXPECT_NEAR(0.0055752885952389348, xch4l, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
-  EXPECT_NEAR(0.0055645129878437024, xh2og, tolerance) << "Pressure: " << P << " bar, temperature: " << T << " K";
-  
+  _fp->equilibriumMassFractions(
+      barToPascal(P), T, Xnacl, xch4l, dxch4l_dp, dxch4l_dT, xh2og, dxh2og_dp, dxh2og_dT);
+  EXPECT_NEAR(0.0055752885952389348, xch4l, tolerance)
+      << "Pressure: " << P << " bar, temperature: " << T << " K";
+  EXPECT_NEAR(0.0055645129878437024, xh2og, tolerance)
+      << "Pressure: " << P << " bar, temperature: " << T << " K";
+
   // const Real dp = 1.0; // Pa
-  _fp->equilibriumMassFractions(barToPascal(P) + dp, T, xnacl, 
-      xch4l2, dxch4l_dp2, dxch4l_dT2, xh2og2, dxh2og_dp2, dxh2og_dT2);
-  EXPECT_NEAR((xch4l2-xch4l)/dp, dxch4l_dp, tolerance) << "Derivative wrt. pressure";
-  EXPECT_NEAR((xh2og2-xh2og)/dp, dxh2og_dp, tolerance) << "Derivative wrt. pressure";
+  _fp->equilibriumMassFractions(barToPascal(P) + dp,
+                                T,
+                                Xnacl,
+                                xch4l2,
+                                dxch4l_dp2,
+                                dxch4l_dT2,
+                                xh2og2,
+                                dxh2og_dp2,
+                                dxh2og_dT2);
+  EXPECT_NEAR((xch4l2 - xch4l) / dp, dxch4l_dp, tolerance) << "Derivative wrt. pressure";
+  EXPECT_NEAR((xh2og2 - xh2og) / dp, dxh2og_dp, tolerance) << "Derivative wrt. pressure";
 
   // const Real dT = 1.0; // K
-  _fp->equilibriumMassFractions(barToPascal(P), T + dT, xnacl, 
-      xch4l2, dxch4l_dp2, dxch4l_dT2, xh2og2, dxh2og_dp2, dxh2og_dT2);
-  EXPECT_NEAR((xch4l2-xch4l)/dT, dxch4l_dT, tolerance) << "Derivative wrt. temperature";
-  EXPECT_NEAR((xh2og2-xh2og)/dT, dxh2og_dT, tolerance) << "Derivative wrt. temperature";
+  _fp->equilibriumMassFractions(barToPascal(P),
+                                T + dT,
+                                Xnacl,
+                                xch4l2,
+                                dxch4l_dp2,
+                                dxch4l_dT2,
+                                xh2og2,
+                                dxh2og_dp2,
+                                dxh2og_dT2);
+  EXPECT_NEAR((xch4l2 - xch4l) / dT, dxch4l_dT, tolerance) << "Derivative wrt. temperature";
+  EXPECT_NEAR((xh2og2 - xh2og) / dT, dxh2og_dT, tolerance) << "Derivative wrt. temperature";
 }
 
 /*
@@ -425,14 +443,14 @@ TEST_F(PorousFlowBrineMethaneTest, MassFraction)
 {
   const Real p = 1.0e6;
   const Real T = 350.0;
-  const Real xnacl = 0.1;
+  const Real Xnacl = 0.1;
 
   FluidStatePhaseEnum phase_state;
   std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
 
   // Liquid region
-  Real z = 0.0001;
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  Real Z = 0.0001;
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::LIQUID);
 
   // Verify mass fraction values
@@ -440,28 +458,28 @@ TEST_F(PorousFlowBrineMethaneTest, MassFraction)
   Real Ych4 = fsp[1].mass_fraction[1];
   Real Xh2o = fsp[0].mass_fraction[0];
   Real Yh2o = fsp[1].mass_fraction[0];
-  ABS_TEST("Xch4", Xch4, z, 1.0e-8);
-  ABS_TEST("Ych4", Ych4, 0.0, 1.0e-8);
-  ABS_TEST("Xh2o", Xh2o, 1.0 - z, 1.0e-8);
-  ABS_TEST("Yh2o", Yh2o, 0.0, 1.0e-8);
+  ABS_TEST(Xch4, Z, 1.0e-8);
+  ABS_TEST(Ych4, 0.0, 1.0e-8);
+  ABS_TEST(Xh2o, 1.0 - Z, 1.0e-8);
+  ABS_TEST(Yh2o, 0.0, 1.0e-8);
 
   // Verify derivatives
   Real dXch4_dp = fsp[0].dmass_fraction_dp[1];
   Real dXch4_dT = fsp[0].dmass_fraction_dT[1];
-  Real dXch4_dz = fsp[0].dmass_fraction_dz[1];
+  Real dXch4_dZ = fsp[0].dmass_fraction_dZ[1];
   Real dYch4_dp = fsp[1].dmass_fraction_dp[1];
   Real dYch4_dT = fsp[1].dmass_fraction_dT[1];
-  Real dYch4_dz = fsp[1].dmass_fraction_dz[1];
-  ABS_TEST("dXch4_dp", dXch4_dp, 0.0, 1.0e-8);
-  ABS_TEST("dXch4_dT", dXch4_dT, 0.0, 1.0e-8);
-  ABS_TEST("dXch4_dz", dXch4_dz, 1.0, 1.0e-8);
-  ABS_TEST("dYch4_dp", dYch4_dp, 0.0, 1.0e-8);
-  ABS_TEST("dYch4_dT", dYch4_dT, 0.0, 1.0e-8);
-  ABS_TEST("dYch4_dz", dYch4_dz, 0.0, 1.0e-8);
+  Real dYch4_dZ = fsp[1].dmass_fraction_dZ[1];
+  ABS_TEST(dXch4_dp, 0.0, 1.0e-8);
+  ABS_TEST(dXch4_dT, 0.0, 1.0e-8);
+  ABS_TEST(dXch4_dZ, 1.0, 1.0e-8);
+  ABS_TEST(dYch4_dp, 0.0, 1.0e-8);
+  ABS_TEST(dYch4_dT, 0.0, 1.0e-8);
+  ABS_TEST(dYch4_dZ, 0.0, 1.0e-8);
 
   // Gas region
-  z = 0.995;
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  Z = 0.995;
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::GAS);
 
   // Verify mass fraction values
@@ -469,74 +487,73 @@ TEST_F(PorousFlowBrineMethaneTest, MassFraction)
   Ych4 = fsp[1].mass_fraction[1];
   Xh2o = fsp[0].mass_fraction[0];
   Yh2o = fsp[1].mass_fraction[0];
-  ABS_TEST("Xch4", Xch4, 0.0, 1.0e-8);
-  ABS_TEST("Ych4", Ych4, z, 1.0e-8);
-  ABS_TEST("Xh2o", Xh2o, 0.0, 1.0e-8);
-  ABS_TEST("Yh2o", Yh2o, 1.0 - z, 1.0e-8);
+  ABS_TEST(Xch4, 0.0, 1.0e-8);
+  ABS_TEST(Ych4, Z, 1.0e-8);
+  ABS_TEST(Xh2o, 0.0, 1.0e-8);
+  ABS_TEST(Yh2o, 1.0 - Z, 1.0e-8);
 
   // Verify derivatives
   dXch4_dp = fsp[0].dmass_fraction_dp[1];
   dXch4_dT = fsp[0].dmass_fraction_dT[1];
-  dXch4_dz = fsp[0].dmass_fraction_dz[1];
+  dXch4_dZ = fsp[0].dmass_fraction_dZ[1];
   dYch4_dp = fsp[1].dmass_fraction_dp[1];
   dYch4_dT = fsp[1].dmass_fraction_dT[1];
-  dYch4_dz = fsp[1].dmass_fraction_dz[1];
-  ABS_TEST("dXch4_dp", dXch4_dp, 0.0, 1.0e-8);
-  ABS_TEST("dXch4_dT", dXch4_dT, 0.0, 1.0e-8);
-  ABS_TEST("dXch4_dz", dXch4_dz, 0.0, 1.0e-8);
-  ABS_TEST("dYch4_dp", dYch4_dp, 0.0, 1.0e-8);
-  ABS_TEST("dYch4_dT", dYch4_dT, 0.0, 1.0e-8);
-  ABS_TEST("dYch4_dz", dYch4_dz, 1.0, 1.0e-8);
+  dYch4_dZ = fsp[1].dmass_fraction_dZ[1];
+  ABS_TEST(dXch4_dp, 0.0, 1.0e-8);
+  ABS_TEST(dXch4_dT, 0.0, 1.0e-8);
+  ABS_TEST(dXch4_dZ, 0.0, 1.0e-8);
+  ABS_TEST(dYch4_dp, 0.0, 1.0e-8);
+  ABS_TEST(dYch4_dT, 0.0, 1.0e-8);
+  ABS_TEST(dYch4_dZ, 1.0, 1.0e-8);
 
   // Two phase region. In this region, the mass fractions and derivatives can
   //  be verified using the equilibrium mass fraction derivatives that have
   // been verified above
-  z = 0.45;
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  Z = 0.45;
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
   // Equilibrium mass fractions and derivatives
   Real Xch4_eq, dXch4_dp_eq, dXch4_dT_eq, Yh2o_eq, dYh2o_dp_eq, dYh2o_dT_eq;
   _fp->equilibriumMassFractions(
-      p, T, xnacl, Xch4_eq, dXch4_dp_eq, dXch4_dT_eq, Yh2o_eq, dYh2o_dp_eq, dYh2o_dT_eq);
+      p, T, Xnacl, Xch4_eq, dXch4_dp_eq, dXch4_dT_eq, Yh2o_eq, dYh2o_dp_eq, dYh2o_dT_eq);
 
   // Verfify mass fraction values
   Xch4 = fsp[0].mass_fraction[1];
   Ych4 = fsp[1].mass_fraction[1];
   Xh2o = fsp[0].mass_fraction[0];
   Yh2o = fsp[1].mass_fraction[0];
-  ABS_TEST("Xch4", Xch4, Xch4_eq, 1.0e-8);
-  ABS_TEST("Ych4", Ych4, 1.0 - Yh2o_eq, 1.0e-8);
-  ABS_TEST("Xh2o", Xh2o, 1.0 - Xch4_eq, 1.0e-8);
-  ABS_TEST("Yh2o", Yh2o, Yh2o_eq, 1.0e-8);
+  ABS_TEST(Xch4, Xch4_eq, 1.0e-8);
+  ABS_TEST(Ych4, 1.0 - Yh2o_eq, 1.0e-8);
+  ABS_TEST(Xh2o, 1.0 - Xch4_eq, 1.0e-8);
+  ABS_TEST(Yh2o, Yh2o_eq, 1.0e-8);
 
   // Verify derivatives wrt p and T
   dXch4_dp = fsp[0].dmass_fraction_dp[1];
   dXch4_dT = fsp[0].dmass_fraction_dT[1];
-  dXch4_dz = fsp[0].dmass_fraction_dz[1];
+  dXch4_dZ = fsp[0].dmass_fraction_dZ[1];
   dYch4_dp = fsp[1].dmass_fraction_dp[1];
   dYch4_dT = fsp[1].dmass_fraction_dT[1];
-  dYch4_dz = fsp[1].dmass_fraction_dz[1];
-  ABS_TEST("dXch4_dp", dXch4_dp, dXch4_dp_eq, 1.0e-8);
-  ABS_TEST("dXch4_dT", dXch4_dT, dXch4_dT_eq, 1.0e-8);
-  ABS_TEST("dXch4_dz", dXch4_dz, 0.0, 1.0e-8);
-  ABS_TEST("dYch4_dp", dYch4_dp, -dYh2o_dp_eq, 1.0e-8);
-  ABS_TEST("dYch4_dT", dYch4_dT, -dYh2o_dT_eq, 1.0e-8);
-  ABS_TEST("dYch4_dz", dYch4_dz, 0.0, 1.0e-8);
+  dYch4_dZ = fsp[1].dmass_fraction_dZ[1];
+  ABS_TEST(dXch4_dp, dXch4_dp_eq, 1.0e-8);
+  ABS_TEST(dXch4_dT, dXch4_dT_eq, 1.0e-8);
+  ABS_TEST(dXch4_dZ, 0.0, 1.0e-8);
+  ABS_TEST(dYch4_dp, -dYh2o_dp_eq, 1.0e-8);
+  ABS_TEST(dYch4_dT, -dYh2o_dT_eq, 1.0e-8);
+  ABS_TEST(dYch4_dZ, 0.0, 1.0e-8);
 
-  // Use finite differences to verify derivative wrt z is unaffected by z
-  const Real dz = 1.0e-8;
-  _fp->massFractions(p, T, xnacl, z + dz, phase_state, fsp);
+  // Use finite differences to verify derivative wrt Z is unaffected by Z
+  const Real dZ = 1.0e-8;
+  _fp->massFractions(p, T, Xnacl, Z + dZ, phase_state, fsp);
   Real Xch41 = fsp[0].mass_fraction[1];
   Real Ych41 = fsp[1].mass_fraction[1];
-  _fp->massFractions(p, T, xnacl, z - dz, phase_state, fsp);
+  _fp->massFractions(p, T, Xnacl, Z - dZ, phase_state, fsp);
   Real Xch42 = fsp[0].mass_fraction[1];
   Real Ych42 = fsp[1].mass_fraction[1];
 
-  ABS_TEST("dXch4_dz", dXch4_dz, (Xch41 - Xch42) / (2.0 * dz), 1.0e-8);
-  ABS_TEST("dXYch4_dz", dYch4_dz, (Ych41 - Ych42) / (2.0 * dz), 1.0e-8);
+  ABS_TEST(dXch4_dZ, (Xch41 - Xch42) / (2.0 * dZ), 1.0e-8);
+  ABS_TEST(dYch4_dZ, (Ych41 - Ych42) / (2.0 * dZ), 1.0e-8);
 }
-
 
 /*
  * Verify calculation of gas density and viscosity, and derivatives. Note that as
@@ -547,14 +564,14 @@ TEST_F(PorousFlowBrineMethaneTest, gasProperties)
 {
   const Real p = 1.0e6;
   const Real T = 350.0;
-  const Real xnacl = 0.1;
+  const Real Xnacl = 0.1;
 
   FluidStatePhaseEnum phase_state;
   std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
 
   // Gas region
-  Real z = 0.995;
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  Real Z = 0.995;
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::GAS);
 
   // Verify fluid density and viscosity
@@ -564,16 +581,16 @@ TEST_F(PorousFlowBrineMethaneTest, gasProperties)
   Real density = _methane_fp->rho(p, T);
   Real viscosity = _methane_fp->mu(p, T);
 
-  ABS_TEST("gas density", gas_density, density, 1.0e-8);
-  ABS_TEST("gas viscosity", gas_viscosity, viscosity, 1.0e-8);
+  ABS_TEST(gas_density, density, 1.0e-8);
+  ABS_TEST(gas_viscosity, viscosity, 1.0e-8);
 
   // Verify derivatives
   Real ddensity_dp = fsp[1].ddensity_dp;
   Real ddensity_dT = fsp[1].ddensity_dT;
-  Real ddensity_dz = fsp[1].ddensity_dz;
+  Real ddensity_dZ = fsp[1].ddensity_dZ;
   Real dviscosity_dp = fsp[1].dviscosity_dp;
   Real dviscosity_dT = fsp[1].dviscosity_dT;
-  Real dviscosity_dz = fsp[1].dviscosity_dz;
+  Real dviscosity_dZ = fsp[1].dviscosity_dZ;
 
   const Real dp = 1.0e-1;
   _fp->gasProperties(p + dp, T, fsp);
@@ -584,8 +601,8 @@ TEST_F(PorousFlowBrineMethaneTest, gasProperties)
   Real rho2 = fsp[1].density;
   Real mu2 = fsp[1].viscosity;
 
-  REL_TEST("ddensity_dp", ddensity_dp, (rho1 - rho2) / (2.0 * dp), 1.0e-6);
-  ABS_TEST("dviscosity_dp", dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-6);
+  REL_TEST(ddensity_dp, (rho1 - rho2) / (2.0 * dp), 1.0e-6);
+  ABS_TEST(dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-6);
 
   const Real dT = 1.0e-3;
   _fp->gasProperties(p, T + dT, fsp);
@@ -595,23 +612,23 @@ TEST_F(PorousFlowBrineMethaneTest, gasProperties)
   rho2 = fsp[1].density;
   mu2 = fsp[1].viscosity;
 
-  REL_TEST("ddensity_dT", ddensity_dT, (rho1 - rho2) / (2.0 * dT), 1.0e-6);
-  REL_TEST("dviscosity_dT", dviscosity_dT, (mu1 - mu2) / (2.0 * dT), 1.0e-6);
+  REL_TEST(ddensity_dT, (rho1 - rho2) / (2.0 * dT), 1.0e-6);
+  REL_TEST(dviscosity_dT, (mu1 - mu2) / (2.0 * dT), 1.0e-6);
 
-  // Note: mass fraction changes with z
-  const Real dz = 1.0e-8;
-  _fp->massFractions(p, T, xnacl, z + dz, phase_state, fsp);
+  // Note: mass fraction changes with Z
+  const Real dZ = 1.0e-8;
+  _fp->massFractions(p, T, Xnacl, Z + dZ, phase_state, fsp);
   _fp->gasProperties(p, T, fsp);
   rho1 = fsp[1].density;
   mu1 = fsp[1].viscosity;
 
-  _fp->massFractions(p, T, xnacl, z - dz, phase_state, fsp);
+  _fp->massFractions(p, T, Xnacl, Z - dZ, phase_state, fsp);
   _fp->gasProperties(p, T, fsp);
   rho2 = fsp[1].density;
   mu2 = fsp[1].viscosity;
 
-  ABS_TEST("ddensity_dz", ddensity_dz, (rho1 - rho2) / (2.0 * dz), 1.0e-8);
-  ABS_TEST("dviscosity_dz", dviscosity_dz, (mu1 - mu2) / (2.0 * dz), 1.0e-8);
+  ABS_TEST(ddensity_dZ, (rho1 - rho2) / (2.0 * dZ), 1.0e-8);
+  ABS_TEST(dviscosity_dZ, (mu1 - mu2) / (2.0 * dZ), 1.0e-8);
 }
 
 /*
@@ -621,131 +638,130 @@ TEST_F(PorousFlowBrineMethaneTest, liquidProperties)
 {
   const Real p = 1.0e6;
   const Real T = 350.0;
-  const Real xnacl = 0.1;
+  const Real Xnacl = 0.1;
 
   FluidStatePhaseEnum phase_state;
   std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
 
   // Liquid region
-  Real z = 0.0001;
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  Real Z = 0.0001;
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::LIQUID);
 
   // Verify fluid density and viscosity
-  _fp->liquidProperties(p, T, xnacl, fsp);
+  _fp->liquidProperties(p, T, Xnacl, fsp);
 
   Real liquid_density = fsp[0].density;
   Real liquid_viscosity = fsp[0].viscosity;
 
-  Real brine_density = _brine_fp->rho(p, T, xnacl);
+  Real brine_density = _brine_fp->rho(p, T, Xnacl);
 
-  Real water_density = _water_fp->rho(p, T);
-  Real viscosity = _brine_fp->mu_from_rho_T(water_density, T, xnacl);
+  Real viscosity = _brine_fp->mu(p, T, Xnacl);
 
-  ABS_TEST("liquid density", liquid_density, brine_density, 1.0e-12);
-  ABS_TEST("liquid viscosity", liquid_viscosity, viscosity, 1.0e-12);
-//   EXPECT_NEAR(liquid_viscosity, viscosity, 1.0e-12) << "liquid viscosity";
+  ABS_TEST(liquid_density, brine_density, 1.0e-12);
+  ABS_TEST(liquid_viscosity, viscosity, 1.0e-12);
+  //   EXPECT_NEAR(liquid_viscosity, viscosity, 1.0e-12) << "liquid viscosity";
 
   // Verify fluid density and viscosity derivatives
   Real ddensity_dp = fsp[0].ddensity_dp;
   Real ddensity_dT = fsp[0].ddensity_dT;
-  Real ddensity_dz = fsp[0].ddensity_dz;
+  Real ddensity_dZ = fsp[0].ddensity_dZ;
   Real dviscosity_dp = fsp[0].dviscosity_dp;
   Real dviscosity_dT = fsp[0].dviscosity_dT;
-  Real dviscosity_dz = fsp[0].dviscosity_dz;
+  Real dviscosity_dZ = fsp[0].dviscosity_dZ;
 
   const Real dp = 1.0;
-  _fp->liquidProperties(p + dp, T, xnacl, fsp);
+  _fp->liquidProperties(p + dp, T, Xnacl, fsp);
   Real rho1 = fsp[0].density;
   Real mu1 = fsp[0].viscosity;
 
-  _fp->liquidProperties(p - dp, T, xnacl, fsp);
+  _fp->liquidProperties(p - dp, T, Xnacl, fsp);
   Real rho2 = fsp[0].density;
   Real mu2 = fsp[0].viscosity;
 
-  ABS_TEST("ddensity_dp", ddensity_dp, (rho1 - rho2) / (2.0 * dp), 1.0e-8);
-  ABS_TEST("dviscosity_dp", dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-8);
-//   EXPECT_NEAR(dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-8) << "dviscosity_dp";
+  ABS_TEST(ddensity_dp, (rho1 - rho2) / (2.0 * dp), 1.0e-8);
+  ABS_TEST(dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-8);
+  //   EXPECT_NEAR(dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-8) << "dviscosity_dp";
 
   const Real dT = 1.0e-4;
-  _fp->liquidProperties(p, T + dT, xnacl, fsp);
+  _fp->liquidProperties(p, T + dT, Xnacl, fsp);
   rho1 = fsp[0].density;
   mu1 = fsp[0].viscosity;
 
-  _fp->liquidProperties(p, T - dT, xnacl, fsp);
+  _fp->liquidProperties(p, T - dT, Xnacl, fsp);
   rho2 = fsp[0].density;
   mu2 = fsp[0].viscosity;
 
-  ABS_TEST("ddensity_dT", ddensity_dT, (rho1 - rho2) / (2.0 * dT), 1.0e-6);
-  REL_TEST("dviscosity_dT", dviscosity_dT, (mu1 - mu2) / (2.0 * dT), 1.0e-6);
+  ABS_TEST(ddensity_dT, (rho1 - rho2) / (2.0 * dT), 1.0e-6);
+  REL_TEST(dviscosity_dT, (mu1 - mu2) / (2.0 * dT), 1.0e-6);
 
-  const Real dz = 1.0e-8;
-  _fp->massFractions(p, T, xnacl, z + dz, phase_state, fsp);
-  _fp->liquidProperties(p, T, xnacl, fsp);
+  const Real dZ = 1.0e-8;
+  _fp->massFractions(p, T, Xnacl, Z + dZ, phase_state, fsp);
+  _fp->liquidProperties(p, T, Xnacl, fsp);
   rho1 = fsp[0].density;
   mu1 = fsp[0].viscosity;
 
-  _fp->massFractions(p, T, xnacl, z - dz, phase_state, fsp);
-  _fp->liquidProperties(p, T, xnacl, fsp);
+  _fp->massFractions(p, T, Xnacl, Z - dZ, phase_state, fsp);
+  _fp->liquidProperties(p, T, Xnacl, fsp);
   rho2 = fsp[0].density;
   mu2 = fsp[0].viscosity;
 
-  ABS_TEST("ddensity_dz", ddensity_dz, (rho1 - rho2) / (2.0 * dz), 1.0e-6);
-  ABS_TEST("dviscosity_dz", dviscosity_dz, (mu1 - mu2) / (2.0 * dz), 1.0e-6);
+  ABS_TEST(ddensity_dZ, (rho1 - rho2) / (2.0 * dZ), 1.0e-6);
+  ABS_TEST(dviscosity_dZ, (mu1 - mu2) / (2.0 * dZ), 1.0e-6);
 
   // Two-phase region
-  z = 0.045;
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  Z = 0.045;
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
   // Verify fluid density and viscosity derivatives
-  _fp->liquidProperties(p, T, xnacl, fsp);
+  _fp->liquidProperties(p, T, Xnacl, fsp);
 
   ddensity_dp = fsp[0].ddensity_dp;
   ddensity_dT = fsp[0].ddensity_dT;
-  ddensity_dz = fsp[0].ddensity_dz;
+  ddensity_dZ = fsp[0].ddensity_dZ;
   dviscosity_dp = fsp[0].dviscosity_dp;
   dviscosity_dT = fsp[0].dviscosity_dT;
-  dviscosity_dz = fsp[0].dviscosity_dz;
+  dviscosity_dZ = fsp[0].dviscosity_dZ;
 
-  _fp->massFractions(p + dp, T, xnacl, z, phase_state, fsp);
-  _fp->liquidProperties(p + dp, T, xnacl, fsp);
+  _fp->massFractions(p + dp, T, Xnacl, Z, phase_state, fsp);
+  _fp->liquidProperties(p + dp, T, Xnacl, fsp);
   rho1 = fsp[0].density;
   mu1 = fsp[0].viscosity;
 
-  _fp->massFractions(p - dp, T, xnacl, z, phase_state, fsp);
-  _fp->liquidProperties(p - dp, T, xnacl, fsp);
+  _fp->massFractions(p - dp, T, Xnacl, Z, phase_state, fsp);
+  _fp->liquidProperties(p - dp, T, Xnacl, fsp);
   rho2 = fsp[0].density;
   mu2 = fsp[0].viscosity;
 
-  REL_TEST("ddensity_dp", ddensity_dp, (rho1 - rho2) / (2.0 * dp), 1.0e-4);
-  REL_TEST("dviscosity_dp", dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-5);
+  REL_TEST(ddensity_dp, (rho1 - rho2) / (2.0 * dp), 1.0e-4);
+  REL_TEST(dviscosity_dp, (mu1 - mu2) / (2.0 * dp), 1.0e-5);
 
-  _fp->massFractions(p, T + dT, xnacl, z, phase_state, fsp);
-  _fp->liquidProperties(p, T + dT, xnacl, fsp);
+  _fp->massFractions(p, T + dT, Xnacl, Z, phase_state, fsp);
+  _fp->liquidProperties(p, T + dT, Xnacl, fsp);
   rho1 = fsp[0].density;
   mu1 = fsp[0].viscosity;
 
-  _fp->massFractions(p, T - dT, xnacl, z, phase_state, fsp);
-  _fp->liquidProperties(p, T - dT, xnacl, fsp);
+  _fp->massFractions(p, T - dT, Xnacl, Z, phase_state, fsp);
+  _fp->liquidProperties(p, T - dT, Xnacl, fsp);
   rho2 = fsp[0].density;
   mu2 = fsp[0].viscosity;
 
-  REL_TEST("ddensity_dT", ddensity_dT, (rho1 - rho2) / (2.0 * dT), 1.0e-6);
-  REL_TEST("dviscosity_dT", dviscosity_dT, (mu1 - mu2) / (2.0 * dT), 1.0e-6);
+  REL_TEST(ddensity_dT, (rho1 - rho2) / (2.0 * dT), 1.0e-6);
+  REL_TEST(dviscosity_dT, (mu1 - mu2) / (2.0 * dT), 1.0e-6);
 
-  _fp->massFractions(p, T, xnacl, z + dz, phase_state, fsp);
-  _fp->liquidProperties(p, T, xnacl, fsp);
+  _fp->massFractions(p, T, Xnacl, Z + dZ, phase_state, fsp);
+  _fp->liquidProperties(p, T, Xnacl, fsp);
   rho1 = fsp[0].density;
   mu1 = fsp[0].viscosity;
 
-  _fp->massFractions(p, T, xnacl, z - dz, phase_state, fsp);
-  _fp->liquidProperties(p, T, xnacl, fsp);
+  _fp->massFractions(p, T, Xnacl, Z - dZ, phase_state, fsp);
+  _fp->liquidProperties(p, T, Xnacl, fsp);
   rho2 = fsp[0].density;
   mu2 = fsp[0].viscosity;
 
-  ABS_TEST("ddensity_dz", ddensity_dz, (rho1 - rho2) / (2.0 * dz), 1.0e-6);
-  ABS_TEST("dviscosity_dz", dviscosity_dz, (mu1 - mu2) / (2.0 * dz), 1.0e-6);
+  ABS_TEST(ddensity_dZ, (rho1 - rho2) / (2.0 * dZ), 1.0e-6);
+  ABS_TEST(dviscosity_dZ, (mu1 - mu2) / (2.0 * dZ), 1.0e-6);
 }
 
 /*
@@ -755,81 +771,81 @@ TEST_F(PorousFlowBrineMethaneTest, saturationTwoPhase)
 {
   const Real p = 1.0e6;
   const Real T = 350.0;
-  const Real xnacl = 0.1;
+  const Real Xnacl = 0.1;
 
   FluidStatePhaseEnum phase_state;
   std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
 
   // In the two-phase region, the mass fractions are the equilibrium values, so
-  // a temporary value of z can be used (as long as it corresponds to the two-phase
+  // a temporary value of Z can be used (as long as it corresponds to the two-phase
   // region)
-  Real z = 0.45;
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  Real Z = 0.45;
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
-  // Calculate z that gives a saturation of 0.25
+  // Calculate Z that gives a saturation of 0.25
   Real gas_saturation = 0.25;
   Real liquid_pressure = p + _pc->capillaryPressure(1.0 - gas_saturation);
   // Calculate gas density and liquid density
   _fp->gasProperties(p, T, fsp);
-  _fp->liquidProperties(liquid_pressure, T, xnacl, fsp);
+  _fp->liquidProperties(liquid_pressure, T, Xnacl, fsp);
 
   // The mass fraction that corresponds to a gas_saturation = 0.25
-  z = (gas_saturation * fsp[1].density * fsp[1].mass_fraction[1] +
+  Z = (gas_saturation * fsp[1].density * fsp[1].mass_fraction[1] +
        (1.0 - gas_saturation) * fsp[0].density * fsp[0].mass_fraction[1]) /
       (gas_saturation * fsp[1].density + (1.0 - gas_saturation) * fsp[0].density);
 
   // Calculate the gas saturation and derivatives
-  _fp->saturationTwoPhase(p, T, xnacl, z, fsp);
+  _fp->saturationTwoPhase(p, T, Xnacl, Z, fsp);
 
-  // EXPECT_NEAR(fsp[1].saturation, gas_saturation, 1.0e-8) << z;
-  ABS_TEST("gas saturation", fsp[1].saturation, gas_saturation, 1.0e-8);
+  // EXPECT_NEAR(fsp[1].saturation, gas_saturation, 1.0e-8) << Z;
+  ABS_TEST(fsp[1].saturation, gas_saturation, 1.0e-8);
 
   // Test the derivatives
   const Real dp = 1.0e-1;
   gas_saturation = fsp[1].saturation;
   Real dgas_saturation_dp = fsp[1].dsaturation_dp;
   Real dgas_saturation_dT = fsp[1].dsaturation_dT;
-  Real dgas_saturation_dz = fsp[1].dsaturation_dz;
+  Real dgas_saturation_dZ = fsp[1].dsaturation_dZ;
 
-  _fp->massFractions(p + dp, T, xnacl, z, phase_state, fsp);
+  _fp->massFractions(p + dp, T, Xnacl, Z, phase_state, fsp);
   _fp->gasProperties(p + dp, T, fsp);
-  _fp->saturationTwoPhase(p + dp, T, xnacl, z, fsp);
+  _fp->saturationTwoPhase(p + dp, T, Xnacl, Z, fsp);
   Real gsat1 = fsp[1].saturation;
 
-  _fp->massFractions(p - dp, T, xnacl, z, phase_state, fsp);
+  _fp->massFractions(p - dp, T, Xnacl, Z, phase_state, fsp);
   _fp->gasProperties(p - dp, T, fsp);
-  _fp->saturationTwoPhase(p - dp, T, xnacl, z, fsp);
+  _fp->saturationTwoPhase(p - dp, T, Xnacl, Z, fsp);
   Real gsat2 = fsp[1].saturation;
 
-  REL_TEST("dgas_saturation_dp", dgas_saturation_dp, (gsat1 - gsat2) / (2.0 * dp), 1.0e-6);
+  REL_TEST(dgas_saturation_dp, (gsat1 - gsat2) / (2.0 * dp), 1.0e-6);
 
   // Derivative wrt T
   const Real dT = 1.0e-4;
-  _fp->massFractions(p, T + dT, xnacl, z, phase_state, fsp);
+  _fp->massFractions(p, T + dT, Xnacl, Z, phase_state, fsp);
   _fp->gasProperties(p, T + dT, fsp);
-  _fp->saturationTwoPhase(p, T + dT, xnacl, z, fsp);
+  _fp->saturationTwoPhase(p, T + dT, Xnacl, Z, fsp);
   gsat1 = fsp[1].saturation;
 
-  _fp->massFractions(p, T - dT, xnacl, z, phase_state, fsp);
+  _fp->massFractions(p, T - dT, Xnacl, Z, phase_state, fsp);
   _fp->gasProperties(p, T - dT, fsp);
-  _fp->saturationTwoPhase(p, T - dT, xnacl, z, fsp);
+  _fp->saturationTwoPhase(p, T - dT, Xnacl, Z, fsp);
   gsat2 = fsp[1].saturation;
 
-  REL_TEST("dgas_saturation_dT", dgas_saturation_dT, (gsat1 - gsat2) / (2.0 * dT), 1.0e-6);
+  REL_TEST(dgas_saturation_dT, (gsat1 - gsat2) / (2.0 * dT), 1.0e-6);
 
-  // Derivative wrt z
-  const Real dz = 1.0e-8;
+  // Derivative wrt Z
+  const Real dZ = 1.0e-8;
 
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   _fp->gasProperties(p, T, fsp);
-  _fp->saturationTwoPhase(p, T, xnacl, z + dz, fsp);
+  _fp->saturationTwoPhase(p, T, Xnacl, Z + dZ, fsp);
   gsat1 = fsp[1].saturation;
 
-  _fp->saturationTwoPhase(p, T, xnacl, z - dz, fsp);
+  _fp->saturationTwoPhase(p, T, Xnacl, Z - dZ, fsp);
   gsat2 = fsp[1].saturation;
 
-  REL_TEST("dgas_saturation_dz", dgas_saturation_dz, (gsat1 - gsat2) / (2.0 * dz), 1.0e-6);
+  REL_TEST(dgas_saturation_dZ, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-6);
 }
 
 /*
@@ -839,21 +855,21 @@ TEST_F(PorousFlowBrineMethaneTest, totalMassFraction)
 {
   const Real p = 1.0e6;
   const Real T = 350.0;
-  const Real xnacl = 0.1;
+  const Real Xnacl = 0.1;
   const Real s = 0.2;
 
-  Real z = _fp->totalMassFraction(p, T, xnacl, s);
+  Real Z = _fp->totalMassFraction(p, T, Xnacl, s);
 
-  // Test that the saturation calculated in this fluid state using z is equal to s
+  // Test that the saturation calculated in this fluid state using Z is equal to s
   FluidStatePhaseEnum phase_state;
   std::vector<FluidStateProperties> fsp(2, FluidStateProperties(2));
 
-  _fp->massFractions(p, T, xnacl, z, phase_state, fsp);
+  _fp->massFractions(p, T, Xnacl, Z, phase_state, fsp);
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
   _fp->gasProperties(p, T, fsp);
   Real liquid_pressure = p + _pc->capillaryPressure(1.0 - s);
-  _fp->liquidProperties(liquid_pressure, T, xnacl, fsp);
-  _fp->saturationTwoPhase(p, T, xnacl, z, fsp);
-  ABS_TEST("gas saturation", fsp[1].saturation, s, 1.0e-8);
+  _fp->liquidProperties(liquid_pressure, T, Xnacl, fsp);
+  _fp->saturationTwoPhase(p, T, Xnacl, Z, fsp);
+  ABS_TEST(fsp[1].saturation, s, 1.0e-8);
 }

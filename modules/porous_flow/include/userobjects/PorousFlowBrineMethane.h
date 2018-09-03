@@ -69,46 +69,43 @@ public:
 
   void thermophysicalProperties(Real pressure,
                                 Real temperature,
-                                Real xnacl,
-                                Real z,
+                                Real Xnacl,
+                                Real Z,
                                 std::vector<FluidStateProperties> & fsp) const;
   /**
    * Mass fractions of methane and brine
    *
    * @param pressure phase pressure (Pa)
    * @param temperature phase temperature (C)
-   * @param xnacl NaCl mass fraction (kg/kg)
-   * @param[out] xch4l mass fraction of methane in liquid (kg/kg)
-   * @param[out] dxch4l_dp derivative of mass fraction of methane in liquid wrt pressure
-   * @param[out] dxch4l_dT derivative of mass fraction of methane in liqiud wrt temperature
-   * @param[out] xh2og mass fraction of H2O in gas (kg/kg)
-   * @param[out] dh2ogl_dp derivative of mass fraction of H2O in gas wrt pressure
-   * @param[out] dh2og_dT derivative of mass fraction of H2O in gas wrt temperature
+   * @param Xnacl NaCl mass fraction (kg/kg)
+   * @param[out] Xch4l mass fraction of methane in liquid (kg/kg)
+   * @param[out] dXch4l_dp derivative of mass fraction of methane in liquid wrt pressure
+   * @param[out] dXch4l_dT derivative of mass fraction of methane in liqiud wrt temperature
+   * @param[out] Xh2og mass fraction of H2O in gas (kg/kg)
+   * @param[out] dXh2ogl_dp derivative of mass fraction of H2O in gas wrt pressure
+   * @param[out] dXh2og_dT derivative of mass fraction of H2O in gas wrt temperature
    */
   void equilibriumMassFractions(Real pressure,
                                 Real temperature,
-                                Real xnacl,
-                                Real & xch4l,
-                                Real & dxch4l_dp,
-                                Real & dxch4l_dT,
-                                Real & xh2og,
-                                Real & dxh2og_dp,
-                                Real & dxh2og_dT) const;
+                                Real Xnacl,
+                                Real & Xch4l,
+                                Real & dXch4l_dp,
+                                Real & dXch4l_dT,
+                                Real & Xh2og,
+                                Real & dXh2og_dp,
+                                Real & dXh2og_dT) const;
 
   /**
    * Mass fractions of methane and brine
    *
    * @param pressure phase pressure (Pa)
    * @param temperature phase temperature (C)
-   * @param xnacl NaCl mass fraction (kg/kg)
-   * @param[out] xch4l mass fraction of methane in liquid (kg/kg)
-   * @param[out] xh2og mass fraction of H2O in gas (kg/kg)
+   * @param Xnacl NaCl mass fraction (kg/kg)
+   * @param[out] Xch4l mass fraction of methane in liquid (kg/kg)
+   * @param[out] Xh2og mass fraction of H2O in gas (kg/kg)
    */
-  void equilibriumMassFractions(Real pressure,
-                                Real temperature,
-                                Real xnacl,
-                                Real & xch4l,
-                                Real & xh2og) const;
+  void equilibriumMassFractions(
+      Real pressure, Real temperature, Real Xnacl, Real & Xch4l, Real & Xh2og) const;
 
   /**
    * Mass fractions of methane and H2O in both phases, as well as derivatives wrt
@@ -116,15 +113,15 @@ public:
    *
    * @param pressure phase pressure (Pa)
    * @param temperature phase temperature (C)
-   * @param xnacl NaCl mass fraction (kg/kg)
-   * @param z total mass fraction of methane component
+   * @param Xnacl NaCl mass fraction (kg/kg)
+   * @param Z total mass fraction of methane component
    * @param[out] PhaseStateEnum current phase state
    * @param[out] FluidStateMassFractions data structure
    */
   void massFractions(Real pressure,
                      Real temperature,
-                     Real xnacl,
-                     Real z,
+                     Real Xnacl,
+                     Real Z,
                      FluidStatePhaseEnum & phase_state,
                      std::vector<FluidStateProperties> & fsp) const;
 
@@ -133,7 +130,7 @@ public:
    *
    * @param pressure gas pressure (Pa)
    * @param temperature temperature (C)
-   * @param xnacl NaCl mass fraction (kg/kg)
+   * @param Xnacl NaCl mass fraction (kg/kg)
    * @param[out] FluidStateDensity data structure
    */
   void
@@ -144,12 +141,12 @@ public:
    *
    * @param pressure liquid pressure (Pa)
    * @param temperature temperature (C)
-   * @param xnacl NaCl mass fraction (kg/kg)
+   * @param Xnacl NaCl mass fraction (kg/kg)
    * @param[out] FluidStateDensity data structure
    */
   void liquidProperties(Real pressure,
                         Real temperature,
-                        Real xnacl,
+                        Real Xnacl,
                         std::vector<FluidStateProperties> & fsp) const;
 
   /**
@@ -157,14 +154,14 @@ public:
    *
    * @param pressure gas pressure (Pa)
    * @param temperature phase temperature (C)
-   * @param xnacl NaCl mass fraction (kg/kg)
-   * @param z total mass fraction of methane component
+   * @param Xnacl NaCl mass fraction (kg/kg)
+   * @param Z total mass fraction of methane component
    * @param[out] FluidStateSaturation data structure
    */
   void saturationTwoPhase(Real pressure,
                           Real temperature,
-                          Real xnacl,
-                          Real z,
+                          Real Xnacl,
+                          Real Z,
                           std::vector<FluidStateProperties> & fsp) const;
 
   /**
@@ -191,7 +188,7 @@ public:
   void fugacityCoefficientH2O(
       Real pressure, Real temperature, Real & fh2o, Real & dfh2o_dp, Real & dfh2o_dT) const;
 
-  Real molFractionOfWaterInGas(const Real pressure, const Real temperature, const Real xh2o) const;
+  Real molFractionOfWaterInGas(const Real pressure, const Real temperature, const Real Xh2o) const;
 
   /**
    * Activity coefficient for methane in brine
@@ -207,23 +204,23 @@ public:
    *
    * @param pressure phase pressure (Pa)
    * @param temperature phase temperature (K)
-   * @param xnacl mol fraction (g/g)
+   * @param Xnacl mol fraction (g/g)
    */
-  Real activityCoefficientMolFraction(Real pressure, Real temperature, Real xnacl) const;
+  Real activityCoefficientMolFraction(Real pressure, Real temperature, Real Xnacl) const;
 
   /**
    * Activity coefficient for methane in brine, with molality as NaCl concentration.
    *
    * @param pressure phase pressure (Pa)
    * @param temperature phase temperature (K)
-   * @param xnacl salt mass fraction (g/g)
+   * @param Xnacl salt mass fraction (g/g)
    * @param[out] gamma activity coefficient for Methane in brine (output)
    * @param[out] dgamma_dp derivative of activity coefficient wrt pressure
    * @param[out] dgamma_dT derivative of activity coefficient wrt temperature
    */
   void activityCoefficient(Real pressure,
                            Real temperature,
-                           Real xnacl,
+                           Real Xnacl,
                            Real & gamma,
                            Real & dgamma_dp,
                            Real & dgamma_dT) const;
@@ -251,18 +248,18 @@ public:
    *
    * @param pressure gas pressure (Pa)
    * @param temperature temperature (K)
-   * @param xnacl NaCl mass fraction (kg/kg)
+   * @param Xnacl NaCl mass fraction (kg/kg)
    * @param saturation gas saturation (-)
    * @return total mass fraction z (-)
    */
-  Real totalMassFraction(Real pressure, Real temperature, Real xnacl, Real saturation) const;
+  Real totalMassFraction(Real pressure, Real temperature, Real Xnacl, Real saturation) const;
 
   /**
    * Compute methane solubility in liquid, based on Ref. 1, Eq. 8.
-   * 
+   *
    * @param pressure gas pressure (Pa)
    * @param temperature temperature (K)
-   * @param xnacl NaCl molality (mol/kg)
+   * @param Xnacl NaCl molality (mol/kg)
    * @return methane solubility in the liquid (mol/kg)
    */
   Real methaneSolubilityInLiquid(Real pressure, Real temperature, Real bnacl) const;
@@ -285,6 +282,8 @@ protected:
   const Real _Mch4;
   /// Molar mass of NaCL
   const Real _Mnacl;
+  /// Molar gas constant in bar L /(K mol)
+  const Real _Rbar;
 };
 
 #endif // POROUSFLOWBRINEMETHANE_H
