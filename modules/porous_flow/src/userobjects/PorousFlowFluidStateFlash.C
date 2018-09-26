@@ -111,7 +111,9 @@ PorousFlowFluidStateFlash::vaporMassFraction(Real Z0, Real K0, Real K1) const
 }
 
 Real
-PorousFlowFluidStateFlash::vaporMassFraction(std::vector<Real> & Zi, std::vector<Real> & Ki) const
+PorousFlowFluidStateFlash::vaporMassFraction(std::vector<Real> & Zi,
+                                             std::vector<Real> & Ki,
+                                             Real v0) const
 {
   // Check that the sizes of the mass fractions and equilibrium constant vectors are correct
   if (Ki.size() != Zi.size() + 1)
@@ -126,8 +128,6 @@ PorousFlowFluidStateFlash::vaporMassFraction(std::vector<Real> & Zi, std::vector
   {
     // More than two components - solve the Rachford-Rice equation using
     // Newton-Raphson method
-    // Initial guess for vapor mass fraction
-    Real v0 = 0.5;
     unsigned int iter = 0;
 
     while (std::abs(rachfordRice(v0, Zi, Ki)) > _nr_tol)
@@ -140,5 +140,7 @@ PorousFlowFluidStateFlash::vaporMassFraction(std::vector<Real> & Zi, std::vector
     }
     v = v0;
   }
-  return v;
+
+  // Constrain v to be [0,1]
+  return std::max(0.0, std::min(v, 1.0));
 }
