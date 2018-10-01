@@ -45,8 +45,7 @@ PorousFlowFluidStateBrineCO2::thermophysicalProperties()
   // The FluidProperty objects use temperature in K
   Real Tk = _temperature[_qp] + _T_c2k;
 
-  _fs_uo.thermophysicalProperties(
-      _gas_porepressure[_qp], Tk, _Xnacl[_qp], (*_Z[0])[_qp], _qp, _fsp);
+  _fs_uo.thermophysicalProperties(_gas_porepressure[_qp], Tk, _Xnacl[_qp], _Z, _qp, _fsp);
 }
 
 void

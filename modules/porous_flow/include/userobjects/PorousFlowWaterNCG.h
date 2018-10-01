@@ -48,11 +48,13 @@ public:
    * @param pressure gas phase pressure (Pa)
    * @param temperature fluid temperature (K)
    * @param Z total mass fraction of NCG component
+   * @param qp quadpoint
    * @param[out] fsp the FluidStateProperties struct containing all properties
    */
   void thermophysicalProperties(Real pressure,
                                 Real temperature,
-                                Real Z,
+                                std::vector<const VariableValue *> & Z,
+                                unsigned int qp,
                                 std::vector<FluidStateProperties> & fsp) const;
   /**
    * Mass fractions of NCG in liquid phase and H2O in gas phase at thermodynamic

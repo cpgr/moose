@@ -19,33 +19,38 @@ class PorousFlowFluidStateBase;
 struct FluidStateProperties
 {
   FluidStateProperties(){};
-  FluidStateProperties(unsigned int n)
+  FluidStateProperties(unsigned int nc, unsigned int nz = 1)
     : pressure(0.0),
       saturation(0.0),
       density(0.0),
       viscosity(1.0), // to guard against division by zero
       enthalpy(0.0),
-      mass_fraction(n, 0.0),
+      mass_fraction(nc, 0.0),
       dsaturation_dp(0.0),
       dsaturation_dT(0.0),
       dsaturation_dZ(0.0),
+      // dsaturation_dZ(nz, 0.0),
       dsaturation_dX(0.0),
       ddensity_dp(0.0),
       ddensity_dT(0.0),
       ddensity_dZ(0.0),
+      // ddensity_dZ(nz, 0.0),
       ddensity_dX(0.0),
       dviscosity_dp(0.0),
       dviscosity_dT(0.0),
       dviscosity_dZ(0.0),
+      // dviscosity_dZ(nz, 0.0),
       dviscosity_dX(0.0),
       denthalpy_dp(0.0),
       denthalpy_dT(0.0),
       denthalpy_dZ(0.0),
+      // denthalpy_dZ(nz, 0.0),
       denthalpy_dX(0.0),
-      dmass_fraction_dp(n, 0.0),
-      dmass_fraction_dT(n, 0.0),
-      dmass_fraction_dZ(n, 0.0),
-      dmass_fraction_dX(n, 0.0){};
+      dmass_fraction_dp(nc, 0.0),
+      dmass_fraction_dT(nc, 0.0),
+      dmass_fraction_dZ(nc, 0.0),
+      // dmass_fraction_dZ(nc, std::vector<Real>(nz, 0.0)),
+      dmass_fraction_dX(nc, 0.0){};
 
   Real pressure;
   Real saturation;
@@ -56,22 +61,27 @@ struct FluidStateProperties
   Real dsaturation_dp;
   Real dsaturation_dT;
   Real dsaturation_dZ;
+  // std::vector<Real> dsaturation_dZ;
   Real dsaturation_dX;
   Real ddensity_dp;
   Real ddensity_dT;
   Real ddensity_dZ;
+  // std::vector<Real> ddensity_dZ;
   Real ddensity_dX;
   Real dviscosity_dp;
   Real dviscosity_dT;
   Real dviscosity_dZ;
+  // std::vector<Real> dviscosity_dZ;
   Real dviscosity_dX;
   Real denthalpy_dp;
   Real denthalpy_dT;
   Real denthalpy_dZ;
+  // std::vector<Real> denthalpy_dZ;
   Real denthalpy_dX;
   std::vector<Real> dmass_fraction_dp;
   std::vector<Real> dmass_fraction_dT;
   std::vector<Real> dmass_fraction_dZ;
+  // std::vector<std::vector<Real>> dmass_fraction_dZ;
   std::vector<Real> dmass_fraction_dX;
 };
 
@@ -131,8 +141,10 @@ public:
 protected:
   /// Number of phases
   unsigned int _num_phases;
-  /// Number of components
+  /// Total number of components
   unsigned int _num_components;
+  /// Number of nonlinear variables Zi
+  unsigned int _num_zvars;
   /// Phase number of the aqueous phase
   const unsigned int _aqueous_phase_number;
   /// Phase number of the gas phase
