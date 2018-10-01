@@ -67,15 +67,14 @@ public:
    * @param temperature fluid temperature (K)
    * @param Xnacl mass fraction of NaCl
    * @param Z total mass fraction of CO2 component
-   * @param qp quadpoint, which may be used by the capillary-pressure userobject if it employs
-   * coupledVariables
+   * @param qp quadpoint
    * @param[out] fsp the FluidStateProperties struct containing all properties
    */
   void thermophysicalProperties(Real pressure,
                                 Real temperature,
                                 Real Xnacl,
-                                Real Z,
-                                unsigned qp,
+                                std::vector<const VariableValue *> & Z,
+                                unsigned int qp,
                                 std::vector<FluidStateProperties> & fsp) const;
 
   /**

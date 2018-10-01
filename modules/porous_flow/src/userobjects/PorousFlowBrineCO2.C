@@ -51,6 +51,7 @@ PorousFlowBrineCO2::PorousFlowBrineCO2(const InputParameters & parameters)
   // Set the number of phases and components, and their indexes
   _num_phases = 2;
   _num_components = 3;
+  _num_zvars = 1;
   _gas_phase_number = 1 - _aqueous_phase_number;
   _gas_fluid_component = 3 - _aqueous_fluid_component - _salt_component;
 
@@ -89,7 +90,7 @@ void
 PorousFlowBrineCO2::thermophysicalProperties(Real pressure,
                                              Real temperature,
                                              Real Xnacl,
-                                             Real Z,
+                                             std::vector<const VariableValue *> & Z,
                                              unsigned qp,
                                              std::vector<FluidStateProperties> & fsp) const
 {
@@ -103,7 +104,7 @@ PorousFlowBrineCO2::thermophysicalProperties(Real pressure,
   clearFluidStateProperties(fsp);
 
   FluidStatePhaseEnum phase_state;
-  massFractions(pressure, temperature, Xnacl, Z, phase_state, fsp);
+  massFractions(pressure, temperature, Xnacl, (*Z[0])[qp], phase_state, fsp);
 
   switch (phase_state)
   {
@@ -133,7 +134,7 @@ PorousFlowBrineCO2::thermophysicalProperties(Real pressure,
       gasProperties(pressure, temperature, fsp);
 
       // Calculate the saturation
-      saturationTwoPhase(pressure, temperature, Xnacl, Z, fsp);
+      saturationTwoPhase(pressure, temperature, Xnacl, (*Z[0])[qp], fsp);
 
       // Calculate the liquid properties
       Real liquid_pressure = pressure - _pc_uo.capillaryPressure(1.0 - gas.saturation, qp);

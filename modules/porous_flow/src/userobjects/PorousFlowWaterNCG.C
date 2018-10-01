@@ -41,6 +41,7 @@ PorousFlowWaterNCG::PorousFlowWaterNCG(const InputParameters & parameters)
   // Set the number of phases and components, and their indexes
   _num_phases = 2;
   _num_components = 2;
+  _num_zvars = 1;
   _gas_phase_number = 1 - _aqueous_phase_number;
   _gas_fluid_component = 1 - _aqueous_fluid_component;
 
@@ -66,7 +67,8 @@ PorousFlowWaterNCG::fluidStateName() const
 void
 PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
                                              Real temperature,
-                                             Real Z,
+                                             std::vector<const VariableValue *> & Z,
+                                             unsigned int qp,
                                              std::vector<FluidStateProperties> & fsp) const
 {
   FluidStateProperties & liquid = fsp[_aqueous_phase_number];
@@ -79,7 +81,7 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
   clearFluidStateProperties(fsp);
 
   FluidStatePhaseEnum phase_state;
-  massFractions(pressure, temperature, Z, phase_state, fsp);
+  massFractions(pressure, temperature, (*Z[0])[qp], phase_state, fsp);
 
   switch (phase_state)
   {
@@ -109,10 +111,10 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
       gasProperties(pressure, temperature, fsp);
 
       // Calculate the saturation
-      saturationTwoPhase(pressure, temperature, Z, fsp);
+      saturationTwoPhase(pressure, temperature, (*Z[0])[qp], fsp);
 
       // Calculate the liquid properties
-      Real liquid_pressure = pressure - _pc_uo.capillaryPressure(1.0 - gas.saturation);
+      Real liquid_pressure = pressure - _pc_uo.capillaryPressure(1.0 - gas.saturation, qp);
       liquidProperties(liquid_pressure, temperature, fsp);
 
       break;
@@ -127,7 +129,7 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
 
   // Save pressures to FluidStateProperties object
   gas.pressure = pressure;
-  liquid.pressure = pressure - _pc_uo.capillaryPressure(liquid.saturation);
+  liquid.pressure = pressure - _pc_uo.capillaryPressure(liquid.saturation, qp);
 }
 
 void
