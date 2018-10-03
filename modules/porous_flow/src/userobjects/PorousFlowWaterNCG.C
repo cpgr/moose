@@ -67,7 +67,7 @@ PorousFlowWaterNCG::fluidStateName() const
 void
 PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
                                              Real temperature,
-                                             Real Xnacl,
+                                             Real /*Xnacl*/,
                                              std::vector<const VariableValue *> & Z,
                                              unsigned int qp,
                                              std::vector<FluidStateProperties> & fsp) const
@@ -126,7 +126,7 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
   liquid.saturation = 1.0 - gas.saturation;
   liquid.dsaturation_dp = -gas.dsaturation_dp;
   liquid.dsaturation_dT = -gas.dsaturation_dT;
-  liquid.dsaturation_dZ = -gas.dsaturation_dZ;
+  liquid.dsaturation_dZ[0] = -gas.dsaturation_dZ[0];
 
   // Save pressures to FluidStateProperties object
   gas.pressure = pressure;
@@ -209,15 +209,15 @@ PorousFlowWaterNCG::massFractions(Real pressure,
   liquid.dmass_fraction_dp[_gas_fluid_component] = dXncg_dp;
   liquid.dmass_fraction_dT[_aqueous_fluid_component] = -dXncg_dT;
   liquid.dmass_fraction_dT[_gas_fluid_component] = dXncg_dT;
-  liquid.dmass_fraction_dZ[_aqueous_fluid_component] = -dXncg_dZ;
-  liquid.dmass_fraction_dZ[_gas_fluid_component] = dXncg_dZ;
+  liquid.dmass_fraction_dZ[_aqueous_fluid_component][0] = -dXncg_dZ;
+  liquid.dmass_fraction_dZ[_gas_fluid_component][0] = dXncg_dZ;
 
   gas.dmass_fraction_dp[_aqueous_fluid_component] = -dYncg_dp;
   gas.dmass_fraction_dp[_gas_fluid_component] = dYncg_dp;
   gas.dmass_fraction_dT[_aqueous_fluid_component] = -dYncg_dT;
   gas.dmass_fraction_dT[_gas_fluid_component] = dYncg_dT;
-  gas.dmass_fraction_dZ[_aqueous_fluid_component] = -dYncg_dZ;
-  gas.dmass_fraction_dZ[_gas_fluid_component] = dYncg_dZ;
+  gas.dmass_fraction_dZ[_aqueous_fluid_component][0] = -dYncg_dZ;
+  gas.dmass_fraction_dZ[_gas_fluid_component][0] = dYncg_dZ;
 }
 
 void
@@ -234,12 +234,12 @@ PorousFlowWaterNCG::gasProperties(Real pressure,
   const Real Yncg = gas.mass_fraction[_gas_fluid_component];
   const Real dYncg_dp = gas.dmass_fraction_dp[_gas_fluid_component];
   const Real dYncg_dT = gas.dmass_fraction_dT[_gas_fluid_component];
-  const Real dYncg_dZ = gas.dmass_fraction_dZ[_gas_fluid_component];
+  const Real dYncg_dZ = gas.dmass_fraction_dZ[_gas_fluid_component][0];
 
   const Real Xncg = liquid.mass_fraction[_gas_fluid_component];
   const Real dXncg_dp = liquid.dmass_fraction_dp[_gas_fluid_component];
   const Real dXncg_dT = liquid.dmass_fraction_dT[_gas_fluid_component];
-  const Real dXncg_dZ = liquid.dmass_fraction_dZ[_gas_fluid_component];
+  const Real dXncg_dZ = liquid.dmass_fraction_dZ[_gas_fluid_component][0];
 
   // Note: take derivative wrt (Yncg * p) etc, hence the dp0
   Real ncg_density, dncg_density_dp0, dncg_density_dT;
@@ -309,7 +309,7 @@ PorousFlowWaterNCG::gasProperties(Real pressure,
   gas.density = ncg_density + vapor_density;
   gas.ddensity_dp = dncg_density_dp + dvapor_density_dp;
   gas.ddensity_dT = dncg_density_dT + dvapor_density_dT;
-  gas.ddensity_dZ = dncg_density_dZ + dvapor_density_dZ;
+  gas.ddensity_dZ[0] = dncg_density_dZ + dvapor_density_dZ;
 
   // Viscosity of the gas phase is a weighted sum of the individual viscosities
   gas.viscosity = Yncg * ncg_viscosity + (1.0 - Yncg) * vapor_viscosity;
@@ -317,8 +317,8 @@ PorousFlowWaterNCG::gasProperties(Real pressure,
                       (1.0 - Yncg) * dvapor_viscosity_dp;
   gas.dviscosity_dT = dYncg_dT * (ncg_viscosity - vapor_viscosity) + Yncg * dncg_viscosity_dT +
                       (1.0 - Yncg) * dvapor_viscosity_dT;
-  gas.dviscosity_dZ = dYncg_dZ * (ncg_viscosity - vapor_viscosity) + Yncg * dncg_viscosity_dZ +
-                      (1.0 - Yncg) * dvapor_viscosity_dZ;
+  gas.dviscosity_dZ[0] = dYncg_dZ * (ncg_viscosity - vapor_viscosity) + Yncg * dncg_viscosity_dZ +
+                         (1.0 - Yncg) * dvapor_viscosity_dZ;
 
   // Enthalpy of the gas phase is a weighted sum of the individual enthalpies
   gas.enthalpy = Yncg * ncg_enthalpy + (1.0 - Yncg) * vapor_enthalpy;
@@ -326,8 +326,8 @@ PorousFlowWaterNCG::gasProperties(Real pressure,
                      (1.0 - Yncg) * dvapor_enthalpy_dp;
   gas.denthalpy_dT = dYncg_dT * (ncg_enthalpy - vapor_enthalpy) + Yncg * dncg_enthalpy_dT +
                      (1.0 - Yncg) * dvapor_enthalpy_dT;
-  gas.denthalpy_dZ = dYncg_dZ * (ncg_enthalpy - vapor_enthalpy) + Yncg * dncg_enthalpy_dZ +
-                     (1.0 - Yncg) * dvapor_enthalpy_dZ;
+  gas.denthalpy_dZ[0] = dYncg_dZ * (ncg_enthalpy - vapor_enthalpy) + Yncg * dncg_enthalpy_dZ +
+                        (1.0 - Yncg) * dvapor_enthalpy_dZ;
 }
 
 void
@@ -355,12 +355,12 @@ PorousFlowWaterNCG::liquidProperties(Real pressure,
   liquid.density = liquid_density;
   liquid.ddensity_dp = dliquid_density_dp;
   liquid.ddensity_dT = dliquid_density_dT;
-  liquid.ddensity_dZ = 0.0;
+  liquid.ddensity_dZ[0] = 0.0;
 
   liquid.viscosity = liquid_viscosity;
   liquid.dviscosity_dp = dliquid_viscosity_dp;
   liquid.dviscosity_dT = dliquid_viscosity_dT;
-  liquid.dviscosity_dZ = 0.0;
+  liquid.dviscosity_dZ[0] = 0.0;
 
   // Enthalpy does include a contribution due to the enthalpy of dissolution
   Real hdis, dhdis_dT;
@@ -377,7 +377,7 @@ PorousFlowWaterNCG::liquidProperties(Real pressure,
   const Real Xncg = liquid.mass_fraction[_gas_fluid_component];
   const Real dXncg_dp = liquid.dmass_fraction_dp[_gas_fluid_component];
   const Real dXncg_dT = liquid.dmass_fraction_dT[_gas_fluid_component];
-  const Real dXncg_dZ = liquid.dmass_fraction_dZ[_gas_fluid_component];
+  const Real dXncg_dZ = liquid.dmass_fraction_dZ[_gas_fluid_component][0];
 
   liquid.enthalpy = (1.0 - Xncg) * water_enthalpy + Xncg * (ncg_enthalpy + hdis);
   liquid.denthalpy_dp = (1.0 - Xncg) * dwater_enthalpy_dp - dXncg_dp * water_enthalpy +
@@ -385,7 +385,7 @@ PorousFlowWaterNCG::liquidProperties(Real pressure,
   liquid.denthalpy_dT = (1.0 - Xncg) * dwater_enthalpy_dT - dXncg_dT * water_enthalpy +
                         Xncg * dncg_enthalpy_dT + dXncg_dT * (ncg_enthalpy + hdis) +
                         Xncg * dhdis_dT;
-  liquid.denthalpy_dZ = dXncg_dZ * (ncg_enthalpy + hdis - water_enthalpy);
+  liquid.denthalpy_dZ[0] = dXncg_dZ * (ncg_enthalpy + hdis - water_enthalpy);
 }
 
 void
@@ -455,7 +455,7 @@ PorousFlowWaterNCG::saturationTwoPhase(Real pressure,
 
   gas.dsaturation_dp = ds_dp;
   gas.dsaturation_dT = ds_dT;
-  gas.dsaturation_dZ = ds_dZ;
+  gas.dsaturation_dZ[0] = ds_dZ;
 }
 
 void
@@ -544,7 +544,7 @@ PorousFlowWaterNCG::enthalpyOfDissolution(Real temperature, Real & hdis, Real & 
 
 Real
 PorousFlowWaterNCG::totalMassFraction(
-    Real pressure, Real temperature, Real Xnacl, Real saturation, unsigned int qp) const
+    Real pressure, Real temperature, Real /*Xnacl*/, Real saturation, unsigned int qp) const
 {
   // Check whether the input temperature is within the region of validity
   checkVariables(temperature);
