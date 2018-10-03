@@ -10,7 +10,7 @@
 #ifndef POROUSFLOWFLUIDSTATEWATERNCG_H
 #define POROUSFLOWFLUIDSTATEWATERNCG_H
 
-#include "PorousFlowFluidStateFlashBase.h"
+#include "PorousFlowFluidState.h"
 #include "Water97FluidProperties.h"
 
 class PorousFlowWaterNCG;
@@ -24,16 +24,13 @@ InputParameters validParams<PorousFlowFluidStateWaterNCG>();
  * of the gas phase in the water using Henry's law, and provides density, viscosity
  * and mass fractions for use in Kernels.
  */
-class PorousFlowFluidStateWaterNCG : public PorousFlowFluidStateFlashBase
+class PorousFlowFluidStateWaterNCG : public PorousFlowFluidState
 {
 public:
   PorousFlowFluidStateWaterNCG(const InputParameters & parameters);
 
 protected:
-  virtual void thermophysicalProperties();
-
-  /// FluidState UserObject
-  const PorousFlowWaterNCG & _fs_uo;
+  virtual void thermophysicalProperties() override;
 };
 
 #endif // POROUSFLOWFLUIDSTATEWATERNCG_H

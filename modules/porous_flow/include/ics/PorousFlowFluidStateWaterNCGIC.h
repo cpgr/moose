@@ -10,9 +10,8 @@
 #ifndef POROUSFLOWFLUIDSTATEWATERNCGIC_H
 #define POROUSFLOWFLUIDSTATEWATERNCGIC_H
 
-#include "PorousFlowFluidStateICBase.h"
+#include "PorousFlowFluidStateIC.h"
 
-class PorousFlowWaterNCG;
 class PorousFlowFluidStateWaterNCGIC;
 
 template <>
@@ -23,7 +22,7 @@ InputParameters validParams<PorousFlowFluidStateWaterNCGIC>();
  * the total mass fraction of a component summed over all
  * phases, z, for water and non-condensable gas
  */
-class PorousFlowFluidStateWaterNCGIC : public PorousFlowFluidStateICBase
+class PorousFlowFluidStateWaterNCGIC : public PorousFlowFluidStateIC
 {
 public:
   PorousFlowFluidStateWaterNCGIC(const InputParameters & parameters);
@@ -31,8 +30,6 @@ public:
   virtual Real value(const Point & p) override;
 
 private:
-  /// FluidState UserObject
-  const PorousFlowWaterNCG & _fs_uo;
 };
 
 #endif // POROUSFLOWFLUIDSTATEWATERNCGIC_H
