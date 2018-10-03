@@ -53,29 +53,14 @@ class PorousFlowBrineCO2 : public PorousFlowFluidStateBase
 public:
   PorousFlowBrineCO2(const InputParameters & parameters);
 
-  /**
-   * Name of FluidState
-   * @return brine-co2
-   */
-  virtual std::string fluidStateName() const;
+  virtual std::string fluidStateName() const override;
 
-  /**
-   * Determines the complete thermophysical state of the system for a given set of
-   * primary variables
-   *
-   * @param pressure gas phase pressure (Pa)
-   * @param temperature fluid temperature (K)
-   * @param Xnacl mass fraction of NaCl
-   * @param Z total mass fraction of CO2 component
-   * @param qp quadpoint
-   * @param[out] fsp the FluidStateProperties struct containing all properties
-   */
-  void thermophysicalProperties(Real pressure,
-                                Real temperature,
-                                Real Xnacl,
-                                std::vector<const VariableValue *> & Z,
-                                unsigned int qp,
-                                std::vector<FluidStateProperties> & fsp) const;
+  virtual void thermophysicalProperties(Real pressure,
+                                        Real temperature,
+                                        Real Xnacl,
+                                        std::vector<const VariableValue *> & Z,
+                                        unsigned int qp,
+                                        std::vector<FluidStateProperties> & fsp) const override;
 
   /**
    * Mole fractions of CO2 in brine and water vapor in CO2 at equilibrium.
@@ -362,25 +347,8 @@ public:
   void
   partialDensityCO2(Real temperature, Real & partial_density, Real & dpartial_density_dT) const;
 
-  /**
-   * Total mass fraction of CO2 summed over all phases in the two-phase state
-   *
-   * @param pressure gas pressure (Pa)
-   * @param temperature temperature (K)
-   * @param Xnacl NaCl mass fraction (kg/kg)
-   * @param saturation gas saturation (-)
-   * @param qp quadpoint, which may be used by the capillary-pressure userobject if it employs
-   * coupledVariables
-   * @return total mass fraction Z (-)
-   */
-  Real totalMassFraction(
-      Real pressure, Real temperature, Real Xnacl, Real saturation, unsigned qp) const;
-
-  /**
-   * The index of the salt component
-   * @return salt component number
-   */
-  unsigned int saltComponentIndex() const { return _salt_component; };
+  virtual Real totalMassFraction(
+      Real pressure, Real temperature, Real Xnacl, Real saturation, unsigned int qp) const override;
 
   /**
    * Henry's constant of dissolution of gas phase CO2 in brine. From
@@ -542,8 +510,6 @@ protected:
                      Real & dB_dT) const;
   ///@}
 
-  /// Salt component index
-  const unsigned int _salt_component;
   /// Fluid properties UserObject for water
   const BrineFluidProperties & _brine_fp;
   /// Fluid properties UserObject for the CO2

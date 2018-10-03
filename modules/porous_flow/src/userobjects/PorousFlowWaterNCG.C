@@ -67,6 +67,7 @@ PorousFlowWaterNCG::fluidStateName() const
 void
 PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
                                              Real temperature,
+                                             Real Xnacl,
                                              std::vector<const VariableValue *> & Z,
                                              unsigned int qp,
                                              std::vector<FluidStateProperties> & fsp) const
@@ -99,7 +100,7 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
     case FluidStatePhaseEnum::LIQUID:
     {
       // Calculate the liquid properties
-      Real liquid_pressure = pressure - _pc_uo.capillaryPressure(1.0);
+      Real liquid_pressure = pressure - _pc_uo.capillaryPressure(1.0, qp);
       liquidProperties(liquid_pressure, temperature, fsp);
 
       break;
@@ -542,7 +543,8 @@ PorousFlowWaterNCG::enthalpyOfDissolution(Real temperature, Real & hdis, Real & 
 }
 
 Real
-PorousFlowWaterNCG::totalMassFraction(Real pressure, Real temperature, Real saturation) const
+PorousFlowWaterNCG::totalMassFraction(
+    Real pressure, Real temperature, Real Xnacl, Real saturation, unsigned int qp) const
 {
   // Check whether the input temperature is within the region of validity
   checkVariables(temperature);
@@ -569,7 +571,7 @@ PorousFlowWaterNCG::totalMassFraction(Real pressure, Real temperature, Real satu
 
   // Liquid properties
   const Real liquid_saturation = 1.0 - saturation;
-  const Real liquid_pressure = pressure - _pc_uo.capillaryPressure(liquid_saturation);
+  const Real liquid_pressure = pressure - _pc_uo.capillaryPressure(liquid_saturation, qp);
   liquidProperties(liquid_pressure, temperature, fsp);
 
   // The total mass fraction of ncg (Z) can now be calculated

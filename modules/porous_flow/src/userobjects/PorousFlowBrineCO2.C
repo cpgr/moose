@@ -22,14 +22,12 @@ validParams<PorousFlowBrineCO2>()
   InputParameters params = validParams<PorousFlowFluidStateBase>();
   params.addRequiredParam<UserObjectName>("brine_fp", "The name of the user object for brine");
   params.addRequiredParam<UserObjectName>("co2_fp", "The name of the user object for CO2");
-  params.addParam<unsigned int>("salt_component", 2, "The component number of salt");
   params.addClassDescription("Fluid state class for brine and CO2");
   return params;
 }
 
 PorousFlowBrineCO2::PorousFlowBrineCO2(const InputParameters & parameters)
   : PorousFlowFluidStateBase(parameters),
-    _salt_component(getParam<unsigned int>("salt_component")),
     _brine_fp(getUserObject<BrineFluidProperties>("brine_fp")),
     _co2_fp(getUserObject<SinglePhaseFluidPropertiesPT>("co2_fp")),
     _water_fp(_brine_fp.getComponent(BrineFluidProperties::WATER)),
@@ -48,11 +46,12 @@ PorousFlowBrineCO2::PorousFlowBrineCO2(const InputParameters & parameters)
   if (_brine_fp.fluidName() != "brine")
     paramError("brine_fp", "A valid Brine FluidProperties UserObject must be provided");
 
-  // Set the number of phases and components, and their indexes
+  // Set the number of phases, components, and their indexes
   _num_phases = 2;
   _num_components = 3;
   _num_zvars = 1;
   _gas_phase_number = 1 - _aqueous_phase_number;
+  _salt_component = 2;
   _gas_fluid_component = 3 - _aqueous_fluid_component - _salt_component;
 
   // Check that _aqueous_phase_number is <= total number of phases
@@ -70,14 +69,7 @@ PorousFlowBrineCO2::PorousFlowBrineCO2(const InputParameters & parameters)
   // Check that the salt component index is not identical to the liquid fluid component
   if (_salt_component == _aqueous_fluid_component)
     paramError(
-        "salt_component",
-        "The value provided must be different from the value entered in liquid_fluid_component");
-
-  // Check that _salt_component is <= total number of fluid components
-  if (_salt_component >= _num_components)
-    paramError("salt_component",
-               "The value provided is larger than the possible number of fluid components",
-               _num_components);
+        "liquid_fluid_component", "The value provided must be different from ", _salt_component);
 }
 
 std::string
@@ -91,7 +83,7 @@ PorousFlowBrineCO2::thermophysicalProperties(Real pressure,
                                              Real temperature,
                                              Real Xnacl,
                                              std::vector<const VariableValue *> & Z,
-                                             unsigned qp,
+                                             unsigned int qp,
                                              std::vector<FluidStateProperties> & fsp) const
 {
   FluidStateProperties & liquid = fsp[_aqueous_phase_number];
@@ -1406,7 +1398,7 @@ PorousFlowBrineCO2::partialDensityCO2(Real temperature,
 
 Real
 PorousFlowBrineCO2::totalMassFraction(
-    Real pressure, Real temperature, Real Xnacl, Real saturation, unsigned qp) const
+    Real pressure, Real temperature, Real Xnacl, Real saturation, unsigned int qp) const
 {
   // Check whether the input pressure and temperature are within the region of validity
   checkVariables(pressure, temperature);

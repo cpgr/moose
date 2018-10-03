@@ -43,11 +43,11 @@ PorousFlowFluidStateFlashBase::PorousFlowFluidStateFlashBase(const InputParamete
 
     _num_Z_vars(coupledComponents("z")),
 
-    _fs_base(getUserObject<PorousFlowFluidStateBase>("fluid_state")),
-    _aqueous_phase_number(_fs_base.aqueousPhaseIndex()),
-    _gas_phase_number(_fs_base.gasPhaseIndex()),
-    _aqueous_fluid_component(_fs_base.aqueousComponentIndex()),
-    _gas_fluid_component(_fs_base.gasComponentIndex()),
+    _fs(getUserObject<PorousFlowFluidStateBase>("fluid_state")),
+    _aqueous_phase_number(_fs.aqueousPhaseIndex()),
+    _gas_phase_number(_fs.gasPhaseIndex()),
+    _aqueous_fluid_component(_fs.aqueousComponentIndex()),
+    _gas_fluid_component(_fs.gasComponentIndex()),
 
     _temperature(_nodal_material ? getMaterialProperty<Real>("PorousFlow_temperature_nodal")
                                  : getMaterialProperty<Real>("PorousFlow_temperature_qp")),
@@ -100,10 +100,10 @@ PorousFlowFluidStateFlashBase::PorousFlowFluidStateFlashBase(const InputParamete
     _pc_uo(getUserObject<PorousFlowCapillaryPressure>("capillary_pressure"))
 {
   // Check that the number of phases in the fluidstate class is also provided in the Dictator
-  if (_fs_base.numPhases() != _num_phases)
+  if (_fs.numPhases() != _num_phases)
     mooseError(name(),
                ": only ",
-               _fs_base.numPhases(),
+               _fs.numPhases(),
                " phases are allowed. Please check the number of phases entered in the dictator is "
                "correct");
 
@@ -124,7 +124,7 @@ PorousFlowFluidStateFlashBase::PorousFlowFluidStateFlashBase(const InputParamete
   }
 
   // Set the size of the FluidStateProperties vector
-  _fsp.resize(_num_phases, FluidStateProperties(_num_components));
+  _fsp.resize(_num_phases, FluidStateProperties(_num_components, _num_Z_vars));
 }
 
 void
