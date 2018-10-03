@@ -141,7 +141,7 @@ PorousFlowBrineCO2::thermophysicalProperties(Real pressure,
   liquid.dsaturation_dp = -gas.dsaturation_dp;
   liquid.dsaturation_dT = -gas.dsaturation_dT;
   liquid.dsaturation_dX = -gas.dsaturation_dX;
-  liquid.dsaturation_dZ = -gas.dsaturation_dZ;
+  liquid.dsaturation_dZ[0] = -gas.dsaturation_dZ[0];
 
   // Save pressures to FluidStateProperties object
   gas.pressure = pressure;
@@ -243,8 +243,8 @@ PorousFlowBrineCO2::massFractions(Real pressure,
   liquid.dmass_fraction_dX[_aqueous_fluid_component] = -dXco2_dX;
   liquid.dmass_fraction_dX[_gas_fluid_component] = dXco2_dX;
   liquid.dmass_fraction_dX[_salt_component] = 1.0;
-  liquid.dmass_fraction_dZ[_aqueous_fluid_component] = -dXco2_dZ;
-  liquid.dmass_fraction_dZ[_gas_fluid_component] = dXco2_dZ;
+  liquid.dmass_fraction_dZ[_aqueous_fluid_component][0] = -dXco2_dZ;
+  liquid.dmass_fraction_dZ[_gas_fluid_component][0] = dXco2_dZ;
 
   gas.dmass_fraction_dp[_aqueous_fluid_component] = -dYco2_dp;
   gas.dmass_fraction_dp[_gas_fluid_component] = dYco2_dp;
@@ -252,8 +252,8 @@ PorousFlowBrineCO2::massFractions(Real pressure,
   gas.dmass_fraction_dT[_gas_fluid_component] = dYco2_dT;
   gas.dmass_fraction_dX[_aqueous_fluid_component] = -dYco2_dX;
   gas.dmass_fraction_dX[_gas_fluid_component] = dYco2_dX;
-  gas.dmass_fraction_dZ[_aqueous_fluid_component] = -dYco2_dZ;
-  gas.dmass_fraction_dZ[_gas_fluid_component] = dYco2_dZ;
+  gas.dmass_fraction_dZ[_aqueous_fluid_component][0] = -dYco2_dZ;
+  gas.dmass_fraction_dZ[_gas_fluid_component][0] = dYco2_dZ;
 }
 
 void
@@ -283,17 +283,17 @@ PorousFlowBrineCO2::gasProperties(Real pressure,
   gas.density = co2_density;
   gas.ddensity_dp = dco2_density_dp;
   gas.ddensity_dT = dco2_density_dT;
-  gas.ddensity_dZ = 0.0;
+  gas.ddensity_dZ[0] = 0.0;
 
   gas.viscosity = co2_viscosity;
   gas.dviscosity_dp = dco2_viscosity_dp;
   gas.dviscosity_dT = dco2_viscosity_dT;
-  gas.dviscosity_dZ = 0.0;
+  gas.dviscosity_dZ[0] = 0.0;
 
   gas.enthalpy = co2_enthalpy;
   gas.denthalpy_dp = dco2_enthalpy_dp;
   gas.denthalpy_dT = dco2_enthalpy_dT;
-  gas.denthalpy_dZ = 0.0;
+  gas.denthalpy_dZ[0] = 0.0;
 }
 
 void
@@ -318,7 +318,7 @@ PorousFlowBrineCO2::liquidProperties(Real pressure,
   const Real Xco2 = liquid.mass_fraction[_gas_fluid_component];
   const Real dXco2_dp = liquid.dmass_fraction_dp[_gas_fluid_component];
   const Real dXco2_dT = liquid.dmass_fraction_dT[_gas_fluid_component];
-  const Real dXco2_dZ = liquid.dmass_fraction_dZ[_gas_fluid_component];
+  const Real dXco2_dZ = liquid.dmass_fraction_dZ[_gas_fluid_component][0];
   const Real dXco2_dX = liquid.dmass_fraction_dX[_gas_fluid_component];
 
   // The liquid density
@@ -388,19 +388,19 @@ PorousFlowBrineCO2::liquidProperties(Real pressure,
   liquid.density = liquid_density;
   liquid.ddensity_dp = dliquid_density_dp;
   liquid.ddensity_dT = dliquid_density_dT;
-  liquid.ddensity_dZ = dliquid_density_dZ;
+  liquid.ddensity_dZ[0] = dliquid_density_dZ;
   liquid.ddensity_dX = dliquid_density_dX;
 
   liquid.viscosity = liquid_viscosity;
   liquid.dviscosity_dp = dliquid_viscosity_dp;
   liquid.dviscosity_dT = dliquid_viscosity_dT;
-  liquid.dviscosity_dZ = 0.0;
+  liquid.dviscosity_dZ[0] = 0.0;
   liquid.dviscosity_dX = dliquid_viscosity_dX;
 
   liquid.enthalpy = liquid_enthalpy;
   liquid.denthalpy_dp = dliquid_enthalpy_dp;
   liquid.denthalpy_dT = dliquid_enthalpy_dT;
-  liquid.denthalpy_dZ = dliquid_enthalpy_dZ;
+  liquid.denthalpy_dZ[0] = dliquid_enthalpy_dZ;
   liquid.denthalpy_dX = dliquid_enthalpy_dX;
 }
 
@@ -509,7 +509,7 @@ PorousFlowBrineCO2::saturationTwoPhase(Real pressure,
 
   gas.dsaturation_dp = ds_dp;
   gas.dsaturation_dT = ds_dT;
-  gas.dsaturation_dZ = ds_dZ;
+  gas.dsaturation_dZ[0] = ds_dZ;
   gas.dsaturation_dX = ds_dX;
 }
 

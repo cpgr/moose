@@ -183,8 +183,10 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
   // Derivative of saturation wrt variables
   for (unsigned int ph = 0; ph < _num_phases; ++ph)
   {
-    _dsaturation_dvar[_qp][ph][_Zvar[0]] = _fsp[ph].dsaturation_dZ;
     _dsaturation_dvar[_qp][ph][_pvar] = _fsp[ph].dsaturation_dp;
+
+    for (unsigned int z = 0; z < _num_Z_vars; ++z)
+      _dsaturation_dvar[_qp][ph][_Zvar[z]] = _fsp[ph].dsaturation_dZ[z];
   }
   // Derivative of capillary pressure
   Real dpc = _pc_uo.dCapillaryPressure(_fsp[_aqueous_phase_number].saturation);
@@ -203,16 +205,20 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
     {
       (*_dgradp_qp_dgradv)[_qp][_aqueous_phase_number][_pvar] +=
           -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar];
-      (*_dgradp_qp_dgradv)[_qp][_aqueous_phase_number][_Zvar[0]] =
-          -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[0]];
+
+      for (unsigned int z = 0; z < _num_Z_vars; ++z)
+        (*_dgradp_qp_dgradv)[_qp][_aqueous_phase_number][_Zvar[z]] =
+            -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[z]];
     }
 
     // The aqueous phase porepressure is also a function of liquid saturation,
     // which depends on both gas porepressure and Z
     _dporepressure_dvar[_qp][_aqueous_phase_number][_pvar] +=
         -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar];
-    _dporepressure_dvar[_qp][_aqueous_phase_number][_Zvar[0]] =
-        -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[0]];
+
+    for (unsigned int z = 0; z < _num_Z_vars; ++z)
+      _dporepressure_dvar[_qp][_aqueous_phase_number][_Zvar[z]] =
+          -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[z]];
   }
 
   // Calculate derivatives of material properties wrt primary variables
@@ -220,8 +226,9 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
   std::vector<Real> dZ_dvar;
   dZ_dvar.assign(_num_pf_vars, 0.0);
 
-  if (_dictator.isPorousFlowVariable(_Z_varnum[0]))
-    dZ_dvar[_Zvar[0]] = 1.0;
+  for (unsigned int z = 0; z < _num_Z_vars; ++z)
+    if (_dictator.isPorousFlowVariable(_Z_varnum[z]))
+      dZ_dvar[_Zvar[z]] = 1.0;
 
   // Derivatives of properties wrt primary variables
   for (unsigned int v = 0; v < _num_pf_vars; ++v)
@@ -230,17 +237,20 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
       // Derivative of density in each phase
       _dfluid_density_dvar[_qp][ph][v] = _fsp[ph].ddensity_dp * _dporepressure_dvar[_qp][ph][v];
       _dfluid_density_dvar[_qp][ph][v] += _fsp[ph].ddensity_dT * _dtemperature_dvar[_qp][v];
-      _dfluid_density_dvar[_qp][ph][v] += _fsp[ph].ddensity_dZ * dZ_dvar[v];
+      for (unsigned int z = 0; z < _num_Z_vars; ++z)
+        _dfluid_density_dvar[_qp][ph][v] += _fsp[ph].ddensity_dZ[z] * dZ_dvar[v];
 
       // Derivative of viscosity in each phase
       _dfluid_viscosity_dvar[_qp][ph][v] = _fsp[ph].dviscosity_dp * _dporepressure_dvar[_qp][ph][v];
       _dfluid_viscosity_dvar[_qp][ph][v] += _fsp[ph].dviscosity_dT * _dtemperature_dvar[_qp][v];
-      _dfluid_viscosity_dvar[_qp][ph][v] += _fsp[ph].dviscosity_dZ * dZ_dvar[v];
+      for (unsigned int z = 0; z < _num_Z_vars; ++z)
+        _dfluid_viscosity_dvar[_qp][ph][v] += _fsp[ph].dviscosity_dZ[z] * dZ_dvar[v];
 
       // Derivative of enthalpy in each phase
       _dfluid_enthalpy_dvar[_qp][ph][v] = _fsp[ph].denthalpy_dp * _dporepressure_dvar[_qp][ph][v];
       _dfluid_enthalpy_dvar[_qp][ph][v] += _fsp[ph].denthalpy_dT * _dtemperature_dvar[_qp][v];
-      _dfluid_enthalpy_dvar[_qp][ph][v] += _fsp[ph].denthalpy_dZ * dZ_dvar[v];
+      for (unsigned int z = 0; z < _num_Z_vars; ++z)
+        _dfluid_enthalpy_dvar[_qp][ph][v] += _fsp[ph].denthalpy_dZ[z] * dZ_dvar[v];
     }
 
   // The derivative of the mass fractions for each fluid component in each phase.
@@ -250,8 +260,9 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
     for (unsigned int comp = 0; comp < _num_components; ++comp)
     {
       _dmass_frac_dvar[_qp][ph][comp][_pvar] = _fsp[ph].dmass_fraction_dp[comp];
-      _dmass_frac_dvar[_qp][ph][comp][_Zvar[0]] =
-          _fsp[ph].dmass_fraction_dZ[comp] * dZ_dvar[_Zvar[0]];
+      for (unsigned int z = 0; z < _num_Z_vars; ++z)
+        _dmass_frac_dvar[_qp][ph][comp][_Zvar[z]] =
+            _fsp[ph].dmass_fraction_dZ[comp][z] * dZ_dvar[_Zvar[z]];
     }
 
   // If the material properties are being evaluated at the qps, calculate the
@@ -264,8 +275,7 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
     Real d2pc = _pc_uo.d2CapillaryPressure(_fsp[_aqueous_phase_number].saturation);
 
     (*_grads_qp)[_qp][_aqueous_phase_number] =
-        _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar] * _gas_gradp_qp[_qp] +
-        _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[0]] * (*_gradZ_qp[0])[_qp];
+        _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar] * _gas_gradp_qp[_qp];
     (*_grads_qp)[_qp][_gas_phase_number] = -(*_grads_qp)[_qp][_aqueous_phase_number];
 
     (*_gradp_qp)[_qp][_gas_phase_number] = _gas_gradp_qp[_qp];
@@ -275,22 +285,34 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
     (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_pvar] =
         -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
         _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar];
-    (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_Zvar[0]] =
-        -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
-        _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[0]];
 
     (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component] =
         _fsp[_aqueous_phase_number].dmass_fraction_dp[_aqueous_fluid_component] *
-            _gas_gradp_qp[_qp] +
-        _fsp[_aqueous_phase_number].dmass_fraction_dZ[_aqueous_fluid_component] *
-            (*_gradZ_qp[0])[_qp];
+        _gas_gradp_qp[_qp];
     (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_gas_fluid_component] =
         -(*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component];
     (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component] =
-        _fsp[_gas_phase_number].dmass_fraction_dp[_aqueous_fluid_component] * _gas_gradp_qp[_qp] +
-        _fsp[_gas_phase_number].dmass_fraction_dZ[_aqueous_fluid_component] * (*_gradZ_qp[0])[_qp];
+        _fsp[_gas_phase_number].dmass_fraction_dp[_aqueous_fluid_component] * _gas_gradp_qp[_qp];
     (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_gas_fluid_component] =
         -(*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component];
+
+    // Add derivatives wrt Z
+    for (unsigned int z = 0; z < _num_Z_vars; ++z)
+    {
+      (*_grads_qp)[_qp][_aqueous_phase_number] +=
+          _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[z]] * (*_gradZ_qp[z])[_qp];
+
+      (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_Zvar[z]] =
+          -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
+          _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[z]];
+
+      _fsp[_aqueous_phase_number].dmass_fraction_dZ[_aqueous_fluid_component][z] *
+          (*_gradZ_qp[z])[_qp];
+
+      (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component] +=
+          _fsp[_gas_phase_number].dmass_fraction_dZ[_aqueous_fluid_component][z] *
+          (*_gradZ_qp[z])[_qp];
+    }
   }
 }
 

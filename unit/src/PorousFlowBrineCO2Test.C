@@ -328,11 +328,11 @@ TEST_F(PorousFlowBrineCO2Test, MassFraction)
   Real dXco2_dp = fsp[0].dmass_fraction_dp[1];
   Real dXco2_dT = fsp[0].dmass_fraction_dT[1];
   Real dXco2_dX = fsp[0].dmass_fraction_dX[1];
-  Real dXco2_dZ = fsp[0].dmass_fraction_dZ[1];
+  Real dXco2_dZ = fsp[0].dmass_fraction_dZ[1][0];
   Real dYco2_dp = fsp[1].dmass_fraction_dp[1];
   Real dYco2_dT = fsp[1].dmass_fraction_dT[1];
   Real dYco2_dX = fsp[1].dmass_fraction_dX[1];
-  Real dYco2_dZ = fsp[1].dmass_fraction_dZ[1];
+  Real dYco2_dZ = fsp[1].dmass_fraction_dZ[1][0];
   Real dXnacl_dX = fsp[0].dmass_fraction_dX[2];
 
   ABS_TEST(dXco2_dp, 0.0, 1.0e-8);
@@ -366,11 +366,11 @@ TEST_F(PorousFlowBrineCO2Test, MassFraction)
   dXco2_dp = fsp[0].dmass_fraction_dp[1];
   dXco2_dT = fsp[0].dmass_fraction_dT[1];
   dXco2_dX = fsp[0].dmass_fraction_dX[1];
-  dXco2_dZ = fsp[0].dmass_fraction_dZ[1];
+  dXco2_dZ = fsp[0].dmass_fraction_dZ[1][0];
   dYco2_dp = fsp[1].dmass_fraction_dp[1];
   dYco2_dT = fsp[1].dmass_fraction_dT[1];
   dYco2_dX = fsp[1].dmass_fraction_dX[1];
-  dYco2_dZ = fsp[1].dmass_fraction_dZ[1];
+  dYco2_dZ = fsp[1].dmass_fraction_dZ[1][0];
   Real dYnacl_dX = fsp[1].dmass_fraction_dX[2];
   ABS_TEST(dXco2_dp, 0.0, 1.0e-8);
   ABS_TEST(dXco2_dT, 0.0, 1.0e-8);
@@ -418,11 +418,11 @@ TEST_F(PorousFlowBrineCO2Test, MassFraction)
   dXco2_dp = fsp[0].dmass_fraction_dp[1];
   dXco2_dT = fsp[0].dmass_fraction_dT[1];
   dXco2_dX = fsp[0].dmass_fraction_dX[1];
-  dXco2_dZ = fsp[0].dmass_fraction_dZ[1];
+  dXco2_dZ = fsp[0].dmass_fraction_dZ[1][0];
   dYco2_dp = fsp[1].dmass_fraction_dp[1];
   dYco2_dT = fsp[1].dmass_fraction_dT[1];
   dYco2_dX = fsp[1].dmass_fraction_dX[1];
-  dYco2_dZ = fsp[1].dmass_fraction_dZ[1];
+  dYco2_dZ = fsp[1].dmass_fraction_dZ[1][0];
 
   ABS_TEST(dXco2_dp, dXco2_dp_eq, 1.0e-8);
   ABS_TEST(dXco2_dT, dXco2_dT_eq, 1.0e-8);
@@ -484,13 +484,13 @@ TEST_F(PorousFlowBrineCO2Test, gasProperties)
   // Verify derivatives
   Real ddensity_dp = fsp[1].ddensity_dp;
   Real ddensity_dT = fsp[1].ddensity_dT;
-  Real ddensity_dZ = fsp[1].ddensity_dZ;
+  Real ddensity_dZ = fsp[1].ddensity_dZ[0];
   Real dviscosity_dp = fsp[1].dviscosity_dp;
   Real dviscosity_dT = fsp[1].dviscosity_dT;
-  Real dviscosity_dZ = fsp[1].dviscosity_dZ;
+  Real dviscosity_dZ = fsp[1].dviscosity_dZ[0];
   Real denthalpy_dp = fsp[1].denthalpy_dp;
   Real denthalpy_dT = fsp[1].denthalpy_dT;
-  Real denthalpy_dZ = fsp[1].denthalpy_dZ;
+  Real denthalpy_dZ = fsp[1].denthalpy_dZ[0];
 
   const Real dp = 1.0e-1;
   _fp->gasProperties(p + dp, T, fsp);
@@ -588,15 +588,15 @@ TEST_F(PorousFlowBrineCO2Test, liquidProperties)
   // Verify fluid density and viscosity derivatives
   Real ddensity_dp = fsp[0].ddensity_dp;
   Real ddensity_dT = fsp[0].ddensity_dT;
-  Real ddensity_dZ = fsp[0].ddensity_dZ;
+  Real ddensity_dZ = fsp[0].ddensity_dZ[0];
   Real ddensity_dX = fsp[0].ddensity_dX;
   Real dviscosity_dp = fsp[0].dviscosity_dp;
   Real dviscosity_dT = fsp[0].dviscosity_dT;
-  Real dviscosity_dZ = fsp[0].dviscosity_dZ;
+  Real dviscosity_dZ = fsp[0].dviscosity_dZ[0];
   Real dviscosity_dX = fsp[0].dviscosity_dX;
   Real denthalpy_dp = fsp[0].denthalpy_dp;
   Real denthalpy_dT = fsp[0].denthalpy_dT;
-  Real denthalpy_dZ = fsp[0].denthalpy_dZ;
+  Real denthalpy_dZ = fsp[0].denthalpy_dZ[0];
   Real denthalpy_dX = fsp[0].denthalpy_dX;
 
   // Derivatives wrt pressure
@@ -676,14 +676,14 @@ TEST_F(PorousFlowBrineCO2Test, liquidProperties)
   ddensity_dp = fsp[0].ddensity_dp;
   ddensity_dT = fsp[0].ddensity_dT;
   ddensity_dX = fsp[0].ddensity_dX;
-  ddensity_dZ = fsp[0].ddensity_dZ;
+  ddensity_dZ = fsp[0].ddensity_dZ[0];
   dviscosity_dp = fsp[0].dviscosity_dp;
   dviscosity_dT = fsp[0].dviscosity_dT;
   dviscosity_dX = fsp[0].dviscosity_dX;
-  dviscosity_dZ = fsp[0].dviscosity_dZ;
+  dviscosity_dZ = fsp[0].dviscosity_dZ[0];
   denthalpy_dp = fsp[0].denthalpy_dp;
   denthalpy_dT = fsp[0].denthalpy_dT;
-  denthalpy_dZ = fsp[0].denthalpy_dZ;
+  denthalpy_dZ = fsp[0].denthalpy_dZ[0];
   denthalpy_dX = fsp[0].denthalpy_dX;
 
   // Derivatives wrt pressure
@@ -799,7 +799,7 @@ TEST_F(PorousFlowBrineCO2Test, saturationTwoPhase)
   Real dgas_saturation_dp = fsp[1].dsaturation_dp;
   Real dgas_saturation_dT = fsp[1].dsaturation_dT;
   Real dgas_saturation_dX = fsp[1].dsaturation_dX;
-  Real dgas_saturation_dZ = fsp[1].dsaturation_dZ;
+  Real dgas_saturation_dZ = fsp[1].dsaturation_dZ[0];
 
   // Derivative wrt pressure
   _fp->massFractions(p + dp, T, Xnacl, Z, phase_state, fsp);
