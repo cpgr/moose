@@ -8,6 +8,7 @@
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 
 #include "PorousFlowFluidStateFlash.h"
+#include "BrentsMethod.h"
 
 registerMooseObject("PorousFlowApp", PorousFlowFluidStateFlash);
 
@@ -111,9 +112,7 @@ PorousFlowFluidStateFlash::vaporMassFraction(Real Z0, Real K0, Real K1) const
 }
 
 Real
-PorousFlowFluidStateFlash::vaporMassFraction(std::vector<Real> & Zi,
-                                             std::vector<Real> & Ki,
-                                             Real v0) const
+PorousFlowFluidStateFlash::vaporMassFraction(std::vector<Real> & Zi, std::vector<Real> & Ki) const
 {
   // Check that the sizes of the mass fractions and equilibrium constant vectors are correct
   if (Ki.size() != Zi.size() + 1)
@@ -126,21 +125,22 @@ PorousFlowFluidStateFlash::vaporMassFraction(std::vector<Real> & Zi,
     v = vaporMassFraction(Zi[0], Ki[0], Ki[1]);
   else
   {
-    // More than two components - solve the Rachford-Rice equation using
-    // Newton-Raphson method
-    unsigned int iter = 0;
+    // More than two components - solve the Rachford-Rice equation iteratively
+    // First, check whether the function has a root in [0,1]
+    const Real r0 = rachfordRice(0.0, Zi, Ki);
+    const Real r1 = rachfordRice(0.999, Zi, Ki);
 
-    while (std::abs(rachfordRice(v0, Zi, Ki)) > _nr_tol)
+    if (r0 <= 0.0)
+      v = 0.0;
+    else if (r1 >= 0.0)
+      v = 1.0;
+    else
     {
-      v0 = v0 - rachfordRice(v0, Zi, Ki) / rachfordRiceDeriv(v0, Zi, Ki);
-      iter++;
+      auto func = [&, this](Real v0) { return rachfordRice(v0, Zi, Ki); };
 
-      if (iter > _nr_max_its)
-        break;
+      v = BrentsMethod::root(func, 0.0, 1.0, 1.0e-6);
     }
-    v = v0;
   }
 
-  // Constrain v to be [0,1]
-  return std::max(0.0, std::min(v, 1.0));
+  return v;
 }

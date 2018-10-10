@@ -81,11 +81,10 @@ public:
    *
    * @param Zi total mass fraction(s)
    * @param Ki equilibrium constant(s)
-   * @param v0 initial guess for vapor mass fraction
    * @return vapor mass fraction
    */
   Real vaporMassFraction(Real Z0, Real K0, Real K1) const;
-  Real vaporMassFraction(std::vector<Real> & Zi, std::vector<Real> & Ki, Real v0 = 0.5) const;
+  Real vaporMassFraction(std::vector<Real> & Zi, std::vector<Real> & Ki) const;
 
 protected:
   /**
