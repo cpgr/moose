@@ -61,8 +61,8 @@ public:
                                 Real temperature,
                                 Real Xnacl,
                                 Real yco2,
-                                Real yh2s,
                                 Real ych4,
+                                Real yh2s,
                                 Real & xco2,
                                 Real & xch4,
                                 Real & xh2s,
@@ -75,21 +75,24 @@ public:
    * @param pressure phase pressure (Pa)
    * @param temperature phase temperature (K)
    * @param Xnacl NaCl mass fraction (kg/kg)
-   * @param[out] xco2 mole fraction of CO2 in liquid
-   * @param[out] xch4 mole fraction of CO2 in liquid
-   * @param[out] xh2s mole fraction of CO2 in liquid
-   * @param[out] yh2o mass fraction of mole in gas
+   * @param Yco2 mass fraction of CO2 in gas
+   * @param Ych4 mass fraction of CO2 in gas
+   * @param Yh2s mass fraction of CO2 in gas
+   * @param[out] Xco2 mass fraction of CO2 in liquid
+   * @param[out] Xch4 mass fraction of CO2 in liquid
+   * @param[out] Xh2s mass fraction of CO2 in liquid
+   * @param[out] Yh2o mass fraction of mole in gas
    */
   void equilibriumMassFractions(Real pressure,
                                 Real temperature,
                                 Real Xnacl,
-                                Real yco2,
-                                Real yh2s,
-                                Real ych4,
-                                Real & xco2,
-                                Real & xch4,
-                                Real & xh2s,
-                                Real & yh2o) const;
+                                Real Yco2,
+                                Real Ych4,
+                                Real Yh2s,
+                                Real & Xco2,
+                                Real & Xch4,
+                                Real & Xh2s,
+                                Real & Yh2o) const;
 
   /**
    * Mass fractions of CO2, CH4 and H2S in brine and water vapor in gas phase
@@ -105,20 +108,35 @@ public:
                      Real temperature,
                      Real Xnacl,
                      Real ZCO2,
-                     Real ZH2S,
                      Real ZCH4,
+                     Real ZH2S,
                      FluidStatePhaseEnum & phase_state,
                      std::vector<FluidStateProperties> & fsp) const;
+
+  void massFractions(Real pressure,
+                     Real temperature,
+                     Real Xnacl,
+                     Real ZCO2,
+                     Real ZCH4,
+                     Real ZH2S,
+                     Real & Xco2,
+                     Real & Yco2,
+                     Real & Xch4,
+                     Real & Ych4,
+                     Real & Xh2s,
+                     Real & Yh2s) const;
 
   /**
    * Gas density
    *
    * @param pressure gas pressure (Pa)
    * @param temperature temperature (K)
-   * @param FluidStateDensity data structure
+   * @param yco2 mole fraction of CO2 in gas phase
+   * @param ych4 mole fraction of CH4 in gas phase
+   * @param yh2s mole fraction of H2S in gas phase
    * @return gas density (kg/m^3)
    */
-  Real gasDensity(Real pressure, Real temperature, std::vector<FluidStateProperties> & fsp) const;
+  Real gasDensity(Real pressure, Real temperature, Real yco2, Real ych4, Real yh2s) const;
 
   /**
    * Thermophysical properties of the gaseous state
@@ -170,8 +188,8 @@ public:
                           Real temperature,
                           Real Xnacl,
                           Real ZCO2,
-                          Real ZH2S,
                           Real ZCH4,
+                          Real ZH2S,
                           std::vector<FluidStateProperties> & fsp) const;
 
   /**
@@ -187,8 +205,8 @@ public:
                      Real temperature,
                      Real Xnacl,
                      Real ZCO2,
-                     Real ZH2S,
                      Real ZCH4,
+                     Real ZH2S,
                      std::vector<FluidStateProperties> & fsp) const;
 
   void GasCompressibilityFactor(
@@ -204,6 +222,15 @@ public:
 
   virtual Real totalMassFraction(
       Real pressure, Real temperature, Real Xnacl, Real saturation, unsigned int qp) const override;
+
+  virtual Real totalMassFraction(Real pressure,
+                                 Real temperature,
+                                 Real Xnacl,
+                                 Real saturation,
+                                 std::vector<Real> Yi,
+                                 std::vector<FluidStateProperties> & fsp,
+                                 unsigned int component,
+                                 unsigned int qp) const;
 
 protected:
   /// Check the input variables
