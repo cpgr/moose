@@ -26,6 +26,7 @@ struct FluidStateProperties
       viscosity(1.0), // to guard against division by zero
       enthalpy(0.0),
       mass_fraction(nc, 0.0),
+      mole_fraction(nc, 0.0),
       dsaturation_dp(0.0),
       dsaturation_dT(0.0),
       // dsaturation_dZ(0.0),
@@ -58,6 +59,7 @@ struct FluidStateProperties
   Real viscosity;
   Real enthalpy;
   std::vector<Real> mass_fraction;
+  std::vector<Real> mole_fraction;
   Real dsaturation_dp;
   Real dsaturation_dT;
   // Real dsaturation_dZ;
