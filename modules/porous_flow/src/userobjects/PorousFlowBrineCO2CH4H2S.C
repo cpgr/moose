@@ -52,6 +52,7 @@ PorousFlowBrineCO2CH4H2S::PorousFlowBrineCO2CH4H2S(const InputParameters & param
   _num_components = 5;
   _num_zvars = 3;
   _gas_phase_number = 1 - _aqueous_phase_number;
+  _gas_fluid_component = _co2_component;
 }
 
 std::string
