@@ -121,7 +121,7 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, gasProperties)
 
   Real viscosity = _co2_fp->mu_from_p_T(p, T);
 
-  ABS_TEST(gas_density, 90.6196547751, 1.0e-8);
+  ABS_TEST(gas_density, 89.9756679753, 1.0e-8);
   ABS_TEST(gas_viscosity, viscosity, 1.0e-8);
 
   // Verify derivatives
@@ -175,10 +175,8 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, gasProperties)
   rho2 = fsp[1].density;
   mu2 = fsp[1].viscosity;
 
-  // REL_TEST(ddensity_dZco2, (rho1 - rho2) / (2.0 * dZ), 1.0e-8);
-  // REL_TEST(dviscosity_dZco2, (mu1 - mu2) / (2.0 * dZ), 1.0e-8);
-  // std::cout << "ddensity_dZco2 " << ddensity_dZco2 << ", fd " << (rho1 - rho2) / (2.0 * dZ)
-  //           << std::endl;
+  REL_TEST(ddensity_dZco2, (rho1 - rho2) / (2.0 * dZ), 1.0e-6);
+  REL_TEST(dviscosity_dZco2, (mu1 - mu2) / (2.0 * dZ), 1.0e-6);
 
   _fp->massFractions(p, T, Xnacl, Zco2, Zch4 + dZ, Zh2s, phase_state, fsp);
   _fp->gasProperties(p, T, fsp);
@@ -189,11 +187,9 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, gasProperties)
   _fp->gasProperties(p, T, fsp);
   rho2 = fsp[1].density;
   mu2 = fsp[1].viscosity;
-  //
-  // REL_TEST(ddensity_dZch4, (rho1 - rho2) / (2.0 * dZ), 1.0e-8);
-  // REL_TEST(dviscosity_dZch4, (mu1 - mu2) / (2.0 * dZ), 1.0e-8);
-  // std::cout << "ddensity_dZch4 " << ddensity_dZch4 << ", fd " << (rho1 - rho2) / (2.0 * dZ)
-  //           << std::endl;
+
+  REL_TEST(ddensity_dZch4, (rho1 - rho2) / (2.0 * dZ), 1.0e-6);
+  REL_TEST(dviscosity_dZch4, (mu1 - mu2) / (2.0 * dZ), 1.0e-6);
 
   _fp->massFractions(p, T, Xnacl, Zco2, Zch4, Zh2s + dZ, phase_state, fsp);
   _fp->gasProperties(p, T, fsp);
@@ -205,10 +201,8 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, gasProperties)
   rho2 = fsp[1].density;
   mu2 = fsp[1].viscosity;
 
-  // REL_TEST(ddensity_dZh2s, (rho1 - rho2) / (2.0 * dZ), 1.0e-8);
-  // REL_TEST(dviscosity_dZh2s, (mu1 - mu2) / (2.0 * dZ), 1.0e-8);
-  // std::cout << "ddensity_dZh2s " << ddensity_dZh2s << ", fd " << (rho1 - rho2) / (2.0 * dZ)
-  //           << std::endl;
+  REL_TEST(ddensity_dZh2s, (rho1 - rho2) / (2.0 * dZ), 1.0e-6);
+  REL_TEST(dviscosity_dZh2s, (mu1 - mu2) / (2.0 * dZ), 1.0e-6);
 }
 
 TEST_F(PorousFlowBrineCO2CH4H2STest, liquidProperties)
@@ -759,7 +753,7 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, twoPhaseProperties)
   _fp->twoPhaseProperties(p, T - dT, Xnacl, Zco2, Zch4, Zh2s, fsp);
   gsat2 = fsp[1].saturation;
 
-  REL_TEST(dgas_saturation_dT, (gsat1 - gsat2) / (2.0 * dT), 1.0e-6);
+  REL_TEST(dgas_saturation_dT, (gsat1 - gsat2) / (2.0 * dT), 1.0e-4);
 
   // Derivative wrt Xnacl
   const Real dX = 1.0e-8;
@@ -773,7 +767,7 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, twoPhaseProperties)
   _fp->twoPhaseProperties(p, T, Xnacl - dX, Zco2, Zch4, Zh2s, fsp);
   gsat2 = fsp[1].saturation;
 
-  REL_TEST(dgas_saturation_dX, (gsat1 - gsat2) / (2.0 * dX), 1.0e-6);
+  REL_TEST(dgas_saturation_dX, (gsat1 - gsat2) / (2.0 * dX), 1.0e-4);
 
   // Derivative wrt Z
   const Real dZ = 1.0e-8;
@@ -787,7 +781,7 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, twoPhaseProperties)
   _fp->twoPhaseProperties(p, T, Xnacl, Zco2 - dZ, Zch4, Zh2s, fsp);
   gsat2 = fsp[1].saturation;
 
-  REL_TEST(dgas_saturation_dZco2, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-6);
+  REL_TEST(dgas_saturation_dZco2, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-4);
 
   _fp->massFractions(p, T, Xnacl, Zco2, Zch4 + dZ, Zh2s, phase_state, fsp);
   _fp->gasProperties(p, T, fsp);
@@ -798,7 +792,7 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, twoPhaseProperties)
   _fp->twoPhaseProperties(p, T, Xnacl, Zco2, Zch4 - dZ, Zh2s, fsp);
   gsat2 = fsp[1].saturation;
 
-  REL_TEST(dgas_saturation_dZch4, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-5);
+  REL_TEST(dgas_saturation_dZch4, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-4);
 
   _fp->massFractions(p, T, Xnacl, Zco2, Zch4, Zh2s + dZ, phase_state, fsp);
   _fp->gasProperties(p, T, fsp);
@@ -809,7 +803,7 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, twoPhaseProperties)
   _fp->twoPhaseProperties(p, T, Xnacl, Zco2, Zch4, Zh2s - dZ, fsp);
   gsat2 = fsp[1].saturation;
 
-  REL_TEST(dgas_saturation_dZh2s, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-6);
+  REL_TEST(dgas_saturation_dZh2s, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-4);
 }
 
 /*
@@ -847,5 +841,5 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, totalMassFraction)
   const Real gas_saturation = _fp->gasSaturation(p, T, Xnacl, Zco2, Zch4, Zh2s, fsp);
   // The tolerance is quite loose as the calculated saturation isn't exact due to the
   // presence of water vopor in the gas phase that is not included in the input
-  ABS_TEST(gas_saturation, s, 1.0e-2);
+  ABS_TEST(gas_saturation, s, 2.0e-2);
 }

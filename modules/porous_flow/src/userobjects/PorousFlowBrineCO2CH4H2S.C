@@ -52,6 +52,7 @@ PorousFlowBrineCO2CH4H2S::PorousFlowBrineCO2CH4H2S(const InputParameters & param
   _num_components = 5;
   _num_zvars = 3;
   _gas_phase_number = 1 - _aqueous_phase_number;
+  _gas_fluid_component = _co2_component;
 }
 
 std::string
@@ -1022,8 +1023,14 @@ PorousFlowBrineCO2CH4H2S::massFractions(Real pressure,
 
 Real
 PorousFlowBrineCO2CH4H2S::gasDensity(
-    Real pressure, Real temperature, Real yco2, Real ych4, Real yh2s) const
+    Real pressure, Real temperature, Real Yco2, Real Ych4, Real Yh2s) const
 {
+  const Real gdenom =
+      Yco2 / _Mco2 + Yh2s / _Mh2s + Ych4 / _Mch4 + (1.0 - Yco2 - Ych4 - Yh2s) / _Mh2o;
+  const Real yco2 = Yco2 / _Mco2 / gdenom;
+  const Real ych4 = Ych4 / _Mco2 / gdenom;
+  const Real yh2s = Yh2s / _Mco2 / gdenom;
+
   Real Zg;
   Real Mw_mix = yco2 * _Mco2 + ych4 * _Mch4 + yh2s * _Mh2s; //(gr/mol)
 
@@ -1040,14 +1047,10 @@ PorousFlowBrineCO2CH4H2S::gasProperties(Real pressure,
   FluidStateProperties & gas = fsp[_gas_phase_number];
 
   // Mole fraction of gas components in gas phase
-  const Real Yh2o = gas.mass_fraction[_aqueous_fluid_component];
+  // const Real Yh2o = gas.mass_fraction[_aqueous_fluid_component];
   const Real Yco2 = gas.mass_fraction[_co2_component];
   const Real Ych4 = gas.mass_fraction[_ch4_component];
   const Real Yh2s = gas.mass_fraction[_h2s_component];
-
-  const Real yco2 = gas.mole_fraction[_co2_component];
-  const Real ych4 = gas.mole_fraction[_ch4_component];
-  const Real yh2s = gas.mole_fraction[_h2s_component];
 
   const Real dYco2_dZco2 = gas.dmass_fraction_dZ[_co2_component][_zco2_idx];
   const Real dYco2_dZch4 = gas.dmass_fraction_dZ[_co2_component][_zch4_idx];
@@ -1062,44 +1065,24 @@ PorousFlowBrineCO2CH4H2S::gasProperties(Real pressure,
   const Real dYh2s_dZh2s = gas.dmass_fraction_dZ[_h2s_component][_zh2s_idx];
 
   // Gas density and derivatives
-  const Real rho = gasDensity(pressure, temperature, yco2, ych4, yh2s);
+  const Real rho = gasDensity(pressure, temperature, Yco2, Ych4, Yh2s);
 
   const Real dp = 1.0e-2;
-  Real drho = gasDensity(pressure + dp, temperature, yco2, ych4, yh2s);
+  Real drho = gasDensity(pressure + dp, temperature, Yco2, Ych4, Yh2s);
   const Real drho_dp = (drho - rho) / dp;
 
   const Real dT = 1.0e-4;
-  drho = gasDensity(pressure, temperature + dT, yco2, ych4, yh2s);
+  drho = gasDensity(pressure, temperature + dT, Yco2, Ych4, Yh2s);
   const Real drho_dT = (drho - rho) / dT;
 
-  // Derivative wrt Z by the chain rule drho/dZ = drho/dy * dy/dY * dY/dZ
-  const Real denom = Yco2 / _Mco2 + Yh2s / _Mh2s + Ych4 / _Mch4 + Yh2o / _Mh2o;
-  const Real dyco2_dYco2 = (_Mco2 * denom - Yco2) / (_Mco2 * denom) / (_Mco2 * denom);
-  const Real dyco2_dYch4 = -Yco2 / (_Mco2 * _Mch4 * denom * denom);
-  const Real dyco2_dYh2s = -Yco2 / (_Mco2 * _Mh2s * denom * denom);
-
-  const Real dych4_dYco2 = -Ych4 / (_Mch4 * _Mco2 * denom * denom);
-  const Real dych4_dYch4 = (_Mch4 * denom - Ych4) / (_Mch4 * denom) / (_Mch4 * denom);
-  const Real dych4_dYh2s = -Ych4 / (_Mch4 * _Mh2s * denom * denom);
-
-  const Real dyh2s_dYco2 = -Yh2s / (_Mh2s * _Mco2 * denom * denom);
-  const Real dyh2s_dYch4 = -Yh2s / (_Mh2s * _Mch4 * denom * denom);
-  const Real dyh2s_dYh2s = (_Mh2s * denom - Yh2s) / (_Mh2s * denom) / (_Mh2s * denom);
-
-  const Real dy = 1.0e-8;
-  drho = gasDensity(pressure, temperature, yco2 + dy, ych4, yh2s);
-  const Real drho_dyco2 = (drho - rho) / dy;
-  drho = gasDensity(pressure, temperature, yco2, ych4 + dy, yh2s);
-  const Real drho_dych4 = (drho - rho) / dy;
-  drho = gasDensity(pressure, temperature, yco2, ych4, yh2s + dy);
-  const Real drho_dyh2s = (drho - rho) / dy;
-
-  const Real drho_dYco2 =
-      drho_dyco2 * dyco2_dYco2 + drho_dych4 * dych4_dYco2 + drho_dyh2s * dyh2s_dYco2;
-  const Real drho_dYch4 =
-      drho_dyco2 * dyco2_dYch4 + drho_dych4 * dych4_dYch4 + drho_dyh2s * dyh2s_dYch4;
-  const Real drho_dYh2s =
-      drho_dyco2 * dyco2_dYh2s + drho_dych4 * dych4_dYh2s + drho_dyh2s * dyh2s_dYh2s;
+  // Derivative wrt Z by the chain rule drho/dZ = drho/dY * dY/dZ
+  const Real dY = 1.0e-8;
+  drho = gasDensity(pressure, temperature, Yco2 + dY, Ych4, Yh2s);
+  const Real drho_dYco2 = (drho - rho) / dY;
+  drho = gasDensity(pressure, temperature, Yco2, Ych4 + dY, Yh2s);
+  const Real drho_dYch4 = (drho - rho) / dY;
+  drho = gasDensity(pressure, temperature, Yco2, Ych4, Yh2s + dY);
+  const Real drho_dYh2s = (drho - rho) / dY;
 
   const Real drho_dZco2 =
       drho_dYco2 * dYco2_dZco2 + drho_dYch4 * dYch4_dZco2 + drho_dYh2s * dYh2s_dZco2;
@@ -1617,12 +1600,7 @@ PorousFlowBrineCO2CH4H2S::totalMassFraction(Real pressure,
   liquid.mass_fraction[_h2s_component] = Xh2s;
   liquid.mass_fraction[_salt_component] = Xnacl;
 
-  const Real gdenom = Yco2 / _Mco2 + Yh2s / _Mh2s + Ych4 / _Mch4 + Yh2o / _Mh2o;
-  const Real yco2 = Yco2 / _Mco2 / gdenom;
-  const Real ych4 = Ych4 / _Mch4 / gdenom;
-  const Real yh2s = Yh2s / _Mh2s / gdenom;
-
-  const Real gas_density = gasDensity(pressure, temperature, yco2, ych4, yh2s);
+  const Real gas_density = gasDensity(pressure, temperature, Yco2, Ych4, Yh2s);
   const Real liquid_pressure = pressure - _pc_uo.capillaryPressure(saturation, qp);
   const Real liquid_density = liquidDensity(liquid_pressure, temperature, Xnacl, fsp);
 

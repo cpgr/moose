@@ -276,42 +276,53 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
 
     (*_grads_qp)[_qp][_aqueous_phase_number] =
         _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar] * _gas_gradp_qp[_qp];
+    // Add derivatives wrt Z
+    for (unsigned int z = 0; z < _num_Z_vars; ++z)
+    {
+      (*_grads_qp)[_qp][_aqueous_phase_number] +=
+          _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[z]] * (*_gradZ_qp[z])[_qp];
+    }
     (*_grads_qp)[_qp][_gas_phase_number] = -(*_grads_qp)[_qp][_aqueous_phase_number];
 
     (*_gradp_qp)[_qp][_gas_phase_number] = _gas_gradp_qp[_qp];
     (*_gradp_qp)[_qp][_aqueous_phase_number] =
         _gas_gradp_qp[_qp] - dpc * (*_grads_qp)[_qp][_aqueous_phase_number];
 
-    (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_pvar] =
-        -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
-        _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar];
-
-    // (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component] =
-    //     _fsp[_aqueous_phase_number].dmass_fraction_dp[_aqueous_fluid_component] *
-    //     _gas_gradp_qp[_qp];
-    // (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_gas_fluid_component] =
-    //     -(*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component];
-    // (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component] =
-    //     _fsp[_gas_phase_number].dmass_fraction_dp[_aqueous_fluid_component] * _gas_gradp_qp[_qp];
-    // (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_gas_fluid_component] =
-    //     -(*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component];
-
+    (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component] =
+        _fsp[_aqueous_phase_number].dmass_fraction_dp[_aqueous_fluid_component] *
+        _gas_gradp_qp[_qp];
+    (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component] =
+        _fsp[_gas_phase_number].dmass_fraction_dp[_aqueous_fluid_component] * _gas_gradp_qp[_qp];
     // Add derivatives wrt Z
     for (unsigned int z = 0; z < _num_Z_vars; ++z)
     {
-      (*_grads_qp)[_qp][_aqueous_phase_number] +=
-          _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[z]] * (*_gradZ_qp[z])[_qp];
-
-      (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_Zvar[z]] =
-          -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
-          _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[z]];
-
-      _fsp[_aqueous_phase_number].dmass_fraction_dZ[_aqueous_fluid_component][z] *
+      (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component] +=
+          _fsp[_aqueous_phase_number].dmass_fraction_dZ[_aqueous_fluid_component][z] *
           (*_gradZ_qp[z])[_qp];
 
       (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component] +=
-          _fsp[_gas_phase_number].dmass_fraction_dZ[_aqueous_fluid_component][z] *
+          _fsp[_aqueous_phase_number].dmass_fraction_dZ[_aqueous_fluid_component][z] *
           (*_gradZ_qp[z])[_qp];
+    }
+
+    // Gradient of each gas component
+    for (unsigned int c = 0; c < _num_Z_vars; ++c)
+    {
+      (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_gas_fluid_component + c] =
+          -(*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component];
+      (*_grad_mass_frac_qp)[_qp][_gas_phase_number][_gas_fluid_component + c] =
+          -(*_grad_mass_frac_qp)[_qp][_gas_phase_number][_aqueous_fluid_component];
+    }
+
+    (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_pvar] =
+        -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
+        _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar];
+    // Add derivatives wrt Z
+    for (unsigned int z = 0; z < _num_Z_vars; ++z)
+    {
+      (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_Zvar[z]] =
+          -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
+          _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[z]];
     }
   }
 }
