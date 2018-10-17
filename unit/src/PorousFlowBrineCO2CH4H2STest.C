@@ -121,7 +121,7 @@ TEST_F(PorousFlowBrineCO2CH4H2STest, gasProperties)
 
   Real viscosity = _co2_fp->mu_from_p_T(p, T);
 
-  ABS_TEST(gas_density, 89.9756679753, 1.0e-8);
+  ABS_TEST(gas_density, 89.9580148861, 1.0e-8);
   ABS_TEST(gas_viscosity, viscosity, 1.0e-8);
 
   // Verify derivatives

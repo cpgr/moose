@@ -12,6 +12,7 @@
 #include "SinglePhaseFluidPropertiesPT.h"
 #include "MathUtils.h"
 #include "Conversion.h"
+#include "BrentsMethod.h"
 
 registerMooseObject("PorousFlowApp", PorousFlowBrineCO2CH4H2S);
 
@@ -1548,22 +1549,17 @@ PorousFlowBrineCO2CH4H2S::GasCompressibilityFactor(
   // const Real q = a_mix / (b_mix * r * t * std::pow(t, 0.5));
 
   // const Real state = 1;
-  Real er, z, ff;
+  a1 = -(1.0 - B);
+  a2 = (A - 2.0 * B - 3.0 * B * B);
+  a3 = -(A * B - B * B - std::pow(B, 3));
 
-  er = 1;
-  z = 0;
-  // int kk = 1;
-  while (er > 0.0001)
-  {
-    z = z + 0.000005;
-    a1 = -(1 - B);
-    a2 = (A - 2 * B - 3 * B * B);
-    a3 = -(A * B - B * B - std::pow(B, 3));
-    ff = std::pow(z, 3) + a1 * z * z + a2 * z + a3;
-    er = abs(ff);
-  }
+  auto func = [a1, a2, a3](Real z) { return z * z * z + a1 * z * z + a2 * z + a3; };
 
-  Zg = z;
+  // Use Brent's method to calculate z
+  Real x0 = 0.0;
+  Real x1 = 1.0;
+  BrentsMethod::bracket(func, x0, x1);
+  Zg = BrentsMethod::root(func, x0, x1);
 }
 
 Real
