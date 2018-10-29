@@ -237,20 +237,22 @@ PorousFlowFluidStateFlashBase::computeQpProperties()
       // Derivative of density in each phase
       _dfluid_density_dvar[_qp][ph][v] = _fsp[ph].ddensity_dp * _dporepressure_dvar[_qp][ph][v];
       _dfluid_density_dvar[_qp][ph][v] += _fsp[ph].ddensity_dT * _dtemperature_dvar[_qp][v];
-      for (unsigned int z = 0; z < _num_Z_vars; ++z)
-        _dfluid_density_dvar[_qp][ph][v] += _fsp[ph].ddensity_dZ[z] * dZ_dvar[v];
 
       // Derivative of viscosity in each phase
       _dfluid_viscosity_dvar[_qp][ph][v] = _fsp[ph].dviscosity_dp * _dporepressure_dvar[_qp][ph][v];
       _dfluid_viscosity_dvar[_qp][ph][v] += _fsp[ph].dviscosity_dT * _dtemperature_dvar[_qp][v];
-      for (unsigned int z = 0; z < _num_Z_vars; ++z)
-        _dfluid_viscosity_dvar[_qp][ph][v] += _fsp[ph].dviscosity_dZ[z] * dZ_dvar[v];
 
       // Derivative of enthalpy in each phase
       _dfluid_enthalpy_dvar[_qp][ph][v] = _fsp[ph].denthalpy_dp * _dporepressure_dvar[_qp][ph][v];
       _dfluid_enthalpy_dvar[_qp][ph][v] += _fsp[ph].denthalpy_dT * _dtemperature_dvar[_qp][v];
-      for (unsigned int z = 0; z < _num_Z_vars; ++z)
-        _dfluid_enthalpy_dvar[_qp][ph][v] += _fsp[ph].denthalpy_dZ[z] * dZ_dvar[v];
+    }
+
+  for (unsigned int ph = 0; ph < _num_phases; ++ph)
+    for (unsigned int z = 0; z < _num_Z_vars; ++z)
+    {
+      _dfluid_density_dvar[_qp][ph][_Zvar[z]] += _fsp[ph].ddensity_dZ[z] * dZ_dvar[_Zvar[z]];
+      _dfluid_viscosity_dvar[_qp][ph][_Zvar[z]] += _fsp[ph].dviscosity_dZ[z] * dZ_dvar[_Zvar[z]];
+      _dfluid_enthalpy_dvar[_qp][ph][_Zvar[z]] += _fsp[ph].denthalpy_dZ[z] * dZ_dvar[_Zvar[z]];
     }
 
   // The derivative of the mass fractions for each fluid component in each phase.
