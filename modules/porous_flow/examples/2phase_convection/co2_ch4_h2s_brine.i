@@ -348,6 +348,15 @@
   []
 []
 
+[Functions]
+  [./flux]
+    type = ParsedFunction
+    vals = 'delta_xco2 dt'
+    vars = 'dx dt'
+    value = 'dx/dt'
+  [../]
+[]
+
 [Postprocessors]
   [total_co2_in_gas]
     type = PorousFlowFluidMass
@@ -383,6 +392,17 @@
     type = PorousFlowFluidMass
     phase = '0'
     fluid_component = 0
+  []
+  [delta_xco2]
+    type = ChangeOverTimePostprocessor
+    postprocessor = total_co2_in_liquid
+  []
+  [dt]
+    type = TimestepSize
+  []
+  [lux]
+    type = FunctionValuePostprocessor
+    function = flux
   []
   [numdofs]
     type = NumDOFs
