@@ -15,6 +15,40 @@
 
 class PorousFlowFluidStateBase;
 
+template <typename T, std::size_t n>
+using DualSecond =
+    DualNumber<DualNumber<T, NumberArray<n, T>>, NumberArray<n, DualNumber<T, NumberArray<n, T>>>>;
+
+#define PFAD_MAX_VARS 4
+
+typedef DualSecond<Real, PFAD_MAX_VARS> PFDualRealSecond;
+
+/// Data structure to pass calculated thermophysical properties
+struct ADFluidStateProperties
+{
+  ADFluidStateProperties(){};
+  ADFluidStateProperties(unsigned int n)
+    : pressure(0.0),
+      saturation(0.0),
+      density(0.0),
+      viscosity(1.0), // to guard against division by zero
+      enthalpy(0.0),
+      mass_fraction(n, 0.0),
+      d2saturation_dp2(0.0),
+      d2saturation_dZ2(0.0),
+      d2saturation_dpZ(0.0){};
+
+  DualReal pressure;
+  DualReal saturation;
+  DualReal density;
+  DualReal viscosity;
+  DualReal enthalpy;
+  std::vector<DualReal> mass_fraction;
+  Real d2saturation_dp2;
+  Real d2saturation_dZ2;
+  Real d2saturation_dpZ;
+};
+
 /// Data structure to pass calculated thermophysical properties
 struct FluidStateProperties
 {
@@ -30,6 +64,9 @@ struct FluidStateProperties
       dsaturation_dT(0.0),
       dsaturation_dZ(0.0),
       dsaturation_dX(0.0),
+      d2saturation_dp2(0.0),
+      d2saturation_dZ2(0.0),
+      d2saturation_dpZ(0.0),
       ddensity_dp(0.0),
       ddensity_dT(0.0),
       ddensity_dZ(0.0),
@@ -57,6 +94,9 @@ struct FluidStateProperties
   Real dsaturation_dT;
   Real dsaturation_dZ;
   Real dsaturation_dX;
+  Real d2saturation_dp2;
+  Real d2saturation_dZ2;
+  Real d2saturation_dpZ;
   Real ddensity_dp;
   Real ddensity_dT;
   Real ddensity_dZ;
@@ -170,6 +210,7 @@ public:
    * @param[out] fsp FluidStateProperties data structure with all data initialized to 0
    */
   void clearFluidStateProperties(std::vector<FluidStateProperties> & fsp) const;
+  void clearFluidStateProperties(std::vector<ADFluidStateProperties> & adfsp) const;
 
   /**
    * Derivative of liquid pressure wrt gas pressure due to capillary pressure

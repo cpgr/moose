@@ -69,6 +69,19 @@ PorousFlowCapillaryPressure::capillaryPressure(Real saturation, unsigned qp) con
     return capillaryPressureCurve(saturation, qp);
 }
 
+DualReal
+PorousFlowCapillaryPressure::capillaryPressure(DualReal saturation, unsigned qp) const
+{
+  const Real Pc = capillaryPressure(saturation.value(), qp);
+  const Real dPc_ds = dCapillaryPressure(saturation.value(), qp);
+
+  DualReal result = Pc;
+  for (std::size_t i = 0; i < saturation.derivatives().size(); ++i)
+    result.derivatives()[i] = saturation.derivatives()[i] * dPc_ds;
+
+  return result;
+}
+
 Real
 PorousFlowCapillaryPressure::dCapillaryPressure(Real saturation, unsigned qp) const
 {

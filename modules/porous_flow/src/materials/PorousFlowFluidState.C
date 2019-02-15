@@ -197,15 +197,15 @@ PorousFlowFluidState::computeQpProperties()
     _fluid_viscosity[_qp][ph] = _fsp[ph].viscosity;
     _fluid_enthalpy[_qp][ph] = _fsp[ph].enthalpy;
     _mass_frac[_qp][ph] = _fsp[ph].mass_fraction;
-
-    _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", pressure "
-             << _porepressure[_qp][ph] << std::endl;
-
-    _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", saturation "
-             << _saturation[_qp][ph] << std::endl;
+    //
+    // _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", pressure "
+    //          << _porepressure[_qp][ph] << std::endl;
+    //
+    // _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", saturation "
+    //          << _saturation[_qp][ph] << std::endl;
   }
 
-  _console << "qpoint " << _q_point[_qp] << ", Z " << (*_Z[0])[_qp] << std::endl;
+  // _console << "qpoint " << _q_point[_qp] << ", Z " << (*_Z[0])[_qp] << std::endl;
 
   // Derivative of saturation wrt variables
   for (unsigned int ph = 0; ph < _num_phases; ++ph)
@@ -224,14 +224,6 @@ PorousFlowFluidState::computeQpProperties()
       _dporepressure_dvar[_qp][ph][_pvar] = 1.0;
       if (!_nodal_material)
         (*_dgradp_qp_dgradv)[_qp][ph][_pvar] = 1.0;
-    }
-
-    if (!_nodal_material)
-    {
-      (*_dgradp_qp_dgradv)[_qp][_aqueous_phase_number][_pvar] +=
-          -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar];
-      (*_dgradp_qp_dgradv)[_qp][_aqueous_phase_number][_Zvar[0]] =
-          -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[0]];
     }
 
     // The aqueous phase porepressure is also a function of liquid saturation,
@@ -277,8 +269,11 @@ PorousFlowFluidState::computeQpProperties()
     for (unsigned int comp = 0; comp < _num_components; ++comp)
     {
       _dmass_frac_dvar[_qp][ph][comp][_pvar] = _fsp[ph].dmass_fraction_dp[comp];
-      _dmass_frac_dvar[_qp][ph][comp][_Zvar[0]] =
-          _fsp[ph].dmass_fraction_dZ[comp] * dZ_dvar[_Zvar[0]];
+      _dmass_frac_dvar[_qp][ph][comp][_Zvar[0]] = _fsp[ph].dmass_fraction_dZ[comp];
+      // _console << "phase " << ph << " _fsp[ph].dmass_fraction_dp[comp] "
+      //          << _fsp[ph].dmass_fraction_dp[comp] << std::endl;
+      // _console << "phase " << ph << " _fsp[ph].dmass_fraction_dZ[comp] "
+      //          << _fsp[ph].dmass_fraction_dZ[comp] << std::endl;
     }
 
   // If the material properties are being evaluated at the qps, calculate the
@@ -287,24 +282,58 @@ PorousFlowFluidState::computeQpProperties()
   // properties
   if (!_nodal_material)
   {
+    (*_dgradp_qp_dgradv)[_qp][_aqueous_phase_number][_pvar] +=
+        -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar];
+    (*_dgradp_qp_dgradv)[_qp][_aqueous_phase_number][_Zvar[0]] =
+        -dpc * _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[0]];
+
     // Second derivative of capillary pressure
     Real d2pc = _pc.d2CapillaryPressure(_fsp[_aqueous_phase_number].saturation);
 
-    (*_grads_qp)[_qp][_aqueous_phase_number] =
-        _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar] * _gas_gradp_qp[_qp] +
-        _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[0]] * (*_gradZ_qp[0])[_qp];
-    (*_grads_qp)[_qp][_gas_phase_number] = -(*_grads_qp)[_qp][_aqueous_phase_number];
+    (*_grads_qp)[_qp][_gas_phase_number] =
+        _dsaturation_dvar[_qp][_gas_phase_number][_pvar] * _gas_gradp_qp[_qp] +
+        _dsaturation_dvar[_qp][_gas_phase_number][_Zvar[0]] * (*_gradZ_qp[0])[_qp];
+    (*_grads_qp)[_qp][_aqueous_phase_number] = -(*_grads_qp)[_qp][_gas_phase_number];
 
     (*_gradp_qp)[_qp][_gas_phase_number] = _gas_gradp_qp[_qp];
     (*_gradp_qp)[_qp][_aqueous_phase_number] =
         _gas_gradp_qp[_qp] - dpc * (*_grads_qp)[_qp][_aqueous_phase_number];
 
+    (*_dgrads_qp_dgradv)[_qp][_gas_phase_number][_pvar] =
+        _dsaturation_dvar[_qp][_gas_phase_number][_pvar];
+    (*_dgrads_qp_dgradv)[_qp][_gas_phase_number][_Zvar[0]] =
+        _dsaturation_dvar[_qp][_gas_phase_number][_Zvar[0]];
+    (*_dgrads_qp_dgradv)[_qp][_aqueous_phase_number][_pvar] =
+        -(*_dgrads_qp_dgradv)[_qp][_gas_phase_number][_pvar];
+    (*_dgrads_qp_dgradv)[_qp][_aqueous_phase_number][_Zvar[0]] =
+        -(*_dgrads_qp_dgradv)[_qp][_gas_phase_number][_Zvar[0]];
+
+    (*_dgrads_qp_dv)[_qp][_gas_phase_number][_pvar] =
+        (_fsp[_gas_phase_number].d2saturation_dp2 * _gas_gradp_qp[_qp] +
+         _fsp[_gas_phase_number].d2saturation_dpZ * (*_gradZ_qp[0])[_qp]);
+    (*_dgrads_qp_dv)[_qp][_aqueous_phase_number][_pvar] =
+        -(*_dgrads_qp_dv)[_qp][_gas_phase_number][_pvar];
+
+    (*_dgrads_qp_dv)[_qp][_gas_phase_number][_Zvar[0]] =
+        (_fsp[_gas_phase_number].d2saturation_dpZ * _gas_gradp_qp[_qp] +
+         _fsp[_gas_phase_number].d2saturation_dZ2 * (*_gradZ_qp[0])[_qp]);
+    (*_dgrads_qp_dv)[_qp][_aqueous_phase_number][_Zvar[0]] =
+        -(*_dgrads_qp_dv)[_qp][_gas_phase_number][_Zvar[0]];
+
+    // The error is here
     (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_pvar] =
         -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
         _dsaturation_dvar[_qp][_aqueous_phase_number][_pvar];
+    (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_pvar] +=
+        -dpc * (_fsp[_aqueous_phase_number].d2saturation_dp2 * _gas_gradp_qp[_qp] +
+                _fsp[_aqueous_phase_number].d2saturation_dpZ * (*_gradZ_qp[0])[_qp]);
     (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_Zvar[0]] =
         -d2pc * (*_grads_qp)[_qp][_aqueous_phase_number] *
         _dsaturation_dvar[_qp][_aqueous_phase_number][_Zvar[0]];
+    (*_dgradp_qp_dv)[_qp][_aqueous_phase_number][_Zvar[0]] +=
+        -dpc * (_fsp[_aqueous_phase_number].d2saturation_dpZ * _gas_gradp_qp[_qp] +
+                _fsp[_aqueous_phase_number].d2saturation_dZ2 * (*_gradZ_qp[0])[_qp]);
+    // ends here
 
     (*_grad_mass_frac_qp)[_qp][_aqueous_phase_number][_aqueous_fluid_component] =
         _fsp[_aqueous_phase_number].dmass_fraction_dp[_aqueous_fluid_component] *
@@ -408,16 +437,16 @@ PorousFlowFluidState::computeQpProperties()
   }
 
   // REMOVE
-  _console << "_gas_gradp_qp " << _gas_gradp_qp[_qp] << std::endl;
-  for (unsigned int ph = 0; ph < _num_phases; ++ph)
-  {
-    _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", dp/dx "
-             << (*_gradp_qp)[_qp][ph] << std::endl;
-    _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", ds/dx "
-             << (*_grads_qp)[_qp][ph] << std::endl;
-  }
-
-  _console << "qpoint " << _q_point[_qp] << ", dZ/dx " << (*_gradZ_qp[0])[_qp] << std::endl;
+  // _console << "_gas_gradp_qp " << _gas_gradp_qp[_qp] << std::endl;
+  // for (unsigned int ph = 0; ph < _num_phases; ++ph)
+  // {
+  //   _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", dp/dx "
+  //            << (*_gradp_qp)[_qp][ph] << std::endl;
+  //   _console << "qpoint " << _q_point[_qp] << ", phase " << ph << ", ds/dx "
+  //            << (*_grads_qp)[_qp][ph] << std::endl;
+  // }
+  //
+  // _console << "qpoint " << _q_point[_qp] << ", dZ/dx " << (*_gradZ_qp[0])[_qp] << std::endl;
 }
 
 void

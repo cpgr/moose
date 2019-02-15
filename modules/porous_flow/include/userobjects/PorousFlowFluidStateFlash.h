@@ -84,6 +84,7 @@ public:
    * @return vapor mass fraction
    */
   Real vaporMassFraction(Real Z0, Real K0, Real K1) const;
+  DualReal vaporMassFraction(DualReal Z0, DualReal K0, DualReal K1) const;
   Real vaporMassFraction(std::vector<Real> & Zi, std::vector<Real> & Ki) const;
 
 protected:

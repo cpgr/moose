@@ -428,6 +428,8 @@ public:
    */
   virtual void rho_mu(Real pressure, Real temperature, Real & rho, Real & mu) const;
   virtual void rho_mu_from_p_T(Real pressure, Real temperature, Real & rho, Real & mu) const;
+  virtual void
+  rho_mu_from_p_T(DualReal pressure, DualReal temperature, DualReal & rho, DualReal & mu) const;
 
   /**
    * Density and viscosity and their derivatives wrt pressure and temperature
@@ -481,6 +483,7 @@ public:
    * @return Henry's constant
    */
   virtual Real henryConstant(Real temperature) const;
+  virtual DualReal henryConstant(DualReal temperature) const;
 
   /**
    * Henry's law constant for dissolution in water and derivative wrt temperature
@@ -500,6 +503,7 @@ public:
    * @return saturation pressure (Pa)
    */
   virtual Real vaporPressure(Real temperature) const;
+  virtual DualReal vaporPressure(DualReal temperature) const;
 
   /**
    * Vapor pressure. Used to delineate liquid and gas phases.

@@ -245,6 +245,21 @@ Real SinglePhaseFluidProperties::henryConstant(Real) const
   mooseError(name(), ": henryConstant() is not implemented");
 }
 
+DualReal
+SinglePhaseFluidProperties::henryConstant(DualReal temperature) const
+{
+  const Real T = temperature.value();
+  Real Kh_real = 0.0;
+  Real dKh_dT_real = 0.0;
+  henryConstant(T, Kh_real, dKh_dT_real);
+
+  DualReal Kh = Kh_real;
+  for (size_t i = 0; i < temperature.derivatives().size(); ++i)
+    Kh.derivatives()[i] = temperature.derivatives()[i] * dKh_dT_real;
+
+  return Kh;
+}
+
 void
 SinglePhaseFluidProperties::henryConstant(Real, Real &, Real &) const
 {
@@ -262,6 +277,21 @@ SinglePhaseFluidProperties::henryConstant_dT(Real T, Real & Kh, Real & dKh_dT) c
 Real SinglePhaseFluidProperties::vaporPressure(Real) const
 {
   mooseError(name(), ": vaporPressure() is not implemented");
+}
+
+DualReal
+SinglePhaseFluidProperties::vaporPressure(DualReal temperature) const
+{
+  const Real T = temperature.value();
+  Real psat_real = 0.0;
+  Real dpsat_dT_real = 0.0;
+  vaporPressure(T, psat_real, dpsat_dT_real);
+
+  DualReal psat = psat_real;
+  for (size_t i = 0; i < temperature.derivatives().size(); ++i)
+    psat.derivatives()[i] = temperature.derivatives()[i] * dpsat_dT_real;
+
+  return psat;
 }
 
 void
@@ -366,6 +396,16 @@ SinglePhaseFluidProperties::rho_mu(Real p, Real T, Real & rho, Real & mu) const
 
 void
 SinglePhaseFluidProperties::rho_mu_from_p_T(Real p, Real T, Real & rho, Real & mu) const
+{
+  rho = rho_from_p_T(p, T);
+  mu = mu_from_p_T(p, T);
+}
+
+void
+SinglePhaseFluidProperties::rho_mu_from_p_T(DualReal p,
+                                            DualReal T,
+                                            DualReal & rho,
+                                            DualReal & mu) const
 {
   rho = rho_from_p_T(p, T);
   mu = mu_from_p_T(p, T);

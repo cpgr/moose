@@ -120,7 +120,6 @@ public:
   h_from_p_T(Real pressure, Real temperature, Real & h, Real & dh_dp, Real & dh_dT) const override;
 
   virtual Real vaporPressure(Real temperature) const override;
-
   virtual void vaporPressure(Real temperature, Real & psat, Real & dpsat_dT) const override;
 
   /**

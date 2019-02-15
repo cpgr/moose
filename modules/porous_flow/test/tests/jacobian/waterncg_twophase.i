@@ -15,6 +15,7 @@
 
 [Variables]
   [./pgas]
+    scaling = 1e-5
   [../]
   [./z]
   [../]
@@ -23,8 +24,8 @@
 [ICs]
   [./pgas]
     type = RandomIC
-    min = 1e5
-    max = 5e5
+    min = 1e6
+    max = 5e6
     variable = pgas
   [../]
   [./z]
@@ -68,11 +69,11 @@
   [./pc]
     type = PorousFlowCapillaryPressureVG
     m = 0.5
-    alpha = 1e1
-    pc_max = 1e4
+    alpha = 1e-5
+    pc_max = 1e7
   [../]
   [./fs]
-    type = PorousFlowWaterNCG
+    type = PorousFlowWaterNCGAD
     water_fp = water
     gas_fp = co2
     capillary_pressure = pc

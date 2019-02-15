@@ -43,6 +43,12 @@ PorousFlowFluidStateBase::clearFluidStateProperties(std::vector<FluidStateProper
   std::fill(fsp.begin(), fsp.end(), FluidStateProperties(_num_components));
 }
 
+void
+PorousFlowFluidStateBase::clearFluidStateProperties(std::vector<ADFluidStateProperties> & fsp) const
+{
+  std::fill(fsp.begin(), fsp.end(), ADFluidStateProperties(_num_components));
+}
+
 Real
 PorousFlowFluidStateBase::dLiquidPressure_dGasPressure(Real liquid_saturation,
                                                        Real dliquid_saturation_dp) const

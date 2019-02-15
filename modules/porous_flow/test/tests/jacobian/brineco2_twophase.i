@@ -76,8 +76,8 @@
   [./pc]
     type = PorousFlowCapillaryPressureVG
     m = 0.5
-    alpha = 1e1
-    pc_max = 1e4
+    alpha = 1e-4
+    pc_max = 1e6
   [../]
   [./fs]
     type = PorousFlowBrineCO2

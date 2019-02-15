@@ -189,14 +189,13 @@ public:
    * @param temperature temperature (K)
    * @param Xnacl NaCl mass fraction (kg/kg)
    * @param Xco2 CO2 mass fraction in liquid (kg/kg)
-   * @param fsp FluidStateProperties data structure
    * @return liquid density (kg/m^3)
    */
   Real liquidDensity(Real pressure, Real temperature, Real Xnacl, Real Xco2) const;
-  void liquidDensity(Real pressure,
-                     Real temperature,
-                     Real Xnacl,
-                     std::vector<FluidStateProperties> & fsp) const;
+  // void liquidDensity(Real pressure,
+  //                    Real temperature,
+  //                    Real Xnacl,
+  //                    std::vector<FluidStateProperties> & fsp) const;
 
   /**
    * Gas saturation in the two-phase region

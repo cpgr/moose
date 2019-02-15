@@ -54,6 +54,7 @@ public:
    * @return capillary pressure (Pa)
    */
   virtual Real capillaryPressure(Real saturation, unsigned qp = 0) const;
+  virtual DualReal capillaryPressure(DualReal saturation, unsigned qp = 0) const;
 
   /**
    * Derivative of capillary pressure wrt true saturation

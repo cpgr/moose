@@ -10,6 +10,11 @@
   ymax = 3
 []
 
+[Problem]
+  type = DumpObjectsProblem
+  dump_path = PorousFlowBasicTHM
+[] 
+
 [MeshModifiers]
   [./aquifer]
     type = SubdomainBoundingBox

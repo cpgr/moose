@@ -486,7 +486,7 @@ TEST_F(PorousFlowWaterNCGTest, twoPhase)
   // Calculate the gas saturation and derivatives
   _fp->twoPhaseProperties(p, T, Z, fsp);
 
-  ABS_TEST(fsp[1].saturation, gas_saturation, 1.0e-6);
+  REL_TEST(fsp[1].saturation, gas_saturation, 5.0e-3);
 
   // Test the derivatives
   const Real dp = 1.0e-1;
@@ -504,6 +504,8 @@ TEST_F(PorousFlowWaterNCGTest, twoPhase)
   Real gsat2 = fsp[1].saturation;
 
   REL_TEST(dgas_saturation_dp, (gsat1 - gsat2) / (2.0 * dp), 1.0e-6);
+  std::cout << "d2s_dp2 " << fsp[1].d2saturation_dp2 << std::endl;
+  std::cout << "fd " << (gsat1 - 2.0 * gas_saturation + gsat2) / (dp * dp) << std::endl;
 
   // Derivative wrt T
   const Real dT = 1.0e-4;
@@ -528,6 +530,8 @@ TEST_F(PorousFlowWaterNCGTest, twoPhase)
   gsat2 = fsp[1].saturation;
 
   REL_TEST(dgas_saturation_dZ, (gsat1 - gsat2) / (2.0 * dZ), 1.0e-6);
+  std::cout << "d2s_dZ2 " << fsp[1].d2saturation_dZ2 << std::endl;
+  std::cout << "fd " << (gsat1 - 2.0 * gas_saturation + gsat2) / (dZ * dZ) << std::endl;
 }
 
 /*
@@ -551,7 +555,7 @@ TEST_F(PorousFlowWaterNCGTest, totalMassFraction)
   EXPECT_EQ(phase_state, FluidStatePhaseEnum::TWOPHASE);
 
   _fp->twoPhaseProperties(p, T, Z, fsp);
-  ABS_TEST(fsp[1].saturation, s, 1.0e-6);
+  REL_TEST(fsp[1].saturation, s, 5.0e-3);
 }
 
 /*
