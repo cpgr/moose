@@ -7,21 +7,16 @@
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 
-#include "Diffusion.h"
-
 #ifndef PRIMARYDIFFUSION_H
 #define PRIMARYDIFFUSION_H
 
-// Forward Declarations
+#include "Diffusion.h"
+
 class PrimaryDiffusion;
 
 template <>
 InputParameters validParams<PrimaryDiffusion>();
 
-/**
- * Define the Kernel for a CoupledConvectionReactionSub operator that looks like:
- * grad (diff * grad_u)
- */
 class PrimaryDiffusion : public Diffusion
 {
 public:
@@ -31,7 +26,7 @@ protected:
   virtual Real computeQpResidual() override;
   virtual Real computeQpJacobian() override;
 
-  /// Material property of dispersion-diffusion coefficient.
+  /// Diffusion coefficient
   const MaterialProperty<Real> & _diffusivity;
 };
 

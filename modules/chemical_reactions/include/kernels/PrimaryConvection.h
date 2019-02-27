@@ -18,10 +18,6 @@ class PrimaryConvection;
 template <>
 InputParameters validParams<PrimaryConvection>();
 
-/**
- * Define the Kernel for a PrimaryConvection operator that looks like:
- * cond * grad_pressure * grad_u
- */
 class PrimaryConvection : public DerivativeMaterialInterface<Kernel>
 {
 public:
@@ -34,16 +30,12 @@ protected:
 
   /// Hydraulic conductivity
   const MaterialProperty<Real> & _cond;
-
   /// Gravity
   const RealVectorValue _gravity;
-
   /// Fluid density
   const MaterialProperty<Real> & _density;
-
   /// Pressure gradient
   const VariableGradient & _grad_p;
-
   /// Pressure variable number
   const unsigned int _pvar;
 };

@@ -7,21 +7,16 @@
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 
-#ifndef PRIMARYTIMEDERIVATIVE
-#define PRIMARYTIMEDERIVATIVE
+#ifndef PRIMARYTIMEDERIVATIVE_H
+#define PRIMARYTIMEDERIVATIVE_H
 
 #include "TimeDerivative.h"
 
-// Forward Declaration
 class PrimaryTimeDerivative;
 
 template <>
 InputParameters validParams<PrimaryTimeDerivative>();
 
-/**
- * Define the Kernel for a CoupledConvectionReactionSub operator that looks like:
- * storage * delta pressure / delta t
- */
 class PrimaryTimeDerivative : public TimeDerivative
 {
 public:
@@ -31,8 +26,8 @@ protected:
   virtual Real computeQpResidual() override;
   virtual Real computeQpJacobian() override;
 
-  /// Material property of porosity
+  /// Porosity
   const MaterialProperty<Real> & _porosity;
 };
 
-#endif // PRIMARYTIMEDERIVATIVE
+#endif // PRIMARYTIMEDERIVATIVE_H

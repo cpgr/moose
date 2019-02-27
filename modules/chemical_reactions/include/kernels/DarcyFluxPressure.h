@@ -18,11 +18,6 @@ class DarcyFluxPressure;
 template <>
 InputParameters validParams<DarcyFluxPressure>();
 
-/**
- * Darcy flux: - cond * (Grad P - rho * g)
- * where cond is the hydraulic conductivity, P is fluid pressure,
- * rho is flui density and g is gravity
- */
 class DarcyFluxPressure : public DerivativeMaterialInterface<Kernel>
 {
 public:
@@ -34,10 +29,8 @@ protected:
 
   /// Hydraulic conductivity
   const MaterialProperty<Real> & _cond;
-
   /// Gravity
   const RealVectorValue _gravity;
-
   /// Fluid density
   const MaterialProperty<Real> & _density;
 };

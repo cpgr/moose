@@ -18,7 +18,7 @@ validParams<DarcyFluxPressure>()
   InputParameters params = validParams<Kernel>();
   RealVectorValue g(0, 0, 0);
   params.addParam<RealVectorValue>("gravity", g, "Gravity vector (default is (0, 0, 0))");
-  params.addClassDescription("");
+  params.addClassDescription("Darcy flux");
   return params;
 }
 
