@@ -13,6 +13,7 @@
 #include "PorousFlowFluidStateMultiComponentBase.h"
 
 class SinglePhaseFluidProperties;
+class Water97FluidProperties;
 class PorousFlowWaterNCG;
 
 template <>
@@ -144,7 +145,7 @@ protected:
   void checkVariables(Real temperature) const;
 
   /// Fluid properties UserObject for water
-  const SinglePhaseFluidProperties & _water_fp;
+  const Water97FluidProperties & _water_fp;
   /// Fluid properties UserObject for the NCG
   const SinglePhaseFluidProperties & _ncg_fp;
   /// Molar mass of water (kg/mol)
@@ -155,6 +156,8 @@ protected:
   const Real _water_triple_temperature;
   /// Critical temperature of water (K)
   const Real _water_critical_temperature;
+  /// Henry's coefficients for the NCG
+  const std::vector<Real> _ncg_henry;
 };
 
 #endif // POROUSFLOWWATERNCG_H

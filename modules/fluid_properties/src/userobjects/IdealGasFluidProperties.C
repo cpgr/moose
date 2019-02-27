@@ -26,7 +26,6 @@ validParams<IdealGasFluidProperties>()
       "cv", 0.718e3, "cv > 0", "Constant specific heat capacity at constant volume (J/kg/K)");
   params.addParam<Real>(
       "cp", 1.005e3, "Constant specific heat capacity at constant pressure (J/kg/K)");
-  params.addParam<Real>("henry_constant", 0.0, "Henry constant for dissolution in water");
   params.addDeprecatedParam<Real>("viscosity", "Dynamic viscosity (Pa.s)", "Use mu instead");
   params.addDeprecatedParam<Real>(
       "thermal_conductivity", "Thermal conductivity, W/(m-K)", "Use k instead");
@@ -46,8 +45,7 @@ IdealGasFluidProperties::IdealGasFluidProperties(const InputParameters & paramet
                                                  : getParam<Real>("mu")),
     _k(parameters.isParamSetByUser("thermal_conductivity") ? getParam<Real>("thermal_conductivity")
                                                            : getParam<Real>("k")),
-    _molar_mass(getParam<Real>("molar_mass")),
-    _henry_constant(getParam<Real>("henry_constant"))
+    _molar_mass(getParam<Real>("molar_mass"))
 {
   // If gamma is provided, calculate cp and cv using this
   if (parameters.isParamSetByUser("gamma"))
@@ -493,13 +491,4 @@ IdealGasFluidProperties::k_from_p_T(Real p, Real T, Real & k, Real & dk_dp, Real
   k = k_from_p_T(p, T);
   dk_dp = 0.0;
   dk_dT = 0.0;
-}
-
-Real IdealGasFluidProperties::henryConstant(Real /*T*/) const { return _henry_constant; }
-
-void
-IdealGasFluidProperties::henryConstant(Real /*T*/, Real & Kh, Real & dKh_dT) const
-{
-  Kh = _henry_constant;
-  dKh_dT = 0.0;
 }

@@ -89,9 +89,6 @@ public:
   virtual Real gamma_from_p_T(Real p, Real T) const override;
   virtual Real c_from_p_T(Real p, Real T) const override;
 
-  virtual Real henryConstant(Real temperature) const override;
-  virtual void henryConstant(Real temperature, Real & Kh, Real & dKh_dT) const override;
-
   // Methods used by Navier-Stokes module
   virtual Real gamma() const { return _gamma; };
   virtual Real cv() const { return _cv; };
@@ -112,8 +109,6 @@ protected:
   const Real _k;
   /// molar mass
   Real _molar_mass;
-  /// Henry constant
-  const Real _henry_constant;
 };
 
 #pragma GCC diagnostic pop

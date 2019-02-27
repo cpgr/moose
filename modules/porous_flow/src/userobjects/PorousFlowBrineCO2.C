@@ -40,7 +40,8 @@ PorousFlowBrineCO2::PorousFlowBrineCO2(const InputParameters & parameters)
     _Rbar(_R * 10.0),
     _Tlower(372.15),
     _Tupper(382.15),
-    _Zmin(1.0e-4)
+    _Zmin(1.0e-4),
+    _co2_henry(_co2_fp.henryCoefficients())
 {
   // Check that the correct FluidProperties UserObjects have been provided
   if (_co2_fp.fluidName() != "co2")

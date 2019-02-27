@@ -27,10 +27,19 @@ BrineFluidProperties::BrineFluidProperties(const InputParameters & parameters)
 {
   // SinglePhaseFluidPropertiesPT UserObject for water
   if (parameters.isParamSetByUser("water_fp"))
+  {
     _water_fp = &getUserObject<SinglePhaseFluidProperties>("water_fp");
+
+    // Also need a Water97FluidProperties UserObject for Henry's constant
+    _water97_fp = &getUserObject<Water97FluidProperties>("water_fp");
+
+    // Check that a water userobject has actually been supplied
+    if (_water_fp->fluidName() != "water")
+      paramError("water_fp", "A water FluidProperties UserObject must be supplied");
+  }
   else
   {
-    // Construct a Water97FluidProperties UserObject
+    // Construct a SinglePhaseFluidProperties UserObject for water
     const std::string water_name = name() + ":water";
     {
       const std::string class_name = "Water97FluidProperties";
@@ -38,9 +47,12 @@ BrineFluidProperties::BrineFluidProperties(const InputParameters & parameters)
       _fe_problem.addUserObject(class_name, water_name, params);
     }
     _water_fp = &_fe_problem.getUserObject<SinglePhaseFluidProperties>(water_name);
+
+    // Also need a Water97FluidProperties UserObject for Henry's constant
+    _water97_fp = &_fe_problem.getUserObject<Water97FluidProperties>(water_name);
   }
 
-  // SinglePhaseFluidPropertiesPT UserObject for NaCl
+  // SinglePhaseFluidProperties UserObject for NaCl
   const std::string nacl_name = name() + ":nacl";
   {
     const std::string class_name = "NaClFluidProperties";
@@ -470,4 +482,19 @@ BrineFluidProperties::massFractionToMoleFraction(const FPDualReal & xnacl) const
   FPDualReal Mbrine = molarMass(xnacl);
   // The mole fraction is then
   return xnacl * Mbrine / _Mnacl;
+}
+
+Real
+BrineFluidProperties::henryConstant(Real temperature, const std::vector<Real> & coeffs) const
+{
+  return _water97_fp->henryConstant(temperature, coeffs);
+}
+
+void
+BrineFluidProperties::henryConstant(Real temperature,
+                                    const std::vector<Real> & coeffs,
+                                    Real & Kh,
+                                    Real & dKh_dT) const
+{
+  _water97_fp->henryConstant(temperature, coeffs, Kh, dKh_dT);
 }

@@ -196,12 +196,3 @@ SimpleFluidProperties::h_from_p_T(
   dh_dp = _pp_coeff / density - _pp_coeff * pressure * ddensity_dp / density / density;
   dh_dT = _cv - _pp_coeff * pressure * ddensity_dT / density / density;
 }
-
-Real SimpleFluidProperties::henryConstant(Real /*temperature*/) const { return _henry_constant; }
-
-void
-SimpleFluidProperties::henryConstant(Real /*temperature*/, Real & Kh, Real & dKh_dT) const
-{
-  Kh = _henry_constant;
-  dKh_dT = 0.0;
-}
