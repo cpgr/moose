@@ -6,6 +6,7 @@
 //*
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
+
 #ifndef ADPRIMARYSPECIESDIFFUSION_H
 #define ADPRIMARYSPECIESDIFFUSION_H
 
@@ -23,7 +24,7 @@ public:
   ADPrimarySpeciesDiffusion(const InputParameters & parameters);
 
 protected:
-  virtual ADResidual computeQpResidual() override;
+  virtual ADVectorResidual precomputeQpResidual() override;
 
   /// Diffusion coefficient
   const MaterialProperty<Real> & _diffusivity;

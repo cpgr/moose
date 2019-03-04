@@ -8,6 +8,7 @@
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 
 #include "AqueousEquilibriumRxnAux.h"
+#include "EquilibriumReactions.h"
 
 registerMooseObject("ChemicalReactionsApp", AqueousEquilibriumRxnAux);
 
@@ -62,11 +63,5 @@ AqueousEquilibriumRxnAux::AqueousEquilibriumRxnAux(const InputParameters & param
 Real
 AqueousEquilibriumRxnAux::computeValue()
 {
-  Real conc_product = 1.0;
-
-  for (unsigned int i = 0; i < _vals.size(); ++i)
-    conc_product *= std::pow((*_gamma_v[i])[_qp] * (*_vals[i])[_qp], _sto_v[i]);
-
-  mooseAssert(_gamma_eq[_qp] > 0.0, "Activity coefficient must be greater than zero");
-  return std::pow(10.0, _log_k[_qp]) * conc_product / _gamma_eq[_qp];
+  return EquilibriumReactions::equilibriumSpecies(_vals, _gamma_v, _sto_v, _gamma_eq, _log_k, _qp);
 }

@@ -23,8 +23,8 @@ ADPrimarySpeciesDiffusion<compute_stage>::ADPrimarySpeciesDiffusion(
 }
 
 template <ComputeStage compute_stage>
-ADResidual
-ADPrimarySpeciesDiffusion<compute_stage>::computeQpResidual()
+ADVectorResidual
+ADPrimarySpeciesDiffusion<compute_stage>::precomputeQpResidual()
 {
   return _diffusivity[_qp] * ADDiffusion<compute_stage>::computeQpResidual();
 }

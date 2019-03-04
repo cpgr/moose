@@ -25,7 +25,7 @@ ADPrimarySpeciesTimeDerivative<compute_stage>::ADPrimarySpeciesTimeDerivative(
 
 template <ComputeStage compute_stage>
 ADResidual
-ADPrimarySpeciesTimeDerivative<compute_stage>::computeQpResidual()
+ADPrimarySpeciesTimeDerivative<compute_stage>::precomputeQpResidual()
 {
   return _porosity[_qp] * ADTimeDerivative<compute_stage>::computeQpResidual();
 }
