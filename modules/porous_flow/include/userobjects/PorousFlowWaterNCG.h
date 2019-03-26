@@ -10,7 +10,7 @@
 #ifndef POROUSFLOWWATERNCG_H
 #define POROUSFLOWWATERNCG_H
 
-#include "PorousFlowFluidStateBase.h"
+#include "PorousFlowFluidStateMultiComponentBase.h"
 
 class SinglePhaseFluidProperties;
 class PorousFlowWaterNCG;
@@ -30,7 +30,7 @@ InputParameters validParams<PorousFlowWaterNCG>();
  * Yk: mass fraction of component k in the gas phase
  * Xk: mass fraction of component k in the liquid phase
  */
-class PorousFlowWaterNCG : public PorousFlowFluidStateBase
+class PorousFlowWaterNCG : public PorousFlowFluidStateMultiComponentBase
 {
 public:
   PorousFlowWaterNCG(const InputParameters & parameters);
