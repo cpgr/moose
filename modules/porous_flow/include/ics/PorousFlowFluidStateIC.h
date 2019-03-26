@@ -14,7 +14,7 @@
 
 class PorousFlowDictator;
 class PorousFlowFluidStateIC;
-class PorousFlowFluidStateBase;
+class PorousFlowFluidStateMultiComponentBase;
 
 template <>
 InputParameters validParams<PorousFlowFluidStateIC>();
@@ -45,7 +45,7 @@ protected:
   /// The PorousFlowDictator UserObject
   const PorousFlowDictator & _dictator;
   /// FluidState UserObject
-  const PorousFlowFluidStateBase & _fs;
+  const PorousFlowFluidStateMultiComponentBase & _fs;
 };
 
 #endif // POROUSFLOWFLUIDSTATEIC_H
