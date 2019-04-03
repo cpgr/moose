@@ -8,10 +8,6 @@ By simply adding pieces of physics together in an input file, the PorousFlow
 module enables the user to model problems with any combination of fluid, heat
 and geomechanics.
 
-## Other sources of information
-
-This documentation is based on earlier latex documentation, and we are still in the process of transferring the latex into the online format.  You may find the latex documentation and its associated PDF files at `porous_flow/doc/theory`, `porous_flow/doc/tests` and in the `porous_flow/test/tests` directories.
-
 ## Theoretical foundation
 
 The equations governing motion of fluid and heat in porous media that are implemented
@@ -93,15 +89,24 @@ to make sure that only valid fluid components or phases are used.
 !alert note
 A `PorousFlowDictator` must be present in all simulations!
 
+## Verification problems
+
+The capability of PorousFlow is rigorously tested through a large number of regression tests
+that are provided in the test suite. Many of these tests are designed to recover analytical
+solutions to the problem or to reproduce well-known benchmark problems. A full listing of the
+verification problems, the model setup, and comparison with analytical or benchmark solutions
+is provided below:
+
+- [Verification problems](verification_problems/index.md)
+
 ## Examples
 
-We are currently in the process of building a few key examples of PorousFlow.
+Some key examples of PorousFlow
 
 - [PorousFlow tutorial](tutorial_00.md)
 - [Flow through an explicitly fractured medium and flow through a fracture network](flow_through_fractured_media.md)
 - [Cold CO$_{2}$ injection into an elastic reservoir --- a THM problem](co2_example.md)
 - [Underground mining - an HM problem](coal_mining.md)
-- [CO$_2$ storage benchmark problems](co2_intercomparison.md)
 - [Restarting from a previous simulation](restart.md)
 
 ## Additional MOOSE objects
