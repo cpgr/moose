@@ -277,7 +277,7 @@ public:
    * @return internal energy (J/kg)
    */
   virtual Real e_from_p_T(Real p, Real T) const;
-  virtual DualReal e_from_p_T(DualReal p, DualReal T) const;
+  DualReal e_from_p_T(const DualReal & p, const DualReal & T) const;
   virtual Real e(Real pressure, Real temperature) const;
 
   /**
@@ -302,7 +302,8 @@ public:
    * @return temperature (K)
    */
   virtual Real T_from_p_h(Real p, Real h) const;
-  virtual DualReal T_from_p_h(DualReal p, DualReal h) const;
+  virtual void T_from_p_h(Real p, Real h, Real & T, Real & dT_dp, Real & dT_dh) const;
+  DualReal T_from_p_h(const DualReal & p, const DualReal & h) const;
 
   /**
    * Molar mass [kg/mol]
@@ -513,13 +514,11 @@ public:
    */
   virtual void vaporPressure(Real temperature, Real & psat, Real & dpsat_dT) const;
   virtual void vaporPressure_dT(Real temperature, Real & psat, Real & dpsat_dT) const;
-  virtual DualReal vaporPressure(DualReal temperature) const;
+  DualReal vaporPressure(const DualReal & temperature) const;
 
   virtual Real vaporTemperature(Real pressure) const;
   virtual void vaporTemperature(Real pressure, Real & Tsat, Real & dTsat_dp) const;
-  virtual DualReal vaporTemperature(DualReal pressure) const;
-
-#pragma GCC diagnostic pop
+  DualReal vaporTemperature(const DualReal & pressure) const;
 
 protected:
   /**
@@ -547,5 +546,7 @@ private:
       mooseError(std::forward<Args>(args)...);
   }
 };
+
+#pragma GCC diagnostic pop
 
 #endif /* SINGLEPHASEFLUIDPROPERTIES_H */
