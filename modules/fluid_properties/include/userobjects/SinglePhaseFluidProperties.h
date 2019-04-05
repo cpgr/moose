@@ -391,20 +391,6 @@ public:
                               Real & de_dT) const;
 
   /**
-   * Dynamic viscosity and its derivatives wrt density and temperature
-   * TODO: this shouldn't need 3 input args - AD will assume/call the 2-input version.
-   *
-   * @param rho fluid density (kg/m^3)
-   * @param T fluid temperature (K)
-   * @param drho_dT derivative of density wrt temperature
-   * @param[out] mu viscosity (Pa.s)
-   * @param[out] dmu_drho derivative of viscosity wrt density
-   * @param[out] dmu_dT derivative of viscosity wrt temperature
-   */
-  virtual void
-  mu_from_rho_T(Real rho, Real T, Real drho_dT, Real & mu, Real & dmu_drho, Real & dmu_dT) const;
-
-  /**
    * Deprecated methods. These methods have been superseded by the methods above.
    * Calling them will cause a deprecated warning with a message letting the user
    * know the new method name to use, before passing calculation to the updated
@@ -442,7 +428,7 @@ public:
                           Real & dmu_dp,
                           Real & dmu_dT) const;
 
-  virtual void vaporp_dT(Real T, Real & psat, Real & dpsat_dT) const;
+  virtual void vaporPressure_dT(Real T, Real & psat, Real & dpsat_dT) const;
 
   virtual void henryConstant_dT(Real T, Real & Kh, Real & dKh_dT) const;
 
@@ -454,9 +440,6 @@ public:
                          Real & e,
                          Real & de_dp,
                          Real & de_dT) const;
-
-  virtual void mu_drhoT_from_rho_T(
-      Real rho, Real T, Real drho_dT, Real & mu, Real & dmu_drho, Real & dmu_dT) const;
   ///@}
 
 protected:
@@ -467,8 +450,7 @@ protected:
    * temperatures, IAPWS (2004)
    */
   virtual Real henryConstantIAPWS(Real T, Real A, Real B, Real C) const;
-  virtual void
-  henryConstantIAPWS(Real T, Real & Kh, Real & dKh_dT, Real A, Real B, Real C) const;
+  virtual void henryConstantIAPWS(Real T, Real & Kh, Real & dKh_dT, Real A, Real B, Real C) const;
   virtual void
   henryConstantIAPWS_dT(Real T, Real & Kh, Real & dKh_dT, Real A, Real B, Real C) const;
 
