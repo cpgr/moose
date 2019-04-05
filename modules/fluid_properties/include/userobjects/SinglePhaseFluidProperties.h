@@ -322,46 +322,46 @@ public:
 
   /**
    * Adiabatic index - ratio of specific heats
-   * @param pressure fluid pressure (Pa)
-   * @param temperature fluid temperature (K)
+   * @param p fluid pressure (Pa)
+   * @param T fluid temperature (K)
    * @return gamma (-)
    */
-  virtual Real gamma_from_p_T(Real pressure, Real temperature) const;
+  virtual Real gamma_from_p_T(Real p, Real T) const;
 
   /**
    * Henry's law constant for dissolution in water and derivative wrt temperature
-   * @param temperature fluid temperature (K)
+   * @param T fluid temperature (K)
    * @param[out] Kh Henry's constant
    * @param[out] dKh_dT derivative of Kh wrt temperature
    */
-  virtual Real henryConstant(Real temperature) const;
-  virtual void henryConstant(Real temperature, Real & Kh, Real & dKh_dT) const;
+  virtual Real henryConstant(Real T) const;
+  virtual void henryConstant(Real T, Real & Kh, Real & dKh_dT) const;
 
   /**
    * Vapor pressure. Used to delineate liquid and gas phases.
    * Valid for temperatures between the triple point temperature
    * and the critical temperature
    *
-   * @param temperature fluid temperature (K)
+   * @param T fluid temperature (K)
    * @param[out] saturation pressure (Pa)
    * @param[out] derivative of saturation pressure wrt temperature (Pa/K)
    */
-  virtual Real vaporPressure(Real temperature) const;
-  virtual void vaporPressure(Real temperature, Real & psat, Real & dpsat_dT) const;
-  DualReal vaporPressure(const DualReal & temperature) const;
+  virtual Real vaporPressure(Real T) const;
+  virtual void vaporPressure(Real T, Real & psat, Real & dpsat_dT) const;
+  DualReal vaporPressure(const DualReal & T) const;
 
   /**
    * Vapor temperature. Used to delineate liquid and gas phases.
    * Valid for pressures between the triple point pressure
    * and the critical pressure
    *
-   * @param pressure fluid pressure (Pa)
+   * @param p fluid pressure (Pa)
    * @param[out] saturation temperature (K)
    * @param[out] derivative of saturation temperature wrt pressure
    */
-  virtual Real vaporTemperature(Real pressure) const;
-  virtual void vaporTemperature(Real pressure, Real & Tsat, Real & dTsat_dp) const;
-  DualReal vaporTemperature(const DualReal & pressure) const;
+  virtual Real vaporTemperature(Real p) const;
+  virtual void vaporTemperature(Real p, Real & Tsat, Real & dTsat_dp) const;
+  DualReal vaporTemperature(const DualReal & p) const;
 
   /**
    * Combined methods. These methods are particularly useful for the PorousFlow
@@ -371,9 +371,9 @@ public:
    * extra density calculation would be required to calculate mu(p, T). All
    * propery names are described above.
    */
-  virtual void rho_mu_from_p_T(Real pressure, Real temperature, Real & rho, Real & mu) const;
-  virtual void rho_mu_from_p_T(Real pressure,
-                               Real temperature,
+  virtual void rho_mu_from_p_T(Real p, Real T, Real & rho, Real & mu) const;
+  virtual void rho_mu_from_p_T(Real p,
+                               Real T,
                                Real & rho,
                                Real & drho_dp,
                                Real & drho_dT,
@@ -381,8 +381,8 @@ public:
                                Real & dmu_dp,
                                Real & dmu_dT) const;
 
-  virtual void rho_e_from_p_T(Real pressure,
-                              Real temperature,
+  virtual void rho_e_from_p_T(Real p,
+                              Real T,
                               Real & rho,
                               Real & drho_dp,
                               Real & drho_dT,
@@ -394,19 +394,15 @@ public:
    * Dynamic viscosity and its derivatives wrt density and temperature
    * TODO: this shouldn't need 3 input args - AD will assume/call the 2-input version.
    *
-   * @param density fluid density (kg/m^3)
-   * @param temperature fluid temperature (K)
-   * @param ddensity_dT derivative of density wrt temperature
+   * @param rho fluid density (kg/m^3)
+   * @param T fluid temperature (K)
+   * @param drho_dT derivative of density wrt temperature
    * @param[out] mu viscosity (Pa.s)
    * @param[out] dmu_drho derivative of viscosity wrt density
    * @param[out] dmu_dT derivative of viscosity wrt temperature
    */
-  virtual void mu_from_rho_T(Real density,
-                             Real temperature,
-                             Real ddensity_dT,
-                             Real & mu,
-                             Real & dmu_drho,
-                             Real & dmu_dT) const;
+  virtual void
+  mu_from_rho_T(Real rho, Real T, Real drho_dT, Real & mu, Real & dmu_drho, Real & dmu_dT) const;
 
   /**
    * Deprecated methods. These methods have been superseded by the methods above.
@@ -416,31 +412,29 @@ public:
    */
   ///@{
   virtual Real rho(Real p, Real T) const;
-  virtual void
-  rho_dpT(Real pressure, Real temperature, Real & rho, Real & drho_dp, Real & drho_dT) const;
+  virtual void rho_dpT(Real p, Real T, Real & rho, Real & drho_dp, Real & drho_dT) const;
 
-  virtual Real mu(Real pressure, Real temperature) const;
-  virtual void
-  mu_dpT(Real pressure, Real temperature, Real & mu, Real & dmu_dp, Real & dmu_dT) const;
+  virtual Real mu(Real p, Real T) const;
+  virtual void mu_dpT(Real p, Real T, Real & mu, Real & dmu_dp, Real & dmu_dT) const;
 
   virtual Real h(Real p, Real T) const;
-  virtual void h_dpT(Real pressure, Real temperature, Real & h, Real & dh_dp, Real & dh_dT) const;
+  virtual void h_dpT(Real p, Real T, Real & h, Real & dh_dp, Real & dh_dT) const;
 
-  virtual Real e(Real pressure, Real temperature) const;
-  virtual void e_dpT(Real pressure, Real temperature, Real & e, Real & de_dp, Real & de_dT) const;
+  virtual Real e(Real p, Real T) const;
+  virtual void e_dpT(Real p, Real T, Real & e, Real & de_dp, Real & de_dT) const;
 
-  virtual Real k(Real pressure, Real temperature) const;
-  virtual void k_dpT(Real pressure, Real temperature, Real & k, Real & dk_dp, Real & dk_dT) const;
+  virtual Real k(Real p, Real T) const;
+  virtual void k_dpT(Real p, Real T, Real & k, Real & dk_dp, Real & dk_dT) const;
 
-  virtual Real c(Real pressure, Real temperature) const;
+  virtual Real c(Real p, Real T) const;
 
-  virtual Real beta(Real pressure, Real temperature) const;
+  virtual Real beta(Real p, Real T) const;
 
-  virtual Real s(Real pressure, Real temperature) const;
+  virtual Real s(Real p, Real T) const;
 
-  virtual void rho_mu(Real pressure, Real temperature, Real & rho, Real & mu) const;
-  virtual void rho_mu_dpT(Real pressure,
-                          Real temperature,
+  virtual void rho_mu(Real p, Real T, Real & rho, Real & mu) const;
+  virtual void rho_mu_dpT(Real p,
+                          Real T,
                           Real & rho,
                           Real & drho_dp,
                           Real & drho_dT,
@@ -448,12 +442,12 @@ public:
                           Real & dmu_dp,
                           Real & dmu_dT) const;
 
-  virtual void vaporPressure_dT(Real temperature, Real & psat, Real & dpsat_dT) const;
+  virtual void vaporp_dT(Real T, Real & psat, Real & dpsat_dT) const;
 
-  virtual void henryConstant_dT(Real temperature, Real & Kh, Real & dKh_dT) const;
+  virtual void henryConstant_dT(Real T, Real & Kh, Real & dKh_dT) const;
 
-  virtual void rho_e_dpT(Real pressure,
-                         Real temperature,
+  virtual void rho_e_dpT(Real p,
+                         Real T,
                          Real & rho,
                          Real & drho_dp,
                          Real & drho_dT,
@@ -461,12 +455,8 @@ public:
                          Real & de_dp,
                          Real & de_dT) const;
 
-  virtual void mu_drhoT_from_rho_T(Real density,
-                                   Real temperature,
-                                   Real ddensity_dT,
-                                   Real & mu,
-                                   Real & dmu_drho,
-                                   Real & dmu_dT) const;
+  virtual void mu_drhoT_from_rho_T(
+      Real rho, Real T, Real drho_dT, Real & mu, Real & dmu_drho, Real & dmu_dT) const;
   ///@}
 
 protected:
@@ -476,11 +466,11 @@ protected:
    * liquid distribution constant for gases in H20 and D20 at high
    * temperatures, IAPWS (2004)
    */
-  virtual Real henryConstantIAPWS(Real temperature, Real A, Real B, Real C) const;
+  virtual Real henryConstantIAPWS(Real T, Real A, Real B, Real C) const;
   virtual void
-  henryConstantIAPWS(Real temperature, Real & Kh, Real & dKh_dT, Real A, Real B, Real C) const;
+  henryConstantIAPWS(Real T, Real & Kh, Real & dKh_dT, Real A, Real B, Real C) const;
   virtual void
-  henryConstantIAPWS_dT(Real temperature, Real & Kh, Real & dKh_dT, Real A, Real B, Real C) const;
+  henryConstantIAPWS_dT(Real T, Real & Kh, Real & dKh_dT, Real A, Real B, Real C) const;
 
 private:
   template <typename... Args>
