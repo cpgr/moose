@@ -120,6 +120,7 @@ ComputeMaterialsObjectThread::onBoundary(const Elem * elem, unsigned int side, B
     unsigned int face_n_points = _assembly[_tid]->qRuleFace()->n_points();
 
     _bnd_material_data[_tid]->resize(face_n_points);
+    face_n_points = _bnd_material_data[_tid]->nQPoints();
 
     if (_has_bnd_stateful_props)
     {

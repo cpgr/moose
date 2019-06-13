@@ -28,7 +28,7 @@ MaterialData::release()
 void
 MaterialData::resize(unsigned int n_qpoints)
 {
-  if (n_qpoints == _n_qpoints)
+  if (n_qpoints <= _n_qpoints)
     return;
 
   _props.resizeItems(n_qpoints);

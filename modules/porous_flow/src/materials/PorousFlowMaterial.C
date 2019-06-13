@@ -86,7 +86,11 @@ PorousFlowMaterial::sizeNodalProperty(const std::string & prop_name)
   const unsigned prop_id =
       _material_data->getMaterialPropertyStorage().retrievePropertyId(prop_name);
   // _material_data->props() returns MaterialProperties, which is a std::vector of PropertyValue.
-  _material_data->props()[prop_id]->resize(std::max(_current_elem->n_nodes(), _qrule->n_points()));
+  // _material_data->props()[prop_id]->resize(std::max(_current_elem->n_nodes(),
+  // _qrule->n_points()));
+
+  // Resize all of them instead
+  _material_data->resize(std::max(_current_elem->n_nodes(), _qrule->n_points()));
 }
 
 void
