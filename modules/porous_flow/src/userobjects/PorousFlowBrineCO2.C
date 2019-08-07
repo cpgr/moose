@@ -52,6 +52,7 @@ PorousFlowBrineCO2::PorousFlowBrineCO2(const InputParameters & parameters)
   // Set the number of phases and components, and their indexes
   _num_phases = 2;
   _num_components = 3;
+  _num_zvars = 1;
   _gas_phase_number = 1 - _aqueous_phase_number;
   _gas_fluid_component = 3 - _aqueous_fluid_component - _salt_component;
 
@@ -90,7 +91,7 @@ void
 PorousFlowBrineCO2::thermophysicalProperties(Real pressure,
                                              Real temperature,
                                              Real Xnacl,
-                                             Real Z,
+                                             std::vector<Real> & Z,
                                              unsigned int qp,
                                              std::vector<FluidStateProperties> & fsp) const
 {
@@ -105,7 +106,7 @@ PorousFlowBrineCO2::thermophysicalProperties(Real pressure,
   p.derivatives()[_pidx] = 1.0;
   DualReal T = temperature;
   T.derivatives()[_Tidx] = 1.0;
-  DualReal Zco2 = Z;
+  DualReal Zco2 = Z[0];
   Zco2.derivatives()[_Zidx] = 1.0;
   DualReal X = Xnacl;
   X.derivatives()[_Xidx] = 1.0;

@@ -49,7 +49,7 @@ public:
   virtual void thermophysicalProperties(Real pressure,
                                         Real temperature,
                                         Real Xnacl,
-                                        Real Z,
+                                        std::vector<Real> & Z,
                                         unsigned int qp,
                                         std::vector<FluidStateProperties> & fsp) const = 0;
 
@@ -75,10 +75,10 @@ public:
 protected:
   /// Index of derivative wrt pressure
   const unsigned int _pidx;
-  /// Index of derivative wrt total mass fraction Z
-  const unsigned int _Zidx;
   /// Index of derivative wrt temperature
   const unsigned int _Tidx;
   /// Index of derivative wrt salt mass fraction X
   const unsigned int _Xidx;
+  /// Index of derivative wrt total mass fraction Z
+  const unsigned int _Zidx;
 };

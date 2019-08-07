@@ -44,6 +44,7 @@ PorousFlowWaterNCG::PorousFlowWaterNCG(const InputParameters & parameters)
   // Set the number of phases and components, and their indexes
   _num_phases = 2;
   _num_components = 2;
+  _num_zvars = 1;
   _gas_phase_number = 1 - _aqueous_phase_number;
   _gas_fluid_component = 1 - _aqueous_fluid_component;
 
@@ -70,7 +71,7 @@ void
 PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
                                              Real temperature,
                                              Real /* Xnacl */,
-                                             Real Z,
+                                             std::vector<Real> & Z,
                                              unsigned int qp,
                                              std::vector<FluidStateProperties> & fsp) const
 {
@@ -85,7 +86,7 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
   p.derivatives()[_pidx] = 1.0;
   DualReal T = temperature;
   T.derivatives()[_Tidx] = 1.0;
-  DualReal Zncg = Z;
+  DualReal Zncg = Z[0];
   Zncg.derivatives()[_Zidx] = 1.0;
 
   // Clear all of the FluidStateProperties data

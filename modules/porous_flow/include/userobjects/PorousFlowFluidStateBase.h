@@ -74,6 +74,12 @@ public:
   unsigned int numComponents() const { return _num_components; };
 
   /**
+   * The maximum number of Zi nonlinear variables in this model
+   * @return number of variables
+   */
+  unsigned int numZVars() const { return _num_zvars; };
+
+  /**
    * The index of the aqueous phase
    * @return aqueous phase number
    */
@@ -119,6 +125,8 @@ protected:
   unsigned int _num_phases;
   /// Number of components
   unsigned int _num_components;
+  /// Number of nonlinear variables Zi
+  unsigned int _num_zvars;
   /// Phase number of the aqueous phase
   const unsigned int _aqueous_phase_number;
   /// Phase number of the gas phase

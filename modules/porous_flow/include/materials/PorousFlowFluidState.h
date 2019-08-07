@@ -75,13 +75,15 @@ protected:
   const unsigned int _pvar;
   /// Total mass fraction(s) of the gas component(s) summed over all phases
   std::vector<const VariableValue *> _Z;
+  /// Total mass fraction(s) of the gas component(s) summed over all phases at qp
+  std::vector<Real> _Zqp;
   /// Gradient(s) of total mass fraction(s) of the gas component(s) (only defined at the qps)
   std::vector<const VariableGradient *> _gradZ_qp;
   /// Moose variable number of Z
   std::vector<unsigned int> _Z_varnum;
   /// PorousFlow variable number of Z
   std::vector<unsigned int> _Zvar;
-  /// Number of coupled total mass fractions. Should be _num_phases - 1
+  /// Number of coupled total mass fractions
   const unsigned int _num_Z_vars;
   /// Salt mass fraction (kg/kg)
   const VariableValue & _Xnacl;
@@ -143,8 +145,8 @@ protected:
   const unsigned int _pidx;
   /// Index of derivative wrt temperature
   const unsigned int _Tidx;
-  /// Index of derivative wrt total mass fraction Z
-  const unsigned int _Zidx;
+  /// Index of derivative wrt total mass fraction Z (for multiple Z's)
+  std::vector<unsigned int> _Zidx;
   /// Index of derivative wrt salt mass fraction X
   const unsigned int _Xidx;
 };

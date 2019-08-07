@@ -20,7 +20,7 @@ validParams<PorousFlowFluidStateMultiComponentBase>()
 
 PorousFlowFluidStateMultiComponentBase::PorousFlowFluidStateMultiComponentBase(
     const InputParameters & parameters)
-  : PorousFlowFluidStateFlash(parameters), _pidx(0), _Zidx(1), _Tidx(2), _Xidx(3)
+  : PorousFlowFluidStateFlash(parameters), _pidx(0), _Tidx(1), _Xidx(2), _Zidx(3)
 {
 }
 
