@@ -34,7 +34,10 @@ struct FluidStateProperties
       viscosity(1.0), // to guard against division by zero
       enthalpy(0.0),
       internal_energy(0.0),
-      mass_fraction(n, 0.0){};
+      mass_fraction(n, 0.0),
+      d2saturation_dp2(0.0),
+      d2saturation_dZ2(0.0),
+      d2saturation_dpZ(0.0){};
 
   DualReal pressure;
   DualReal temperature;
@@ -44,6 +47,9 @@ struct FluidStateProperties
   DualReal enthalpy;
   DualReal internal_energy;
   std::vector<DualReal> mass_fraction;
+  Real d2saturation_dp2;
+  Real d2saturation_dZ2;
+  Real d2saturation_dpZ;
 };
 
 template <>

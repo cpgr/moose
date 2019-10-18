@@ -730,7 +730,7 @@
     type = 'PetscJacobianTester'
     input = 'waterncg_twophase.i'
     ratio_tol = 1e-6 # Lots of chain rule derivatives
-    difference_tol = 1e10
+    difference_tol = 1e-4
     cli_args = '-mat_fd_type ds Executioner/num_steps=1'
     threading = '!pthreads'
     requirement = "PorousFlow shall compute all Jacobian entries of all Kernels"
@@ -741,7 +741,7 @@
     type = 'PetscJacobianTester'
     input = 'waterncg_liquid.i'
     ratio_tol = 1e-6
-    difference_tol = 1e10
+    difference_tol = 1e-4
     cli_args = '-mat_fd_type ds Executioner/num_steps=1'
     threading = '!pthreads'
     requirement = "PorousFlow shall compute all Jacobian entries of all Kernels"
@@ -752,7 +752,7 @@
     type = 'PetscJacobianTester'
     input = 'waterncg_gas.i'
     ratio_tol = 1e-6 # Lots of chain rule derivatives
-    difference_tol = 1e10
+    difference_tol = 1e-4
     cli_args = '-mat_fd_type ds Executioner/num_steps=1'
     threading = '!pthreads'
     requirement = "PorousFlow shall compute all Jacobian entries of all Kernels"
@@ -763,7 +763,7 @@
     type = 'PetscJacobianTester'
     input = 'brineco2_twophase.i'
     ratio_tol = 1e-6 # Lots of chain rule derivatives
-    difference_tol = 1e10
+    difference_tol = 1e-4
     cli_args = '-mat_fd_type ds Executioner/num_steps=1'
     threading = '!pthreads'
     requirement = "PorousFlow shall compute all Jacobian entries of all Kernels"
@@ -774,7 +774,7 @@
     type = 'PetscJacobianTester'
     input = 'brineco2_liquid.i'
     ratio_tol = 1e-6 # Lots of chain rule derivatives
-    difference_tol = 1e10
+    difference_tol = 1e-4
     cli_args = '-mat_fd_type ds Executioner/num_steps=1'
     threading = '!pthreads'
     requirement = "PorousFlow shall compute all Jacobian entries of all Kernels"
@@ -785,7 +785,7 @@
     type = 'PetscJacobianTester'
     input = 'brineco2_gas.i'
     ratio_tol = 1e-6 # Lots of chain rule derivatives
-    difference_tol = 1e10
+    difference_tol = 1e-4
     cli_args = '-mat_fd_type ds Executioner/num_steps=1'
     threading = '!pthreads'
     requirement = "PorousFlow shall compute all Jacobian entries of all Kernels"
@@ -795,8 +795,8 @@
   [./brineco2_twophase_2]
     type = 'PetscJacobianTester'
     input = 'brineco2_twophase_2.i'
-    ratio_tol = 1e-5 # Lots of chain rule derivatives
-    difference_tol = 1e10
+    ratio_tol = 1e-6 # Lots of chain rule derivatives
+    difference_tol = 1e-4
     cli_args = '-mat_fd_type ds Executioner/num_steps=1'
     threading = '!pthreads'
     requirement = "PorousFlow shall compute all Jacobian entries of all Kernels"
@@ -807,7 +807,7 @@
     type = 'PetscJacobianTester'
     input = 'brineco2_liquid_2.i'
     ratio_tol = 1e-6 # Lots of chain rule derivatives
-    difference_tol = 1e10
+    difference_tol = 1e-4
     cli_args = '-mat_fd_type ds Executioner/num_steps=1'
     threading = '!pthreads'
     requirement = "PorousFlow shall compute all Jacobian entries of all Kernels"
