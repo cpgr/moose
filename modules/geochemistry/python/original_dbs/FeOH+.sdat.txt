@@ -142,7 +142,6 @@ Hematite
      3 species in reaction
         1.000 >(s)FeOH       -1.000 H+              1.000 Mn++    
      log K= .4000       dlogK/dT= 0.0000
-* -- estimated --
 
 >(s)FeONi+
      charge=    1       mole wt.=   130.5564 g
@@ -155,7 +154,6 @@ Hematite
      3 species in reaction
         1.000 >(s)FeOH       -1.000 H+              1.000 NpO2++  
      log K= -5.9000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(s)FeOPb+
      charge=    1       mole wt.=   279.0464 g
@@ -168,21 +166,18 @@ Hematite
      3 species in reaction
         1.000 >(s)FeOH       -1.000 H+              1.000 PuO2++  
      log K= -5.4000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(s)FeOSn+
      charge=    1       mole wt.=   190.5364 g
      3 species in reaction
         1.000 >(s)FeOH       -1.000 H+              1.000 Sn++    
      log K= -8.0000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(s)FeOUO2+
      charge=    1       mole wt.=   341.8742 g
      3 species in reaction
         1.000 >(s)FeOH       -1.000 H+              1.000 UO2++   
      log K= -5.2000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(s)FeOZn+
      charge=    1       mole wt.=   137.2264 g
@@ -203,7 +198,6 @@ Hematite
         1.000 >(w)FeOH        1.000 H+              1.000 F-      
        -1.000 H2O     
      log K= -8.7000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeH2AsO3
      charge=    0       mole wt.=   180.7826 g
@@ -256,14 +250,12 @@ Hematite
      3 species in reaction
         1.000 >(w)FeOH        1.000 Ag+            -1.000 H+      
      log K= 5.3000      dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeOBa+
      charge=    1       mole wt.=   209.1764 g
      3 species in reaction
         1.000 >(w)FeOH        1.000 Ba++           -1.000 H+      
      log K= 7.2000      dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeOCa+
      charge=    1       mole wt.=   111.9264 g
@@ -282,7 +274,6 @@ Hematite
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 Cu++    
      log K= -.6000      dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeOH2+
      charge=    1       mole wt.=    73.8622 g
@@ -301,14 +292,12 @@ Hematite
      2 species in reaction
         1.000 >(w)FeOH        1.000 CrO4--  
      log K= -3.9000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeOHF-
      charge=   -1       mole wt.=    91.8527 g
      2 species in reaction
         1.000 >(w)FeOH        1.000 F-      
      log K= -1.6000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeOHg+
      charge=    1       mole wt.=   272.4364 g
@@ -333,132 +322,12 @@ Hematite
      3 species in reaction
         1.000 >(w)FeOH        1.000 H2SiO4--       -1.000 H2O     
      log K= -8.3000     dlogK/dT= 0.0000
-* -- estimated --
-* 
-* -- estimated --
-* >(w)FeWO4-
-*      charge= -1.0       mole wt.=  303.6946
-*      4 species in reaction
-*        1.000 >(w)FeOH        1.000 H+              1.000 WO4--
-*       -1.000 H2O
-*      log K=  -9.2000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeOHWO4--
-*      charge= -2.0       mole wt.=  320.7019
-*      2 species in reaction
-*        1.000 >(w)FeOH        1.000 WO4--
-*      log K=  -2.1000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeMoO4-
-*      charge= -1.0       mole wt.=  215.7846
-*      4 species in reaction
-*        1.000 >(w)FeOH        1.000 H+              1.000 MoO4--
-*       -1.000 H2O
-*      log K=  -9.5000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeOHMoO4--
-*      charge= -2.0       mole wt.=  232.7919
-*      2 species in reaction
-*        1.000 >(w)FeOH        1.000 MoO4--
-*      log K=  -2.4000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeSbO(OH)4
-*      charge=  0.0       mole wt.=  261.6256
-*      4 species in reaction
-*        1.000 >(w)FeOH        1.000 H+              1.000 SbO(OH)4-
-*       -1.000 H2O
-*      log K=  -8.4000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeOHSbO(OH)4-
-*      charge= -1.0       mole wt.=  278.6329
-*      2 species in reaction
-*        1.000 >(w)FeOH        1.000 SbO(OH)4-
-*      log K=  -1.3000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeCNO
-*      charge=  0.0       mole wt.=   97.8641
-*      4 species in reaction
-*        1.000 >(w)FeOH        1.000 H+              1.000 CNO-
-*       -1.000 H2O
-*      log K=  -8.9000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeOHCNO-
-*      charge= -1.0       mole wt.=  114.8714
-*      2 species in reaction
-*        1.000 >(w)FeOH        1.000 CNO-
-*      log K=  -1.8000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeCNS
-*      charge=  0.0       mole wt.=  113.9307
-*      4 species in reaction
-*        1.000 >(w)FeOH        1.000 H+              1.000 CNS-
-*       -1.000 H2O
-*      log K=  -7.0000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeOHCNS-
-*      charge= -1.0       mole wt.=  130.9380
-*      2 species in reaction
-*        1.000 >(w)FeOH        1.000 CNS-
-*      log K=  -0.1000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeCN
-*      charge=  0.0       mole wt.=   81.8647
-*      4 species in reaction
-*        1.000 >(w)FeOH        1.000 H+              1.000 CN-
-*       -1.000 H2O
-*      log K= -13.0000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeOHCN-
-*      charge= -1.0       mole wt.=   98.8720
-*      2 species in reaction
-*        1.000 >(w)FeOH        1.000 CN-
-*      log K=  -5.7000    dlogK/dT=   0.0000
 
 >(w)FeOHSO4--
      charge=   -2       mole wt.=   168.9119 g
      2 species in reaction
         1.000 >(w)FeOH        1.000 SO4--   
      log K= -.7900      dlogK/dT= 0.0000
-* 
-* -- estimated --
-* >(w)FeSO3-
-*      charge= -1.0       mole wt.=  135.9080
-*      4 species in reaction
-*        1.000 >(w)FeOH        1.000 H+              1.000 SO3--
-*       -1.000 H2O
-*      log K= -11.6000    dlogK/dT=   0.0000
-*  
-* -- estimated --
-* >(w)FeOHSO3--
-*      charge= -2.0       mole wt.=  152.9153
-*      2 species in reaction
-*        1.000 >(w)FeOH        1.000 SO3--
-*      log K=  -4.3000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeS2O3-
-*      charge= -1.0       mole wt.=  167.9772
-*      4 species in reaction
-*        1.000 >(w)FeOH        1.000 H+              1.000 S2O3--
-*       -1.000 H2O
-*      log K=  -7.5000    dlogK/dT=   0.0000
-* 
-* >(w)FeOHS2O3--
-*     charge= -2.0       mole wt.=  184.9725
-*     2 species in reaction
-*       1.000 >(w)FeOH        1.000 S2O3--
-*     log K=  -0.4900    dlogK/dT=   0.0000
 
 >(w)FeOHVO4---
      charge=   -3       mole wt.=   187.7933 g
@@ -471,89 +340,42 @@ Hematite
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 Mg++    
      log K= 4.6000      dlogK/dT= 0.0000
-* -- estimated --
-* 
-* >(s)FeOCd+
-*      charge=  1.0       mole wt.=  184.2564
-*      3 species in reaction
-*        1.000 >(s)FeOH       -1.000 H+              1.000 Cd++
-*      log K=  -0.4700    dlogK/dT=   0.0000
-* 
-* >(w)FeOCd+
-*      charge=  1.0       mole wt.=  184.2564
-*      3 species in reaction
-*        1.000 >(w)FeOH       -1.000 H+              1.000 Cd++
-*      log K=   2.9000    dlogK/dT=   0.0000
 
 >(w)FeOMn+
      charge=    1       mole wt.=   126.7844 g
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 Mn++    
      log K= 3.5000      dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeONi+
      charge=    1       mole wt.=   130.5564 g
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 Ni++    
      log K= 2.5000      dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeONpO2+
      charge=    1       mole wt.=   340.8934 g
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 NpO2++  
      log K= -3.6000     dlogK/dT= 0.0000
-* -- estimated --
-* 
-* -- estimated --
-* >(s)FeOBe+
-*      charge=  1.0       mole wt.=   80.8586
-*      3 species in reaction
-*        1.000 >(s)FeOH       -1.000 H+              1.000 Be++
-*      log K=  -5.7000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeOBe+
-*      charge=  1.0       mole wt.=   80.8586
-*      3 species in reaction
-*        1.000 >(w)FeOH       -1.000 H+              1.000 Be++
-*      log K=  -3.3000    dlogK/dT=   0.0000
 
 >(w)FeOPb+
      charge=    1       mole wt.=   279.0464 g
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 Pb++    
      log K= -.3000      dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeOPuO2+
      charge=    1       mole wt.=   347.8452 g
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 PuO2++  
      log K= -3.0000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeOSn+
      charge=    1       mole wt.=   190.5364 g
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 Sn++    
      log K= -5.9000     dlogK/dT= 0.0000
-* -- estimated --
-* 
-* -- estimated --
-* >(s)FeOPd+
-*      charge=  1.0       mole wt.=  178.2664
-*      3 species in reaction
-*        1.000 >(s)FeOH       -1.000 H+              1.000 Pd++
-*      log K=  -9.6000    dlogK/dT=   0.0000
-* 
-* -- estimated --
-* >(w)FeOPd+
-*      charge=  1.0       mole wt.=  178.2664
-*      3 species in reaction
-*        1.000 >(w)FeOH       -1.000 H+              1.000 Pd++
-*      log K=  -7.7000    dlogK/dT=   0.0000
 
 >(w)FeOSr+
      charge=    1       mole wt.=   159.4664 g
@@ -573,7 +395,6 @@ Hematite
      3 species in reaction
         1.000 >(w)FeOH       -1.000 H+              1.000 UO2++   
      log K= -2.8000     dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeOZn+
      charge=    1       mole wt.=   137.2264 g
@@ -608,7 +429,6 @@ Hematite
         1.000 >(w)FeOH        1.000 H+              1.000 H2SiO4--
        -2.000 H2O     
      log K= -15.9000    dlogK/dT= 0.0000
-* -- estimated --
 
 >(w)FeSO4-
      charge=   -1       mole wt.=   151.9046 g
