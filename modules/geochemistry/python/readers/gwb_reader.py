@@ -167,7 +167,6 @@ def readDatabase(dblist):
                             for i in range(0, len(data), 2):
                                 basis_species[species]['elements'][data[i+1]] = data[i]
 
-
                 line = line+1
 
                 if '-end-' in dblist[line]:
@@ -384,7 +383,6 @@ def readDatabase(dblist):
                     reading_sorbing_mineral_species = False
                     line = line-1
 
-            
         if 'minerals\n' in dblist[line] and not ('sorbing minerals' in dblist[line]) and len(dblist[line].split()) == 2:
             # Read the minerals data
             line = line+1
@@ -472,7 +470,7 @@ def readDatabase(dblist):
                         else:
                             gas_species[species]["a"] = data[9]
                             gas_species[species]["b"] = data[11]
-                            
+
 
                         line = line+1
 
