@@ -219,10 +219,11 @@ class TestGWBReader(unittest.TestCase):
         Test that the sorption basis species are correctly parsed
         """
         self.readSorptionDatabase()
-        gold = {'>(s)FeOH': {'charge': '0', 'molecular weight': '72.8543',
+        gold = {'>(s)FeOH': {'charge': '0', 'radius': '0', 'molecular weight': '72.8543',
                          'elements': {'Fe': '1.000', 'H': '1.000', 'O': '1.000'}},
-                '>(w)FeOH': {'charge': '111', 'molecular weight': '-72.8543',
+                '>(w)FeOH': {'charge': '111', 'radius': '0', 'molecular weight': '-72.8543',
                          'elements': {'Fe': '1.111', 'H': '-1.23', 'Rubbish': '77.0'}}}
+        print(self.sorption_db.basis_species)
 
         self.assertDictEqual(self.sorption_db.basis_species, gold)
 
