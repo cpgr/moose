@@ -135,6 +135,7 @@ def readDatabase(dblist):
                     species = dblist[line].strip()
                     basis_species[species] = {}
                     basis_species[species]['elements'] = {}
+                    basis_species[species]['radius'] = "0" # default for sorption sites that are counted as basis species
                     line = line+1
 
                     # Charge, ionic radius and molecular weight
