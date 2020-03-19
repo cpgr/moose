@@ -216,25 +216,19 @@ GeochemicalDatabaseReader::getMineralSpecies(const std::vector<std::string> & na
 
       dbs.basis_species = basis_species;
 
+      // recover sorption information, if any
+      std::map<std::string, Real> species_and_sorbing_density;
+      dbs.surface_area = 0.0;
       if (_root["sorbing minerals"].isMember(species))
       {
         auto sorbing_mineral = _root["sorbing minerals"][species];
         dbs.surface_area = MooseUtils::convert<Real>(sorbing_mineral["surface area"].asString());
 
-        std::map<std::string, Real> species_and_sorbing_density;
-        unsigned ind = 0;
-        for (auto & site : sorbing_mineral["sorbing site"])
-        {
-          species_and_sorbing_density[site.asString()] =
-              MooseUtils::convert<Real>(sorbing_mineral["site density"][ind].asString());
-          ind += 1;
-        }
-        dbs.sorption_sites = species_and_sorbing_density;
+        for (auto & site : sorbing_mineral["sorbing sites"].getMemberNames())
+          species_and_sorbing_density[site] =
+              MooseUtils::convert<Real>(sorbing_mineral["sorbing sites"][site].asString());
       }
-      else
-      {
-        dbs.surface_area = 0.0;
-      }
+      dbs.sorption_sites = species_and_sorbing_density;
 
       _mineral_species[species] = dbs;
     }
