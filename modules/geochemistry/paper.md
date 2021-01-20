@@ -151,7 +151,7 @@ The major ions in the Weber-Tensleep formation water are Cl$^{-}$, Na$^{+}$, SO$
 
 The 3D MOOSE model of the hot-water injection involves coupling a model of the heat exchanger to a model of transport to the geochemical model of the reservoir.  These three models are loosely coupled using MOOSE's "multiapp" approach, using the geochemistry and PorousFlow modules.  The coupled modelling reveals that anhydrite is the main precipitate in the heat exchanger, that illite and kaolinite dissolve around the injection well, and that K-feldspar and quartz precipitate around the injection well.  \autoref{fig:weber_tensleep_eg} shows some 3D contours of the Weber-Tensleep aquifer.
 
-![Temperature, porosity, pH and free volume of Quartz after 90 days of injection in the 3D coupled model.\label{fig:weber_tensleep_eg}](joss_paper_weber_tensleep.png)
+![Temperature, free volume of Quartz, and porosity after 90 days of hot water injection in the 3D coupled model.\label{fig:weber_tensleep_eg}](joss_paper_weber_tensleep.png)
 
 
 # Acknowledgements - TODO
