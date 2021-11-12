@@ -11,6 +11,12 @@
     csvdiff = 'brooks_corey2_out_vpp_0001.csv'
     threading = '!pthreads'
   [../]
+  [./brookscorey3]
+    type = 'Exodiff'
+    input = 'brooks_corey_het.i'
+    exodiff = 'brooks_corey_het_out.e'
+    threading = '!pthreads'
+  [../]
   [./vangenuchten1]
     type = 'CSVDiff'
     input = 'vangenuchten1.i'

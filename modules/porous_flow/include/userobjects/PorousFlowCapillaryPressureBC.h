@@ -25,17 +25,21 @@ public:
 
   PorousFlowCapillaryPressureBC(const InputParameters & parameters);
 
-  virtual Real capillaryPressureCurve(Real saturation, unsigned qp = 0) const override;
-  virtual Real dCapillaryPressureCurve(Real saturation, unsigned qp = 0) const override;
-  virtual Real d2CapillaryPressureCurve(Real saturation, unsigned qp = 0) const override;
+  virtual Real capillaryPressureCurve(Real saturation, unsigned int qp = 0) const override;
+  virtual Real dCapillaryPressureCurve(Real saturation, unsigned int qp = 0) const override;
+  virtual Real d2CapillaryPressureCurve(Real saturation, unsigned int qp = 0) const override;
 
-  virtual Real effectiveSaturation(Real pc, unsigned qp = 0) const override;
-  virtual Real dEffectiveSaturation(Real pc, unsigned qp = 0) const override;
-  virtual Real d2EffectiveSaturation(Real pc, unsigned qp = 0) const override;
+  virtual Real effectiveSaturation(Real pc, unsigned int qp = 0) const override;
+  virtual Real dEffectiveSaturation(Real pc, unsigned int qp = 0) const override;
+  virtual Real d2EffectiveSaturation(Real pc, unsigned int qp = 0) const override;
 
 protected:
   /// Brooks-Corey exponent lambda
   const Real _lambda;
   /// Threshold entry pressure
-  const Real _pe;
+  const VariableValue & _pe;
+
+private:
+  /// Check that provided entry pressure is greater than or equal to zero
+  void checkEntryPressure(unsigned int qp = 0) const;
 };

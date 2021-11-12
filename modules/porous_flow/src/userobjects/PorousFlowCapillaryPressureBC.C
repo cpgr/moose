@@ -17,8 +17,7 @@ PorousFlowCapillaryPressureBC::validParams()
 {
   InputParameters params = PorousFlowCapillaryPressure::validParams();
   params.addRequiredParam<Real>("lambda", "Brooks-Corey exponent lambda");
-  params.addRequiredRangeCheckedParam<Real>(
-      "pe", "pe > 0", "Brooks-Corey entry pressure. Must be positive");
+  params.addRequiredCoupledVar("pe", "Brooks-Corey entry pressure. Must be positive");
   params.addClassDescription("Brooks-Corey capillary pressure");
   return params;
 }
@@ -26,46 +25,59 @@ PorousFlowCapillaryPressureBC::validParams()
 PorousFlowCapillaryPressureBC::PorousFlowCapillaryPressureBC(const InputParameters & parameters)
   : PorousFlowCapillaryPressure(parameters),
     _lambda(getParam<Real>("lambda")),
-    _pe(getParam<Real>("pe"))
+    _pe(coupledValue("pe"))
 {
 }
 
 Real
-PorousFlowCapillaryPressureBC::capillaryPressureCurve(Real saturation, unsigned /*qp*/) const
+PorousFlowCapillaryPressureBC::capillaryPressureCurve(Real saturation, unsigned int qp) const
 {
+  checkEntryPressure(qp);
   Real seff = effectiveSaturationFromSaturation(saturation);
-  return PorousFlowBrooksCorey::capillaryPressure(seff, _pe, _lambda, _pc_max);
+  return PorousFlowBrooksCorey::capillaryPressure(seff, _pe[qp], _lambda, _pc_max);
 }
 
 Real
-PorousFlowCapillaryPressureBC::dCapillaryPressureCurve(Real saturation, unsigned /*qp*/) const
+PorousFlowCapillaryPressureBC::dCapillaryPressureCurve(Real saturation, unsigned int qp) const
 {
+  checkEntryPressure(qp);
   Real seff = effectiveSaturationFromSaturation(saturation);
-  return PorousFlowBrooksCorey::dCapillaryPressure(seff, _pe, _lambda, _pc_max) * _dseff_ds;
+  return PorousFlowBrooksCorey::dCapillaryPressure(seff, _pe[qp], _lambda, _pc_max) * _dseff_ds;
 }
 
 Real
-PorousFlowCapillaryPressureBC::d2CapillaryPressureCurve(Real saturation, unsigned /*qp*/) const
+PorousFlowCapillaryPressureBC::d2CapillaryPressureCurve(Real saturation, unsigned int qp) const
 {
+  checkEntryPressure(qp);
   Real seff = effectiveSaturationFromSaturation(saturation);
-  return PorousFlowBrooksCorey::d2CapillaryPressure(seff, _pe, _lambda, _pc_max) * _dseff_ds *
+  return PorousFlowBrooksCorey::d2CapillaryPressure(seff, _pe[qp], _lambda, _pc_max) * _dseff_ds *
          _dseff_ds;
 }
 
 Real
-PorousFlowCapillaryPressureBC::effectiveSaturation(Real pc, unsigned /*qp*/) const
+PorousFlowCapillaryPressureBC::effectiveSaturation(Real pc, unsigned int qp) const
 {
-  return PorousFlowBrooksCorey::effectiveSaturation(pc, _pe, _lambda);
+  checkEntryPressure(qp);
+  return PorousFlowBrooksCorey::effectiveSaturation(pc, _pe[qp], _lambda);
 }
 
 Real
-PorousFlowCapillaryPressureBC::dEffectiveSaturation(Real pc, unsigned /*qp*/) const
+PorousFlowCapillaryPressureBC::dEffectiveSaturation(Real pc, unsigned int qp) const
 {
-  return PorousFlowBrooksCorey::dEffectiveSaturation(pc, _pe, _lambda);
+  checkEntryPressure(qp);
+  return PorousFlowBrooksCorey::dEffectiveSaturation(pc, _pe[qp], _lambda);
 }
 
 Real
-PorousFlowCapillaryPressureBC::d2EffectiveSaturation(Real pc, unsigned /*qp*/) const
+PorousFlowCapillaryPressureBC::d2EffectiveSaturation(Real pc, unsigned int qp) const
 {
-  return PorousFlowBrooksCorey::d2EffectiveSaturation(pc, _pe, _lambda);
+  checkEntryPressure(qp);
+  return PorousFlowBrooksCorey::d2EffectiveSaturation(pc, _pe[qp], _lambda);
+}
+
+void
+PorousFlowCapillaryPressureBC::checkEntryPressure(unsigned int qp) const
+{
+  if (_pe[qp] < 0.0)
+    mooseError("Brooks-Corey entry pressure is ", _pe[qp], " but it cannot be negative");
 }
