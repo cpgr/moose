@@ -65,9 +65,9 @@ PorousFlowDictator::PorousFlowDictator(const InputParameters & parameters)
   if (_num_variables > 0)
   {
     _consistent_fe_type = true;
-    _fe_type = FEType(getVar("porous_flow_vars", 0)->feType());
+    _fe_type = FEType(getFieldVar("porous_flow_vars", 0)->feType());
     for (unsigned int i = 1; i < _num_variables; ++i)
-      if (getVar("porous_flow_vars", i)->feType() != _fe_type)
+      if (getFieldVar("porous_flow_vars", i)->feType() != _fe_type)
         _consistent_fe_type = false;
   }
 

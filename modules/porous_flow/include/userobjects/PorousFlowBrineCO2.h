@@ -53,13 +53,19 @@ public:
 
   virtual std::string fluidStateName() const override;
 
+  virtual void thermophysicalProperties(ADReal pressure,
+                                        ADReal temperature,
+                                        ADReal Xnacl,
+                                        ADReal Z,
+                                        unsigned int qp,
+                                        std::vector<FluidStateProperties> & fsp) const override;
+
   virtual void thermophysicalProperties(Real pressure,
                                         Real temperature,
                                         Real Xnacl,
                                         Real Z,
                                         unsigned int qp,
                                         std::vector<FluidStateProperties> & fsp) const override;
-
   /**
    * Mole fractions of CO2 in brine and water vapor in CO2 at equilibrium
    *

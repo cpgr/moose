@@ -976,8 +976,13 @@ TEST_F(PorousFlowBrineCO2Test, equilibriumMoleFractions)
   // Test pure water (Xnacl = 0)
   // Low temperature regime
   DualReal p = 20.0e6;
+  Moose::derivInsert(p.derivatives(), _pidx, 1.0);
+
   DualReal T = 323.15;
+  Moose::derivInsert(T.derivatives(), _Tidx, 1.0);
+
   DualReal Xnacl = 0.0;
+  Moose::derivInsert(Xnacl.derivatives(), _Xidx, 1.0);
 
   DualReal x, y;
   _fs->equilibriumMoleFractions(p, T, Xnacl, x, y);
@@ -986,6 +991,7 @@ TEST_F(PorousFlowBrineCO2Test, equilibriumMoleFractions)
 
   // Intermediate temperature regime
   T = 373.15;
+  Moose::derivInsert(T.derivatives(), _Tidx, 1.0);
 
   _fs->equilibriumMoleFractions(p, T, Xnacl, x, y);
   ABS_TEST(y.value(), 0.0194394631944, 1.0e-8);
@@ -1019,6 +1025,7 @@ TEST_F(PorousFlowBrineCO2Test, equilibriumMoleFractions)
 
   // Intermediate temperature regime
   T = 373.15;
+  Moose::derivInsert(T.derivatives(), _Tidx, 1.0);
 
   _fs->equilibriumMoleFractions(p, T, Xnacl, x, y);
   ABS_TEST(y.value(), 0.01831360857, 1.0e-8);

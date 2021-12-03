@@ -42,7 +42,7 @@ Real
 capillaryPressure(Real seff, Real pe, Real lambda, Real pc_max)
 {
   if (seff >= 1.0)
-    return 0.0;
+    return pe;
   else if (seff <= 0.0)
     return pc_max;
   else

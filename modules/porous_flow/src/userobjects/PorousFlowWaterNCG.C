@@ -70,17 +70,11 @@ PorousFlowWaterNCG::fluidStateName() const
 void
 PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
                                              Real temperature,
-                                             Real /* Xnacl */,
+                                             Real Xnacl,
                                              Real Z,
                                              unsigned int qp,
                                              std::vector<FluidStateProperties> & fsp) const
 {
-  FluidStateProperties & liquid = fsp[_aqueous_phase_number];
-  FluidStateProperties & gas = fsp[_gas_phase_number];
-
-  // Check whether the input temperature is within the region of validity
-  checkVariables(temperature);
-
   // AD versions of primary variables
   DualReal p = pressure;
   Moose::derivInsert(p.derivatives(), _pidx, 1.0);
@@ -88,12 +82,31 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
   Moose::derivInsert(T.derivatives(), _Tidx, 1.0);
   DualReal Zncg = Z;
   Moose::derivInsert(Zncg.derivatives(), _Zidx, 1.0);
+  DualReal X = Xnacl;
+  Moose::derivInsert(X.derivatives(), _Xidx, 1.0);
+
+  thermophysicalProperties(p, T, X, Zncg, qp, fsp);
+}
+
+void
+PorousFlowWaterNCG::thermophysicalProperties(ADReal p,
+                                             ADReal T,
+                                             ADReal /* X */,
+                                             ADReal Z,
+                                             unsigned int qp,
+                                             std::vector<FluidStateProperties> & fsp) const
+{
+  FluidStateProperties & liquid = fsp[_aqueous_phase_number];
+  FluidStateProperties & gas = fsp[_gas_phase_number];
+
+  // Check whether the input temperature is within the region of validity
+  checkVariables(T.value());
 
   // Clear all of the FluidStateProperties data
   clearFluidStateProperties(fsp);
 
   FluidStatePhaseEnum phase_state;
-  massFractions(p, T, Zncg, phase_state, fsp);
+  massFractions(p, T, Z, phase_state, fsp);
 
   switch (phase_state)
   {
@@ -120,7 +133,7 @@ PorousFlowWaterNCG::thermophysicalProperties(Real pressure,
     case FluidStatePhaseEnum::TWOPHASE:
     {
       // Calculate the gas and liquid properties in the two phase region
-      twoPhaseProperties(p, T, Zncg, qp, fsp);
+      twoPhaseProperties(p, T, Z, qp, fsp);
 
       break;
     }

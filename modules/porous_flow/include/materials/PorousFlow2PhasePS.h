@@ -52,4 +52,7 @@ protected:
   const unsigned int _svar;
   /// Capillary pressure UserObject
   const PorousFlowCapillaryPressure & _pc_uo;
+
+  const VariableValue & _pc0;
+  const VariableValue & _pc_neighbour;
 };

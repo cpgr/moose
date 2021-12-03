@@ -43,6 +43,13 @@ public:
    * @param qp quadpoint index
    * @param[out] fsp the FluidStateProperties struct containing all properties
    */
+  virtual void thermophysicalProperties(ADReal pressure,
+                                        ADReal temperature,
+                                        ADReal Xnacl,
+                                        ADReal Z,
+                                        unsigned int qp,
+                                        std::vector<FluidStateProperties> & fsp) const = 0;
+
   virtual void thermophysicalProperties(Real pressure,
                                         Real temperature,
                                         Real Xnacl,

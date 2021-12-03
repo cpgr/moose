@@ -22,6 +22,8 @@ PorousFlow2PhasePS::validParams()
                                "Variable that is the saturation of phase 1 (the gas phase)");
   params.addRequiredParam<UserObjectName>("capillary_pressure",
                                           "Name of the UserObject defining the capillary pressure");
+  params.addCoupledVar("pc0", 0, "Pc original value");
+  params.addCoupledVar("pc_neighbour", 0, "Pc of neigbour");
   params.addClassDescription("This Material calculates the 2 porepressures and the 2 saturations "
                              "in a 2-phase situation, and derivatives of these with "
                              "respect to the PorousFlowVariables.");
@@ -47,7 +49,9 @@ PorousFlow2PhasePS::PorousFlow2PhasePS(const InputParameters & parameters)
               ? _dictator.porousFlowVariableNum(_phase1_saturation_varnum)
               : 0),
 
-    _pc_uo(getUserObject<PorousFlowCapillaryPressure>("capillary_pressure"))
+    _pc_uo(getUserObject<PorousFlowCapillaryPressure>("capillary_pressure")),
+    _pc0(coupledValue("pc0")),
+    _pc_neighbour(coupledValue("pc_neighbour"))
 {
   if (_dictator.numPhases() != 2)
     mooseError("The Dictator proclaims that the number of phases is ",
@@ -70,6 +74,7 @@ PorousFlow2PhasePS::computeQpProperties()
   PorousFlowVariableBase::computeQpProperties();
 
   buildQpPPSS();
+  const Real pc = _pc_uo.capillaryPressure(1.0 - _phase1_saturation[_qp]);
   const Real dpc = _pc_uo.dCapillaryPressure(1.0 - _phase1_saturation[_qp]);
 
   if (!_nodal_material)
@@ -77,7 +82,16 @@ PorousFlow2PhasePS::computeQpProperties()
     (*_grads_qp)[_qp][0] = -_phase1_grads_qp[_qp];
     (*_grads_qp)[_qp][1] = _phase1_grads_qp[_qp];
     (*_gradp_qp)[_qp][0] = _phase0_gradp_qp[_qp];
-    (*_gradp_qp)[_qp][1] = _phase0_gradp_qp[_qp] - dpc * (*_grads_qp)[_qp][1];
+
+    // if (_pc_neighbour[0] < 1.0e-6)
+    //   (*_gradp_qp)[_qp][1] = _phase0_gradp_qp[_qp] - dpc * (*_grads_qp)[_qp][1];
+    // else
+    // {
+    if (_pc_neighbour[_qp] < 0.0)
+      (*_gradp_qp)[_qp][1] = 0.0;
+    else
+      (*_gradp_qp)[_qp][1] = _phase0_gradp_qp[_qp] - dpc * (*_grads_qp)[_qp][1];
+    // }
   }
 
   // _porepressure depends on _phase0_porepressure, and its derivative is 1
