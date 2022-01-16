@@ -455,6 +455,8 @@ protected:
                      DualReal & B) const;
   ///@}
 
+  /// Flag to activate calculation of thermal properties
+  const bool _isothermal;
   /// Salt component index
   const unsigned int _salt_component;
   /// Fluid properties UserObject for water

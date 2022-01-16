@@ -22,12 +22,15 @@ PorousFlowBrineCO2::validParams()
   params.addRequiredParam<UserObjectName>("brine_fp", "The name of the user object for brine");
   params.addRequiredParam<UserObjectName>("co2_fp", "The name of the user object for CO2");
   params.addParam<unsigned int>("salt_component", 2, "The component number of salt");
+  params.addParam<bool>(
+      "isothermal", true, "Flag to specify whether the run is isothermal. Default is true");
   params.addClassDescription("Fluid state class for brine and CO2");
   return params;
 }
 
 PorousFlowBrineCO2::PorousFlowBrineCO2(const InputParameters & parameters)
   : PorousFlowFluidStateMultiComponentBase(parameters),
+    _isothermal(getParam<bool>("isothermal")),
     _salt_component(getParam<unsigned int>("salt_component")),
     _brine_fp(getUserObject<BrineFluidProperties>("brine_fp")),
     _co2_fp(getUserObject<SinglePhaseFluidProperties>("co2_fp")),
@@ -255,10 +258,14 @@ PorousFlowBrineCO2::gasProperties(const DualReal & pressure,
   // Save the values to the FluidStateProperties object. Note that derivatives wrt z are 0
   gas.density = co2_density;
   gas.viscosity = co2_viscosity;
-  gas.enthalpy = co2_enthalpy;
 
-  mooseAssert(gas.density.value() > 0.0, "Gas density must be greater than zero");
-  gas.internal_energy = gas.enthalpy - pressure / gas.density;
+  if (!_isothermal)
+  {
+    gas.enthalpy = co2_enthalpy;
+
+    mooseAssert(gas.density.value() > 0.0, "Gas density must be greater than zero");
+    gas.internal_energy = gas.enthalpy - pressure / gas.density;
+  }
 }
 
 void
@@ -297,10 +304,14 @@ PorousFlowBrineCO2::liquidProperties(const DualReal & pressure,
   // Save the values to the FluidStateProperties object
   liquid.density = liquid_density;
   liquid.viscosity = liquid_viscosity;
-  liquid.enthalpy = liquid_enthalpy;
 
-  mooseAssert(liquid.density.value() > 0.0, "Liquid density must be greater than zero");
-  liquid.internal_energy = liquid.enthalpy - pressure / liquid.density;
+  if (!_isothermal)
+  {
+    liquid.enthalpy = liquid_enthalpy;
+
+    mooseAssert(liquid.density.value() > 0.0, "Liquid density must be greater than zero");
+    liquid.internal_energy = liquid.enthalpy - pressure / liquid.density;
+  }
 }
 
 DualReal
