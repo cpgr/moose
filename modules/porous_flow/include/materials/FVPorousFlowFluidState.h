@@ -49,7 +49,6 @@ public:
   FVPorousFlowFluidState(const InputParameters & parameters);
 
 protected:
-  virtual void initialSetup() override;
   virtual void initQpStatefulProperties() override;
   virtual void computeQpProperties() override;
 
