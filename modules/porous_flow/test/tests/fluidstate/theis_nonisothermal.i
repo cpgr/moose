@@ -230,8 +230,8 @@
   type = Transient
   solve_type = NEWTON
   end_time = 1e4
-  nl_abs_tol = 1e-7
-  nl_rel_tol = 1e-5
+  nl_abs_tol = 1e-10
+  nl_rel_tol = 1e-8
   [TimeStepper]
     type = IterationAdaptiveDT
     dt = 1

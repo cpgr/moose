@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Material.h"
-#include "PorousFlowBrineCO2.h"
+#include "PorousFlowFluidStateMultiComponentBase.h"
 
 class PorousFlowDictator;
 
@@ -92,7 +92,7 @@ protected:
   /// PorousFlow variable number of the temperature
   const unsigned int _Tvar;
   /// FluidState UserObject
-  const PorousFlowBrineCO2 & _fs;
+  const PorousFlowFluidStateMultiComponentBase & _fs;
   /// Phase number of the aqueous phase
   const unsigned int _aqueous_phase_number;
   /// Phase number of the gas phase

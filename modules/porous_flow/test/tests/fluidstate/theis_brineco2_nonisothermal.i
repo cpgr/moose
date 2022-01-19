@@ -144,6 +144,7 @@
     brine_fp = brine
     co2_fp = co2
     capillary_pressure = pc
+    isothermal = false
   []
 []
 

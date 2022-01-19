@@ -59,7 +59,7 @@ FVPorousFlowFluidState::FVPorousFlowFluidState(const InputParameters & parameter
               ? _dictator.porousFlowVariableNum(_temperature_varnum)
               : 0),
 
-    _fs(getUserObject<PorousFlowBrineCO2>("fluid_state")),
+    _fs(getUserObject<PorousFlowFluidStateMultiComponentBase>("fluid_state")),
     _aqueous_phase_number(_fs.aqueousPhaseIndex()),
     _gas_phase_number(_fs.gasPhaseIndex()),
     _aqueous_fluid_component(_fs.aqueousComponentIndex()),
