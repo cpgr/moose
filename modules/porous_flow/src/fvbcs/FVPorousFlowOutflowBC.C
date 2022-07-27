@@ -56,7 +56,7 @@ FVPorousFlowOutflowBC::computeQpResidual()
     ADReal p_neighbor = _pressure_neighbor[_qp][p];
 
     const ADRealVectorValue gradp =
-        (p_elem - p_neighbor) * _face_info->eCF() / _face_info->dCFMag();
+        (p_elem - p_neighbor) * _face_info->eCN() / _face_info->dCNMag();
 
     const ADRealTensorValue mobility_element = _mass_fractions[_qp][p][_fluid_component] *
                                                _relperm[_qp][p] * _permeability[_qp] *

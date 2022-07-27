@@ -63,7 +63,7 @@ FVPorousFlowDispersiveFlux::computeQpResidual()
     ADReal X_neighbor = _mass_fractions_neighbor[_qp][p][_fluid_component];
 
     const ADRealVectorValue gradX =
-        (X_elem - X_neighbor) * _face_info->eCF() / _face_info->dCFMag();
+        (X_elem - X_neighbor) * _face_info->eCN() / _face_info->dCNMag();
 
     ADReal coeff_ave;
     const auto coeff = _porosity[_qp] * _tortuosity[_qp][p] * _density[_qp][p] *
