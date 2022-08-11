@@ -36,7 +36,7 @@ protected:
   const Real _biot_coefficient;
 
   /// Fluid bulk modulus
-  const Real _fluid_bulk_modulus;
+  const VariableValue & _fluid_bulk_modulus;
 
   /// Solid bulk compliance
   const Real _solid_bulk_compliance;
