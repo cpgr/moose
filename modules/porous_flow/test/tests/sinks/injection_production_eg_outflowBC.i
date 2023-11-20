@@ -108,7 +108,7 @@
     type = CO2FluidProperties
   []
   [tabulated_co2]
-    type = TabulatedFluidProperties
+    type = TabulatedBicubicFluidProperties
     fp = true_co2
     temperature_min = 275
     pressure_max = 1E8
