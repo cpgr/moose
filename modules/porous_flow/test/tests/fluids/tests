@@ -4,7 +4,9 @@
     input = 'h2o.i'
     csvdiff = 'h2o.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use high-precision equations of state for water from the FluidProperties module."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use high-precision equations of state for water from "
+                  "the FluidProperties module."
     issues = "#11716"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -13,7 +15,9 @@
     input = 'methane.i'
     csvdiff = 'methane.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use high-precision equations of state for methane from the FluidProperties module."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use high-precision equations of state for methane "
+                  "from the FluidProperties module."
     issues = "#11716"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -22,7 +26,9 @@
     input = 'ideal_gas.i'
     csvdiff = 'ideal_gas.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use equations of state for an ideal gas from the FluidProperties module."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use equations of state for an ideal gas from the "
+                  "FluidProperties module."
     issues = "#11716"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -31,7 +37,9 @@
     input = 'brine1.i'
     csvdiff = 'brine1.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use high-precision equations of state for brine from the FluidProperties module."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use high-precision equations of state for brine from "
+                  "the FluidProperties module."
     issues = "#11716"
     design = 'PorousFlowBrine.md'
   []
@@ -52,16 +60,41 @@
     rel_err = 1.0E-5
     prereq = 'brine1_tab'
     cli_args = 'AuxVariables/xnacl/family=MONOMIAL AuxVariables/xnacl/order=CONSTANT'
-    requirement = "The system shall be able to use high-precision equations of state for brine from the FluidProperties module where NaCl is an elemental AuxVariable."
+    requirement = "The system shall be able to use high-precision equations of state for brine from "
+                  "the FluidProperties module where NaCl is an elemental AuxVariable."
     issues = "#11716 #13882 #24381"
     design = 'PorousFlowBrine.md'
+  []
+  [brine1_FV]
+    type = 'CSVDiff'
+    input = 'FVbrine1.i'
+    csvdiff = 'brine1.csv'
+    rel_err = 1.0E-5
+    threading = '!pthreads'
+    prereq = 'brine1_tab'
+    cli_args = 'AuxVariables/xnacl/family=MONOMIAL AuxVariables/xnacl/order=CONSTANT'
+    requirement = "The system shall be able to use high-precision equations of state for brine for "
+                  "FV case "
+  []
+  [brine1_MPA]
+    type = 'CSVDiff'
+    input = 'brine1_MPA.i'
+    csvdiff = 'brine1_MPA.csv'
+    rel_err = 1.0E-5
+    threading = '!pthreads'
+    prereq = 'brine1_tab'
+    cli_args = 'AuxVariables/xnacl/family=MONOMIAL AuxVariables/xnacl/order=CONSTANT'
+    requirement = "The system shall be able to use high-precision equations of state for brine for "
+                  "MPa unit pressure "
   []
   [co2]
     type = 'CSVDiff'
     input = 'co2.i'
     csvdiff = 'co2.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use high-precision equations of state for CO2 from the FluidProperties module."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use high-precision equations of state for CO2 from "
+                  "the FluidProperties module."
     issues = "#11716"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -70,7 +103,9 @@
     input = 'simple_fluid.i'
     csvdiff = 'simple_fluid.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use equations of state from the FluidProperties module for a single-component fluid and specify the temperature unit in Kelvin."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use equations of state from the FluidProperties "
+                  "module for a single-component fluid and specify the temperature unit in Kelvin."
     issues = "#13154"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -79,7 +114,9 @@
     input = 'simple_fluid_MPa.i'
     csvdiff = 'simple_fluid_MPa_out.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use equations of state from the FluidProperties module for a single-component fluid and specify the pressure unit in MPa."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use equations of state from the FluidProperties "
+                  "module for a single-component fluid and specify the pressure unit in MPa."
     issues = "#13154"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -88,7 +125,9 @@
     input = 'simple_fluid_dy.i'
     csvdiff = 'simple_fluid_dy_out.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use equations of state from the FluidProperties module for a single-component fluid and specify the time unit in days."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use equations of state from the FluidProperties "
+                  "module for a single-component fluid and specify the time unit in days."
     issues = "#13154"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -97,7 +136,9 @@
     input = 'simple_fluid_hr.i'
     csvdiff = 'simple_fluid_hr_out.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use equations of state from the FluidProperties module for a single-component fluid and specify the time unit in hours."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use equations of state from the FluidProperties "
+                  "module for a single-component fluid and specify the time unit in hours."
     issues = "#13154"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -106,7 +147,9 @@
     input = 'simple_fluid_yr.i'
     csvdiff = 'simple_fluid_yr_out.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use equations of state from the FluidProperties module for a single-component fluid and specify the time unit in years."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use equations of state from the FluidProperties "
+                  "module for a single-component fluid and specify the time unit in years."
     issues = "#13154"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -115,7 +158,10 @@
     input = 'simple_fluid_yr_MPa_C.i'
     csvdiff = 'simple_fluid_yr_MPa_C_out.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use equations of state from the FluidProperties module for a single-component fluid and specify the time unit in years, the pressure unit in MPa and the temperature unit in Celsius."
+    threading = '!pthreads'
+    requirement = "The system shall be able to use equations of state from the FluidProperties "
+                  "module for a single-component fluid and specify the time unit in years, the "
+                  "pressure unit in MPa and the temperature unit in Celsius."
     issues = "#13154"
     design = 'PorousFlowSingleComponentFluid.md'
   []
@@ -125,7 +171,12 @@
     prereq = simple_fluid_yr_MPa_C
     csvdiff = 'simple_fluid_yr_MPa_C_out.csv'
     rel_err = 1.0E-5
-    requirement = "The system shall be able to use equations of state from the FluidProperties module for a single-component fluid and specify the time unit in years, the pressure unit in MPa and the temperature unit in Celsius, and this functionality shall be available through the PorousFlowActions."
+    threading = '!pthreads'
+    installation_type = in_tree
+    requirement = "The system shall be able to use equations of state from the FluidProperties "
+                  "module for a single-component fluid and specify the time unit in years, the "
+                  "pressure unit in MPa and the temperature unit in Celsius, and this functionality "
+                  "shall be available through the PorousFlowActions."
     issues = "#13154 #16841"
     design = 'PorousFlowSingleComponentFluid.md PorousFlowFullySaturated.md'
   []
@@ -135,7 +186,20 @@
     csvdiff = 'brine1.csv'
     rel_err = 1.0E-5
     prereq = brine1_monomial
-    requirement = "The system shall be able to use multicomponent equations of state from the FluidProperties module."
+    requirement = "The system shall be able to use multicomponent equations of state from the "
+                  "FluidProperties module."
+    issues = "#11716 #23609"
+    design = 'PorousFlowMultiComponentFluid.md'
+  []
+  [multicomponentFV]
+    type = 'CSVDiff'
+    input = 'FVmulticomponent.i'
+    csvdiff = 'brine1.csv'
+    rel_err = 1.0E-5
+    threading = '!pthreads'
+    prereq = brine1_monomial
+    requirement = "The system shall be able to use multicomponent equations of state from the "
+                  "FluidProperties module for FV case."
     issues = "#11716 #23609"
     design = 'PorousFlowMultiComponentFluid.md'
   []
@@ -146,7 +210,8 @@
     rel_err = 1.0E-5
     prereq = multicomponent
     cli_args = 'AuxVariables/xnacl/family=MONOMIAL AuxVariables/xnacl/order=CONSTANT'
-    requirement = "The system shall be able to use multicomponent equations of state from the FluidProperties module where mass fraction is an elemental AuxVariable."
+    requirement = "The system shall be able to use multicomponent equations of state from the "
+                  "FluidProperties module where mass fraction is an elemental AuxVariable."
     issues = "#11716 #23609 #24381"
     design = 'PorousFlowMultiComponentFluid.md'
   []
