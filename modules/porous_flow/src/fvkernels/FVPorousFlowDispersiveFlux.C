@@ -64,8 +64,8 @@ FVPorousFlowDispersiveFlux::FVPorousFlowDispersiveFlux(const InputParameters & p
     _tortuosity_neighbor(
         getNeighborADMaterialProperty<std::vector<Real>>("PorousFlow_tortuosity_qp")),
     _diffusion_coeff(
-        getMaterialProperty<std::vector<std::vector<Real>>>("PorousFlow_diffusion_coeff_qp")),
-    _diffusion_coeff_neighbor(getNeighborMaterialProperty<std::vector<std::vector<Real>>>(
+        getADMaterialProperty<std::vector<std::vector<Real>>>("PorousFlow_diffusion_coeff_qp")),
+    _diffusion_coeff_neighbor(getNeighborADMaterialProperty<std::vector<std::vector<Real>>>(
         "PorousFlow_diffusion_coeff_qp")),
     _gravity(getParam<RealVectorValue>("gravity")),
     _identity_tensor(ADRankTwoTensor::initIdentity),

@@ -68,8 +68,8 @@ protected:
   const ADMaterialProperty<std::vector<Real>> & _tortuosity_neighbor;
 
   /// Diffusion coefficients of component k in fluid phase alpha
-  const MaterialProperty<std::vector<std::vector<Real>>> & _diffusion_coeff;
-  const MaterialProperty<std::vector<std::vector<Real>>> & _diffusion_coeff_neighbor;
+  const ADMaterialProperty<std::vector<std::vector<Real>>> & _diffusion_coeff;
+  const ADMaterialProperty<std::vector<std::vector<Real>>> & _diffusion_coeff_neighbor;
 
   /// Gravity vector
   const RealVectorValue & _gravity;
