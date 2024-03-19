@@ -30,13 +30,13 @@ protected:
   MaterialProperty<std::vector<std::vector<Real>>> * const _dtortuosity_dvar;
 
   /// Diffusion coefficients of component k in fluid phase alpha
-  MaterialProperty<std::vector<std::vector<Real>>> & _diffusion_coeff;
+  GenericMaterialProperty<std::vector<std::vector<Real>>, is_ad> & _diffusion_coeff;
 
   /// Derivative of the diffusion coefficients wrt PorousFlow variables
   MaterialProperty<std::vector<std::vector<std::vector<Real>>>> * const _ddiffusion_coeff_dvar;
 
   /// Input diffusion coefficients
-  const std::vector<Real> _input_diffusion_coeff;
+  std::vector<const GenericVariableValue<is_ad> *> _input_diffusion_coeff;
 };
 
 #define usingPorousFlowDiffusivityBaseMembers                                                      \
