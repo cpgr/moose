@@ -469,13 +469,20 @@ BrineFluidProperties::vaporPressure(Real temperature, Real xnacl) const
   return _water_fp->vaporPressure(th20);
 }
 
+ADReal
+BrineFluidProperties::haliteSolubility(const ADReal & temperature) const
+{
+  // This correlation requires temperature in Celcius
+  const ADReal Tc = temperature - _T_c2k;
+
+  return (26.18 + 7.2e-3 * Tc + 1.06e-4 * Tc * Tc) / 100.0;
+}
+
 Real
 BrineFluidProperties::haliteSolubility(Real temperature) const
 {
-  // This correlation requires temperature in Celcius
-  Real Tc = temperature - _T_c2k;
-
-  return (26.18 + 7.2e-3 * Tc + 1.06e-4 * Tc * Tc) / 100.0;
+  // Initialise the AD value (no derivatives required) and return its value
+  return haliteSolubility(ADReal(temperature)).value();
 }
 
 Real

@@ -69,6 +69,21 @@ TEST_F(BrineFluidPropertiesTest, solubility)
   REL_TEST(_fp->haliteSolubility(659.65), 0.442, 2.0e-2);
   REL_TEST(_fp->haliteSolubility(818.65), 0.6085, 2.0e-2);
   REL_TEST(_fp->haliteSolubility(903.15), 0.7185, 2.0e-2);
+
+  // AD overload: value matches the non-AD overload and the derivative matches a
+  // finite difference of haliteSolubility(T)
+  const Real T = 500.0;
+  const Real dT = 1.0e-4;
+
+  ADReal adT = T;
+  Moose::derivInsert(adT.derivatives(), 0, 1.0);
+  const ADReal adsolubility = _fp->haliteSolubility(adT);
+
+  const Real dsolubility_dT_fd =
+      (_fp->haliteSolubility(T + dT) - _fp->haliteSolubility(T - dT)) / (2.0 * dT);
+
+  ABS_TEST(adsolubility.value(), _fp->haliteSolubility(T), REL_TOL_CONSISTENCY);
+  REL_TEST(adsolubility.derivatives()[0], dsolubility_dT_fd, 1.0e-6);
 }
 
 /**

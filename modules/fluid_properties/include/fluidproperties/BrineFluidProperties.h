@@ -152,6 +152,15 @@ public:
   Real haliteSolubility(Real temperature) const;
 
   /**
+   * Solubility of halite (solid NaCl) in water, AD version. See the non-AD
+   * overload for the correlation and its references.
+   *
+   * @param temperature temperature (K)
+   * @return halite solubility (kg/kg)
+   */
+  ADReal haliteSolubility(const ADReal & temperature) const;
+
+  /**
    * IAPWS formulation of Henry's law constant for dissolution in water
    * (implemented in water FluidProperties userobject)
    * @param T fluid temperature (K)
