@@ -23,7 +23,7 @@ enum class FluidStatePhaseEnum
 /// AD data structure to pass calculated thermophysical properties
 struct FluidStateProperties
 {
-  FluidStateProperties(){};
+  FluidStateProperties() {};
   FluidStateProperties(unsigned int n)
     : pressure(0.0),
       temperature(0, 0),
@@ -32,7 +32,8 @@ struct FluidStateProperties
       viscosity(1.0), // to guard against division by zero
       enthalpy(0.0),
       internal_energy(0.0),
-      mass_fraction(n, 0.0){};
+      precipitated_salt(0.0),
+      mass_fraction(n, 0.0) {};
 
   ADReal pressure;
   ADReal temperature;
@@ -41,6 +42,7 @@ struct FluidStateProperties
   ADReal viscosity;
   ADReal enthalpy;
   ADReal internal_energy;
+  ADReal precipitated_salt;
   std::vector<ADReal> mass_fraction;
 };
 
@@ -54,9 +56,9 @@ public:
 
   PorousFlowFluidStateBase(const InputParameters & parameters);
 
-  void initialize() final{};
-  void execute() final{};
-  void finalize() final{};
+  void initialize() final {};
+  void execute() final {};
+  void finalize() final {};
 
   /**
    * The maximum number of phases in this model
