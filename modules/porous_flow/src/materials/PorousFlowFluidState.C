@@ -75,7 +75,11 @@ PorousFlowFluidStateTempl<is_ad>::PorousFlowFluidStateTempl(const InputParameter
     _precipitate_salt(_fs.isSaltPrecipitationActive()),
     _precipitated_salt(_precipitate_salt ? &this->template declareGenericProperty<Real, is_ad>(
                                                "PorousFlow_precipitated_salt" + _sfx)
-                                         : nullptr)
+                                         : nullptr),
+    _dprecipitated_salt_dvar((_precipitate_salt && !is_ad)
+                                 ? &this->template declareProperty<std::vector<Real>>(
+                                       "dPorousFlow_precipitated_salt" + _sfx + "_dvar")
+                                 : nullptr)
 {
   // Check that the number of phases in the fluidstate class is also provided in the Dictator
   if (_fs.numPhases() != _num_phases)
@@ -209,6 +213,21 @@ PorousFlowFluidStateTempl<is_ad>::computeQpProperties()
           (*_dmass_frac_dvar)[_qp][ph][comp][_Xvar] =
               _fsp[ph].mass_fraction[comp].derivatives()[_Xidx];
       }
+    }
+
+    // Derivatives of the (phase-independent) precipitated halite mass fraction
+    if (_precipitate_salt)
+    {
+      (*_dprecipitated_salt_dvar)[_qp].assign(_num_pf_vars, 0.0);
+      const auto & dprecip = _fsp[_aqueous_phase_number].precipitated_salt.derivatives();
+      if (_dictator.isPorousFlowVariable(_gas_porepressure_varnum))
+        (*_dprecipitated_salt_dvar)[_qp][_pvar] = dprecip[_pidx];
+      if (_dictator.isPorousFlowVariable(_Z_varnum[0]))
+        (*_dprecipitated_salt_dvar)[_qp][_Zvar[0]] = dprecip[_Zidx];
+      if (_dictator.isPorousFlowVariable(_temperature_varnum))
+        (*_dprecipitated_salt_dvar)[_qp][_Tvar] = dprecip[_Tidx];
+      if (_dictator.isPorousFlowVariable(_Xnacl_varnum))
+        (*_dprecipitated_salt_dvar)[_qp][_Xvar] = dprecip[_Xidx];
     }
   }
 

@@ -42,15 +42,27 @@ protected:
   /// Precipitated salt mass fraction (kg solid halite / kg fluid) from the fluid state
   const MaterialProperty<Real> & _precipitated_salt;
 
+  /// Derivative of the precipitated salt mass fraction wrt the PorousFlow variables
+  const MaterialProperty<std::vector<Real>> & _dprecipitated_salt_dvar;
+
   /// Phase saturations
   const MaterialProperty<std::vector<Real>> & _saturation;
 
+  /// Derivative of the phase saturations wrt the PorousFlow variables
+  const MaterialProperty<std::vector<std::vector<Real>>> & _dsaturation_dvar;
+
   /// Phase densities
   const MaterialProperty<std::vector<Real>> & _fluid_density;
+
+  /// Derivative of the phase densities wrt the PorousFlow variables
+  const MaterialProperty<std::vector<std::vector<Real>>> & _dfluid_density_dvar;
 
   /// Old porosity (used to break the porosity <-> halite-concentration cyclic dependency)
   const MaterialProperty<Real> & _porosity_old;
 
   /// Computed halite volume fraction (m^3 halite / m^3 porous medium)
   MaterialProperty<Real> & _halite_volume_fraction;
+
+  /// Derivative of the halite volume fraction wrt the PorousFlow variables
+  MaterialProperty<std::vector<Real>> & _dhalite_volume_fraction_dvar;
 };

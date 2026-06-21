@@ -58,6 +58,14 @@
     design = 'PorousFlowBrineCO2.md'
     issues = '#8818'
   []
+  [halite_precipitation]
+    type = 'CSVDiff'
+    input = 'halite_precipitation.i'
+    csvdiff = 'halite_precipitation_out.csv'
+    requirement = 'The system shall conserve total salt mass when a brine and CO2 system precipitates solid halite at local equilibrium, partitioning salt between the dissolved and solid states as the halite solubility changes.'
+    design = 'PorousFlowBrineCO2.md'
+    issues = '#8818'
+  []
   [brineco2_monomial]
     type = 'CSVDiff'
     input = 'brineco2.i'

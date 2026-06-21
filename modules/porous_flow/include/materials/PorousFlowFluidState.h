@@ -120,6 +120,10 @@ protected:
   /// precipitation is active; converted to a mineral volume fraction by a downstream material
   /// that has access to the porosity.
   GenericMaterialProperty<Real, is_ad> * const _precipitated_salt;
+  /// Derivative of precipitated_salt wrt the PorousFlow variables (non-AD path only; the AD path
+  /// carries derivatives in _precipitated_salt itself). Only declared when salt precipitation is
+  /// active.
+  MaterialProperty<std::vector<Real>> * const _dprecipitated_salt_dvar;
 
 #if (is_ad)
   usingPorousFlowFluidStateBaseMaterialMembers;

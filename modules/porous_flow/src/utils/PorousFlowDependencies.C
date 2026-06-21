@@ -117,6 +117,8 @@ PorousFlowDependencies::PorousFlowDependencies()
 
   _deps.insertDependency("PorousFlowDesorpedMassTimeDerivative", "porosity_qp");
 
+  _deps.insertDependency("PorousFlowPrecipitateMassTimeDerivative", "halite_nodal");
+
   _deps.insertDependency("PorousFlowDesorpedMassVolumetricExpansion", "porosity_qp");
   _deps.insertDependency("PorousFlowDesorpedMassVolumetricExpansion", "volumetric_strain_qp");
 
@@ -232,6 +234,13 @@ PorousFlowDependencies::PorousFlowDependencies()
   _deps.insertDependency("mineral_qp", "pressure_saturation_qp");
   _deps.insertDependency("mineral_qp", "porosity_qp");
   _deps.insertDependency("mineral_qp", "chemistry_qp");
+
+  // The halite volume fraction needs the precipitated salt mass fraction, saturations and
+  // densities (all from the fluid state) and the (old) porosity
+  _deps.insertDependency("halite_nodal", "fluid_state_nodal");
+  _deps.insertDependency("halite_nodal", "porosity_nodal");
+  _deps.insertDependency("halite_qp", "fluid_state_qp");
+  _deps.insertDependency("halite_qp", "porosity_qp");
 
   _deps.insertDependency("biot_modulus_nodal", "porosity_nodal");
   _deps.insertDependency("biot_modulus_qp", "porosity_qp");

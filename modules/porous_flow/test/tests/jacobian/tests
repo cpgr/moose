@@ -822,6 +822,16 @@
     issues = '#6845 #10167'
     design = 'porous_flow/tutorial_09.md porous_flow/tutorial_02.md porous_flow/solvers.md porous_flow/nonlinear_convergence_problems.md PorousFlowDictator.md'
   []
+  [brineco2_precipitation]
+    type = 'PetscJacobianTester'
+    input = 'brineco2_precipitation.i'
+    ratio_tol = 5e-6 # Lots of chain rule derivatives
+    difference_tol = 1e10
+    cli_args = '-mat_fd_type ds Executioner/num_steps=1'
+    requirement = 'The porous flow module shall compute all Jacobian entries of physics kernels for the brine equation of state with local-equilibrium halite precipitation.'
+    issues = '#6845'
+    design = 'porous_flow/tutorial_09.md PorousFlowDictator.md'
+  []
   [brineco2_liquid_2]
     type = 'PetscJacobianTester'
     input = 'brineco2_liquid_2.i'
