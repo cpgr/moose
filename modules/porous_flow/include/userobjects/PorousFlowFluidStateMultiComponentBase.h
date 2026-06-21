@@ -94,6 +94,14 @@ public:
   unsigned int getZIndex() const { return _Zidx; };
   unsigned int getXIndex() const { return _Xidx; };
 
+  /**
+   * Whether this fluid state computes local-equilibrium salt (halite) precipitation. When true,
+   * downstream materials surface FluidStateProperties::precipitated_salt; when false (default) it
+   * stays zero and need not be surfaced.
+   * @return true if salt precipitation is active
+   */
+  virtual bool isSaltPrecipitationActive() const { return false; }
+
 protected:
   /// Fluid component number of the aqueous component
   const unsigned int _aqueous_fluid_component;

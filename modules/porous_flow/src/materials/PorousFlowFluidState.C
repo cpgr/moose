@@ -71,7 +71,11 @@ PorousFlowFluidStateTempl<is_ad>::PorousFlowFluidStateTempl(const InputParameter
     _pidx(_fs.getPressureIndex()),
     _Tidx(_fs.getTemperatureIndex()),
     _Zidx(_fs.getZIndex()),
-    _Xidx(_fs.getXIndex())
+    _Xidx(_fs.getXIndex()),
+    _precipitate_salt(_fs.isSaltPrecipitationActive()),
+    _precipitated_salt(_precipitate_salt ? &this->template declareGenericProperty<Real, is_ad>(
+                                               "PorousFlow_precipitated_salt" + _sfx)
+                                         : nullptr)
 {
   // Check that the number of phases in the fluidstate class is also provided in the Dictator
   if (_fs.numPhases() != _num_phases)
@@ -122,6 +126,17 @@ void
 PorousFlowFluidStateTempl<is_ad>::computeQpProperties()
 {
   PorousFlowFluidStateBaseMaterialTempl<is_ad>::computeQpProperties();
+
+  // Surface the precipitated (solid) halite mass fraction reported by salt-precipitating fluid
+  // states. A downstream material converts it to a mineral volume fraction using the porosity.
+  if (_precipitate_salt)
+  {
+    if constexpr (is_ad)
+      (*_precipitated_salt)[_qp] = _fsp[_aqueous_phase_number].precipitated_salt;
+    else
+      (*_precipitated_salt)[_qp] =
+          MetaPhysicL::raw_value(_fsp[_aqueous_phase_number].precipitated_salt);
+  }
 
   // If the material isn't AD, we need to compute the derivatives
   if (!is_ad)

@@ -114,6 +114,12 @@ protected:
   const unsigned int _Zidx;
   /// Index of derivative wrt salt mass fraction X
   const unsigned int _Xidx;
+  /// Whether the fluid state computes local-equilibrium halite precipitation
+  const bool _precipitate_salt;
+  /// Mass of precipitated (solid) halite per unit fluid mass (kg/kg). Only declared when salt
+  /// precipitation is active; converted to a mineral volume fraction by a downstream material
+  /// that has access to the porosity.
+  GenericMaterialProperty<Real, is_ad> * const _precipitated_salt;
 
 #if (is_ad)
   usingPorousFlowFluidStateBaseMaterialMembers;

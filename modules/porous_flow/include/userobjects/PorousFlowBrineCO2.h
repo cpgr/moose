@@ -53,6 +53,8 @@ public:
 
   virtual std::string fluidStateName() const override;
 
+  bool isSaltPrecipitationActive() const override { return _precipitate_salt; }
+
   void thermophysicalProperties(Real pressure,
                                 Real temperature,
                                 Real Xnacl,
