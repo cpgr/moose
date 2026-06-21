@@ -481,4 +481,9 @@ protected:
   const Real _Zmin;
   /// Henry's coefficeients for CO2
   const std::vector<Real> _co2_henry;
+  /// Whether to compute local-equilibrium halite precipitation. When true, the salt
+  /// component variable is interpreted as the total salt mass fraction z_s, the aqueous
+  /// salinity is clamped at the halite solubility, and the excess salt is reported as solid
+  /// halite (FluidStateProperties::precipitated_salt).
+  const bool _precipitate_salt;
 };

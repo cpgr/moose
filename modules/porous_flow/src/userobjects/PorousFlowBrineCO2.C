@@ -22,6 +22,13 @@ PorousFlowBrineCO2::validParams()
   params.addRequiredParam<UserObjectName>("brine_fp", "The name of the user object for brine");
   params.addRequiredParam<UserObjectName>("co2_fp", "The name of the user object for CO2");
   params.addParam<unsigned int>("salt_component", 2, "The component number of salt");
+  params.addParam<bool>(
+      "precipitate_salt",
+      false,
+      "If true, the salt component variable is interpreted as the total salt mass fraction "
+      "(dissolved + solid) and local-equilibrium halite precipitation is computed: the "
+      "aqueous salinity is clamped at the halite solubility and the excess salt is stored as "
+      "solid halite.");
   params.addClassDescription("Fluid state class for brine and CO2");
   return params;
 }
@@ -39,7 +46,8 @@ PorousFlowBrineCO2::PorousFlowBrineCO2(const InputParameters & parameters)
     _Tlower(372.15),
     _Tupper(382.15),
     _Zmin(1.0e-4),
-    _co2_henry(_co2_fp.henryCoefficients())
+    _co2_henry(_co2_fp.henryCoefficients()),
+    _precipitate_salt(getParam<bool>("precipitate_salt"))
 {
   // Check that the correct FluidProperties UserObjects have been provided
   if (_co2_fp.fluidName() != "co2")
@@ -125,8 +133,19 @@ PorousFlowBrineCO2::thermophysicalProperties(const ADReal & pressure,
   // Clear all of the FluidStateProperties data
   clearFluidStateProperties(fsp);
 
+  // When halite precipitation is enabled, the salt variable Xnacl is interpreted as the
+  // total salt mass fraction z_s (dissolved + solid). The aqueous salinity fed to all brine
+  // correlations is clamped at the halite solubility X_eq(T) to keep them within their valid
+  // range; the precipitated (solid) halite is computed once the phase saturations and
+  // densities are known (see below). The clamp uses min(z_s, X_eq) as a single-pass estimate
+  // of the aqueous salinity: this is exact in single-phase cells and at full dry-out, the
+  // only approximation being the brine density in a thin two-phase band. Without
+  // precipitation, Xnacl is the aqueous salinity, exactly as before.
+  const ADReal Xeq = _precipitate_salt ? _brine_fp.haliteSolubility(temperature) : ADReal(0.0);
+  const ADReal Xnacl_aq = (_precipitate_salt && Xnacl.value() > Xeq.value()) ? Xeq : Xnacl;
+
   FluidStatePhaseEnum phase_state;
-  massFractions(pressure, temperature, Xnacl, Z, phase_state, fsp);
+  massFractions(pressure, temperature, Xnacl_aq, Z, phase_state, fsp);
 
   switch (phase_state)
   {
@@ -145,7 +164,7 @@ PorousFlowBrineCO2::thermophysicalProperties(const ADReal & pressure,
     {
       // Calculate the liquid properties
       const ADReal liquid_pressure = pressure - _pc.capillaryPressure(1.0, qp);
-      liquidProperties(liquid_pressure, temperature, Xnacl, fsp);
+      liquidProperties(liquid_pressure, temperature, Xnacl_aq, fsp);
 
       break;
     }
@@ -153,7 +172,7 @@ PorousFlowBrineCO2::thermophysicalProperties(const ADReal & pressure,
     case FluidStatePhaseEnum::TWOPHASE:
     {
       // Calculate the gas and liquid properties in the two phase region
-      twoPhaseProperties(pressure, temperature, Xnacl, Z, qp, fsp);
+      twoPhaseProperties(pressure, temperature, Xnacl_aq, Z, qp, fsp);
 
       break;
     }
@@ -165,6 +184,36 @@ PorousFlowBrineCO2::thermophysicalProperties(const ADReal & pressure,
   // Save pressures to FluidStateProperties object
   gas.pressure = pressure;
   liquid.pressure = pressure - _pc.capillaryPressure(liquid.saturation, qp);
+
+  // Partition the total salt z_s into dissolved (aqueous) and solid (halite). The conserved
+  // salt inventory is m_l * X + m_h, with liquid mass m_l = phi * S_l * rho_l, aqueous
+  // salinity X, and solid halite mass m_h (all per unit volume). Writing the liquid mass
+  // fraction of the fluid f_l = m_l / (m_g + m_l) (porosity cancels), the local-equilibrium
+  // flash for z_s = (m_l * X + m_h) / (m_g + m_l + m_h) is:
+  //   undersaturated (z_s <= f_l * X_eq): X = z_s / f_l,  m_h = 0
+  //   saturated      (z_s >  f_l * X_eq): X = X_eq,        m_h / (m_g + m_l) = (z_s - f_l * X_eq) /
+  //   (1 - z_s)
+  // The solid is stored intensively as precipitated_salt = m_h / (m_g + m_l). Keeping the
+  // gas mass m_g in the denominator keeps (1 - z_s) bounded away from zero as S_l -> 0, so
+  // the partition is well conditioned through full dry-out.
+  if (_precipitate_salt)
+  {
+    const ADReal ml = liquid.saturation * liquid.density;
+    const ADReal mg = gas.saturation * gas.density;
+    const ADReal f_l = ml / (mg + ml);
+    const ADReal f_l_Xeq = f_l * Xeq;
+
+    if (Xnacl.value() > f_l_Xeq.value())
+    {
+      // Salt-saturated: aqueous salinity held at X_eq, the excess precipitates as halite
+      liquid.mass_fraction[_salt_component] = Xeq;
+      liquid.precipitated_salt = (Xnacl - f_l_Xeq) / (1.0 - Xnacl);
+    }
+    else
+      // Undersaturated: all salt dissolved at aqueous salinity z_s / f_l (f_l > 0 here, since
+      // f_l = 0 implies z_s = 0 and the saturated branch is taken for any z_s > 0)
+      liquid.mass_fraction[_salt_component] = (f_l.value() > 0.0) ? ADReal(Xnacl / f_l) : Xnacl;
+  }
 }
 
 void

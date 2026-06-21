@@ -409,6 +409,78 @@ TEST_F(PorousFlowBrineCO2Test, MassFraction)
 }
 
 /*
+ * Verify local-equilibrium halite precipitation (precipitate_salt = true): the aqueous
+ * salinity is clamped at the halite solubility X_eq(T), and the excess salt is reported via
+ * the FluidStateProperties::precipitated_salt member. A single liquid phase is used (small Z)
+ * so the liquid mass fraction of the fluid f_l = 1 and the partition is exact:
+ * precipitated_salt = (z_s - X_eq) / (1 - z_s).
+ */
+TEST_F(PorousFlowBrineCO2Test, precipitatedSalt)
+{
+  // A fluid state with local-equilibrium halite precipitation enabled. Only this test
+  // exercises thermophysicalProperties (where the precipitate_salt flag is read), so the
+  // flag-on object is built here rather than carried in the fixture.
+  InputParameters uo_params = _factory.getValidParams("PorousFlowBrineCO2");
+  uo_params.set<UserObjectName>("brine_fp") = "brine_fp";
+  uo_params.set<UserObjectName>("co2_fp") = "co2_fp";
+  uo_params.set<UserObjectName>("capillary_pressure") = "pc";
+  uo_params.set<bool>("precipitate_salt") = true;
+  _fe_problem->addUserObject("PorousFlowBrineCO2", "fs_precip", uo_params);
+  const PorousFlowBrineCO2 & fs_precip =
+      _fe_problem->getUserObject<PorousFlowBrineCO2>("fs_precip");
+
+  ADReal p = 1.0e6;
+  Moose::derivInsert(p.derivatives(), _pidx, 1.0);
+
+  ADReal T = 350.0;
+  Moose::derivInsert(T.derivatives(), _Tidx, 1.0);
+
+  // Liquid region (negligible CO2)
+  ADReal Z = 0.0001;
+  Moose::derivInsert(Z.derivatives(), _Zidx, 1.0);
+
+  const unsigned int np = _fs->numPhases();
+  const unsigned int nc = _fs->numComponents();
+  const unsigned int aq = _fs->aqueousPhaseIndex();
+  const unsigned int salt = _fs->saltComponentIndex();
+
+  // Halite solubility at this temperature is the clamp value
+  const Real Xeq = _brine_fp->haliteSolubility(T.value());
+
+  // (a) Salt-saturated: total salt z_s above solubility. The aqueous salinity is clamped at
+  // X_eq and the excess precipitates as halite.
+  {
+    ADReal zs = 0.35; // > Xeq
+    Moose::derivInsert(zs.derivatives(), _Xidx, 1.0);
+
+    std::vector<FluidStateProperties> fsp(np, FluidStateProperties(nc));
+    fs_precip.thermophysicalProperties(p, T, zs, Z, 0, fsp);
+
+    // Clamp: dissolved aqueous salinity is held at the solubility, not the input z_s
+    ABS_TEST(fsp[aq].mass_fraction[salt].value(), Xeq, 1.0e-8);
+
+    // (b) The precipitated halite is extractable from the struct, positive, and matches the
+    // expected partition. Its derivative wrt the salt variable is also carried.
+    const Real expected = (zs.value() - Xeq) / (1.0 - zs.value());
+    EXPECT_GT(fsp[aq].precipitated_salt.value(), 0.0);
+    ABS_TEST(fsp[aq].precipitated_salt.value(), expected, 1.0e-8);
+    EXPECT_GT(fsp[aq].precipitated_salt.derivatives()[_Xidx], 0.0);
+  }
+
+  // Undersaturated: total salt below solubility, so all salt is dissolved and no halite forms
+  {
+    ADReal zs = 0.1; // < Xeq
+    Moose::derivInsert(zs.derivatives(), _Xidx, 1.0);
+
+    std::vector<FluidStateProperties> fsp(np, FluidStateProperties(nc));
+    fs_precip.thermophysicalProperties(p, T, zs, Z, 0, fsp);
+
+    ABS_TEST(fsp[aq].mass_fraction[salt].value(), zs.value(), 1.0e-8);
+    ABS_TEST(fsp[aq].precipitated_salt.value(), 0.0, 1.0e-8);
+  }
+}
+
+/*
  * Verify calculation of gas density, viscosity enthalpy, and derivatives. Note that as
  * these properties don't depend on mass fraction, only the gas region needs to be
  * tested (the calculations are identical in the two phase region)
