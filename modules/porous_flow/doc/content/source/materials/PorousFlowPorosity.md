@@ -27,7 +27,7 @@ Flags provided to `PorousFlowPorosity` control its evolution.
 - If `chemical_equilibrium = true` then porosity is additionally reduced by an equilibrium-mineral
   volume fraction (m$^3$ mineral / m$^3$ porous medium) supplied as a dedicated scalar material
   property, named by `equilibrium_mineral` (default `halite_volume_fraction`, as produced by
-  `PorousFlowHaliteVolumeFraction` for salt-precipitating fluid states).  The volume fraction $c$
+  [PorousFlowHaliteVolumeFraction](PorousFlowHaliteVolumeFraction.md) for salt-precipitating fluid states).  The volume fraction $c$
   enters as an extra contribution $w (c - c_{\mathrm{ref}})$ to
   $M$, with weight $w$ = `equilibrium_weight` and reference $c_{\mathrm{ref}}$ =
   `equilibrium_reference`.  This is independent of the kinetic `chemical` option (the two may be
