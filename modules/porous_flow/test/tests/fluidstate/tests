@@ -66,6 +66,30 @@
     design = 'PorousFlowBrineCO2.md'
     issues = '#8818'
   []
+  [halite_precipitation_cycle]
+    type = 'CSVDiff'
+    input = 'halite_precipitation_cycle.i'
+    csvdiff = 'halite_precipitation_cycle_out.csv'
+    requirement = 'The system shall smoothly precipitate and then redissolve solid halite in a brine and CO2 system as the halite solubility is cycled across the saturation point, conserving total salt mass and returning to the original fully-dissolved state.'
+    design = 'PorousFlowBrineCO2.md'
+    issues = '#8818'
+  []
+  [halite_dryout]
+    type = 'CSVDiff'
+    input = 'halite_dryout.i'
+    csvdiff = 'halite_dryout_out.csv'
+    requirement = 'The system shall precipitate solid halite at local equilibrium as injected CO2 dries out a brine column, conserving total salt mass as the dissolved salt is converted to solid halite along the advancing dry-out front.'
+    design = 'PorousFlowBrineCO2.md'
+    issues = '#8818'
+  []
+  [halite_dissolution]
+    type = 'CSVDiff'
+    input = 'halite_dissolution.i'
+    csvdiff = 'halite_dissolution_out.csv'
+    requirement = 'The system shall dissolve solid halite at local equilibrium when pure water is injected into an oversaturated brine column, having seeded the oversaturated initial condition with the solid halite consistent with the total-salt variable.'
+    design = 'PorousFlowBrineCO2.md'
+    issues = '#8818'
+  []
   [brineco2_monomial]
     type = 'CSVDiff'
     input = 'brineco2.i'
