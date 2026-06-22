@@ -56,6 +56,8 @@ PorousFlowHaliteVolumeFraction::PorousFlowHaliteVolumeFraction(const InputParame
                                                "dPorousFlow_fluid_phase_density_qp_dvar")),
     _porosity_old(_nodal_material ? getMaterialPropertyOld<Real>("PorousFlow_porosity_nodal")
                                   : getMaterialPropertyOld<Real>("PorousFlow_porosity_qp")),
+    _porosity(_nodal_material ? getMaterialProperty<Real>("PorousFlow_porosity_nodal")
+                              : getMaterialProperty<Real>("PorousFlow_porosity_qp")),
     _halite_volume_fraction(_nodal_material
                                 ? declareProperty<Real>("PorousFlow_halite_volume_fraction_nodal")
                                 : declareProperty<Real>("PorousFlow_halite_volume_fraction_qp")),
@@ -69,9 +71,18 @@ PorousFlowHaliteVolumeFraction::PorousFlowHaliteVolumeFraction(const InputParame
 void
 PorousFlowHaliteVolumeFraction::initQpStatefulProperties()
 {
-  // Simulations start with no precipitated halite (the porous medium begins undersaturated). The
-  // old porosity is unavailable at t = 0, so the algebraic conversion below cannot be applied here.
-  _halite_volume_fraction[_qp] = 0.0;
+  // Seed the initial solid halite from the fluid state's reported precipitated-salt mass fraction,
+  // so a simulation may start already oversaturated (solid halite present) without losing the
+  // excess salt at the first step. By the flash closure rho_halite * c_halite = m_h, this makes the
+  // initial total salt equal the inventory the conserved variable z_s represents. The current
+  // porosity stands in for the (unavailable) old porosity; at t = 0 they coincide. An undersaturated
+  // start has precipitated_salt = 0 and so begins with no halite, as before.
+  Real fluid_mass = 0.0;
+  for (const auto ph : make_range(_num_phases))
+    fluid_mass += _saturation[_qp][ph] * _fluid_density[_qp][ph];
+
+  _halite_volume_fraction[_qp] =
+      _precipitated_salt[_qp] * (_porosity[_qp] / _halite_density) * fluid_mass;
 }
 
 void

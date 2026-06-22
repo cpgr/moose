@@ -123,6 +123,20 @@ void
 PorousFlowFluidStateTempl<is_ad>::initQpStatefulProperties()
 {
   PorousFlowFluidStateBaseMaterialTempl<is_ad>::initQpStatefulProperties();
+
+  // Publish the precipitated (solid) halite mass fraction at t = 0 as well, so a simulation may
+  // start already oversaturated: the base init has populated _fsp via the flash, but the declared
+  // property is only set in computeQpProperties otherwise, leaving the downstream halite material
+  // to seed its initial solid from a stale zero. (Only the value is needed at init; derivatives
+  // are not evaluated in initQpStatefulProperties.)
+  if (_precipitate_salt)
+  {
+    if constexpr (is_ad)
+      (*_precipitated_salt)[_qp] = _fsp[_aqueous_phase_number].precipitated_salt;
+    else
+      (*_precipitated_salt)[_qp] =
+          MetaPhysicL::raw_value(_fsp[_aqueous_phase_number].precipitated_salt);
+  }
 }
 
 template <bool is_ad>

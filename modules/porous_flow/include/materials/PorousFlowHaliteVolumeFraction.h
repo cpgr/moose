@@ -60,6 +60,10 @@ protected:
   /// Old porosity (used to break the porosity <-> halite-concentration cyclic dependency)
   const MaterialProperty<Real> & _porosity_old;
 
+  /// Current porosity (used only at t = 0, where the old porosity is unavailable, to seed an
+  /// oversaturated initial condition consistently)
+  const MaterialProperty<Real> & _porosity;
+
   /// Computed halite volume fraction (m^3 halite / m^3 porous medium)
   MaterialProperty<Real> & _halite_volume_fraction;
 
