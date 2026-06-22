@@ -24,13 +24,19 @@
  *
  * The OLD porosity is used to break the cyclic dependence between porosity and halite volume
  * fraction, exactly as PorousFlowAqueousPreDisMineral does for kinetic minerals.
+ *
+ * Templated on is_ad so an AD version (ADPorousFlowHaliteVolumeFraction) is available for the
+ * (AD-only) finite-volume models. The AD path propagates derivatives automatically through the
+ * generic precipitated-salt, saturation and density properties; the old porosity is deliberately
+ * read as a plain (non-AD) coefficient so it contributes no current-step Jacobian term.
  */
-class PorousFlowHaliteVolumeFraction : public PorousFlowMaterialVectorBase
+template <bool is_ad>
+class PorousFlowHaliteVolumeFractionTempl : public PorousFlowMaterialVectorBase
 {
 public:
   static InputParameters validParams();
 
-  PorousFlowHaliteVolumeFraction(const InputParameters & parameters);
+  PorousFlowHaliteVolumeFractionTempl(const InputParameters & parameters);
 
 protected:
   void initQpStatefulProperties() override;
@@ -40,33 +46,37 @@ protected:
   const Real _halite_density;
 
   /// Precipitated salt mass fraction (kg solid halite / kg fluid) from the fluid state
-  const MaterialProperty<Real> & _precipitated_salt;
+  const GenericMaterialProperty<Real, is_ad> & _precipitated_salt;
 
-  /// Derivative of the precipitated salt mass fraction wrt the PorousFlow variables
-  const MaterialProperty<std::vector<Real>> & _dprecipitated_salt_dvar;
+  /// Derivative of the precipitated salt mass fraction wrt the PorousFlow variables (non-AD only)
+  const MaterialProperty<std::vector<Real>> * const _dprecipitated_salt_dvar;
 
   /// Phase saturations
-  const MaterialProperty<std::vector<Real>> & _saturation;
+  const GenericMaterialProperty<std::vector<Real>, is_ad> & _saturation;
 
-  /// Derivative of the phase saturations wrt the PorousFlow variables
-  const MaterialProperty<std::vector<std::vector<Real>>> & _dsaturation_dvar;
+  /// Derivative of the phase saturations wrt the PorousFlow variables (non-AD only)
+  const MaterialProperty<std::vector<std::vector<Real>>> * const _dsaturation_dvar;
 
   /// Phase densities
-  const MaterialProperty<std::vector<Real>> & _fluid_density;
+  const GenericMaterialProperty<std::vector<Real>, is_ad> & _fluid_density;
 
-  /// Derivative of the phase densities wrt the PorousFlow variables
-  const MaterialProperty<std::vector<std::vector<Real>>> & _dfluid_density_dvar;
+  /// Derivative of the phase densities wrt the PorousFlow variables (non-AD only)
+  const MaterialProperty<std::vector<std::vector<Real>>> * const _dfluid_density_dvar;
 
-  /// Old porosity (used to break the porosity <-> halite-concentration cyclic dependency)
+  /// Old porosity (used to break the porosity <-> halite-concentration cyclic dependency). Read as a
+  /// plain Real even in the AD path: the old value is fixed data carrying no current-step derivative.
   const MaterialProperty<Real> & _porosity_old;
 
   /// Current porosity (used only at t = 0, where the old porosity is unavailable, to seed an
   /// oversaturated initial condition consistently)
-  const MaterialProperty<Real> & _porosity;
+  const GenericMaterialProperty<Real, is_ad> & _porosity;
 
   /// Computed halite volume fraction (m^3 halite / m^3 porous medium)
-  MaterialProperty<Real> & _halite_volume_fraction;
+  GenericMaterialProperty<Real, is_ad> & _halite_volume_fraction;
 
-  /// Derivative of the halite volume fraction wrt the PorousFlow variables
-  MaterialProperty<std::vector<Real>> & _dhalite_volume_fraction_dvar;
+  /// Derivative of the halite volume fraction wrt the PorousFlow variables (non-AD only)
+  MaterialProperty<std::vector<Real>> * const _dhalite_volume_fraction_dvar;
 };
+
+typedef PorousFlowHaliteVolumeFractionTempl<false> PorousFlowHaliteVolumeFraction;
+typedef PorousFlowHaliteVolumeFractionTempl<true> ADPorousFlowHaliteVolumeFraction;
