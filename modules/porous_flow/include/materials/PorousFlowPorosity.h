@@ -45,6 +45,15 @@ protected:
   /// Porosity is a function of chemistry
   const bool _chemical;
 
+  /// Porosity is reduced by an equilibrium-mineral volume fraction (e.g. solid halite)
+  const bool _chemical_equilibrium;
+
+  /// Weight applied to the equilibrium-mineral volume fraction
+  const Real _equilibrium_weight;
+
+  /// Equilibrium-mineral volume fraction at which porosity equals porosity_zero
+  const Real _equilibrium_reference;
+
   /// Porosity at zero strain and zero porepressure and zero temperature
   const VariableValue & _phi0;
 
@@ -120,4 +129,8 @@ protected:
 
   /// d(saturation)/d(PorousFlow var)
   const MaterialProperty<std::vector<std::vector<Real>>> * const _dsaturation_dvar;
+
+  /// Old value of the equilibrium-mineral volume fraction (used, like _porosity_old, to break the
+  /// porosity/precipitate cyclic dependency; the old value carries no current-step derivative)
+  const MaterialProperty<Real> * const _equilibrium_mineral_old;
 };

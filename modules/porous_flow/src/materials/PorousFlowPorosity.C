@@ -54,6 +54,29 @@ PorousFlowPorosity::validParams()
                                      "When chemical=true, porosity is a linear combination of the "
                                      "solid mineral concentrations multiplied by these weights.  "
                                      "Default=1 for all minerals.");
+  params.addParam<bool>("chemical_equilibrium",
+                        false,
+                        "If true, porosity is additionally reduced by an equilibrium-mineral volume "
+                        "fraction supplied as a dedicated scalar material property (e.g. solid "
+                        "halite from a salt-precipitating fluid state).  This is independent of the "
+                        "kinetic 'chemical' option and uses the OLD value of the volume fraction to "
+                        "break the porosity/precipitate cyclic dependency.");
+  params.addParam<std::string>(
+      "equilibrium_mineral",
+      "halite_volume_fraction",
+      "When chemical_equilibrium=true, the stem of the equilibrium-mineral volume-fraction material "
+      "property (m^3 mineral / m^3 porous medium) that is subtracted from porosity.  The "
+      "'PorousFlow_' prefix and the '_nodal'/'_qp' suffix are added automatically.");
+  params.addParam<Real>(
+      "equilibrium_reference",
+      0.0,
+      "When chemical_equilibrium=true, the equilibrium-mineral volume fraction at which porosity "
+      "equals porosity_zero.  Set to zero (the default) when porosity_zero is the mineral-free "
+      "porosity.");
+  params.addParam<Real>("equilibrium_weight",
+                        1.0,
+                        "When chemical_equilibrium=true, the equilibrium-mineral volume fraction is "
+                        "multiplied by this weight before being subtracted from porosity.");
   params.addClassDescription("This Material calculates the porosity PorousFlow simulations");
   return params;
 }
@@ -65,6 +88,9 @@ PorousFlowPorosity::PorousFlowPorosity(const InputParameters & parameters)
     _fluid(getParam<bool>("fluid")),
     _thermal(getParam<bool>("thermal")),
     _chemical(getParam<bool>("chemical")),
+    _chemical_equilibrium(getParam<bool>("chemical_equilibrium")),
+    _equilibrium_weight(getParam<Real>("equilibrium_weight")),
+    _equilibrium_reference(getParam<Real>("equilibrium_reference")),
     _phi0(coupledValue("porosity_zero")),
     _biot(getParam<Real>("biot_coefficient")),
     _exp_coeff(isParamValid("thermal_expansion_coeff") ? getParam<Real>("thermal_expansion_coeff")
@@ -142,7 +168,19 @@ PorousFlowPorosity::PorousFlowPorosity(const InputParameters & parameters)
                                                    "dPorousFlow_saturation_nodal_dvar")
                                              : &getMaterialProperty<std::vector<std::vector<Real>>>(
                                                    "dPorousFlow_saturation_qp_dvar"))
-                          : nullptr)
+                          : nullptr),
+    // The OLD equilibrium-mineral volume fraction breaks the porosity/precipitate cyclic
+    // dependency, exactly as _porosity_old and _mineral_conc_old do for the kinetic path.  Reading
+    // the old value imposes no same-step material ordering, so the existing volume-fraction ->
+    // porosity dependency is untouched.
+    _equilibrium_mineral_old(
+        _chemical_equilibrium
+            ? (_nodal_material
+                   ? &getMaterialPropertyOld<Real>(
+                         "PorousFlow_" + getParam<std::string>("equilibrium_mineral") + "_nodal")
+                   : &getMaterialPropertyOld<Real>(
+                         "PorousFlow_" + getParam<std::string>("equilibrium_mineral") + "_qp"))
+            : nullptr)
 {
   if (_thermal && !isParamValid("thermal_expansion_coeff"))
     mooseError("PorousFlowPorosity: When thermal=true you must provide a thermal_expansion_coeff");
@@ -201,6 +239,8 @@ PorousFlowPorosity::atNegInfinityQp() const
                                                                       (*_saturation)[_qp][_aq_ph] *
                                                                       (*_reaction_rate)[_qp][i]);
   }
+  if (_chemical_equilibrium)
+    result -= _equilibrium_weight * (*_equilibrium_mineral_old)[_qp];
   return result;
 }
 
@@ -233,6 +273,8 @@ PorousFlowPorosity::atZeroQp() const
                                        (*_reaction_rate)[_qp][i] -
                                    (*_c_reference[i])[_qp]);
   }
+  if (_chemical_equilibrium)
+    result -= _equilibrium_weight * ((*_equilibrium_mineral_old)[_qp] - _equilibrium_reference);
   return result;
 }
 

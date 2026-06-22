@@ -24,6 +24,17 @@ Flags provided to `PorousFlowPorosity` control its evolution.
 - If `chemical = true` then porosity will depend on $M$.  Otherwise that term in
   [eq:poro_evolve] is ignored.
 
+- If `chemical_equilibrium = true` then porosity is additionally reduced by an equilibrium-mineral
+  volume fraction (m$^3$ mineral / m$^3$ porous medium) supplied as a dedicated scalar material
+  property, named by `equilibrium_mineral` (default `halite_volume_fraction`, as produced by
+  `PorousFlowHaliteVolumeFraction` for salt-precipitating fluid states).  The volume fraction $c$
+  enters as an extra contribution $w (c - c_{\mathrm{ref}})$ to
+  $M$, with weight $w$ = `equilibrium_weight` and reference $c_{\mathrm{ref}}$ =
+  `equilibrium_reference`.  This is independent of the kinetic `chemical` option (the two may be
+  combined) and uses the OLD value of the volume fraction to break the porosity/precipitate cyclic
+  dependency, so it contributes no current-step Jacobian term.  Combine with `porosity_min` (below)
+  to keep porosity positive once the mineral fills the pore space.
+
 !alert note title=Lower bound on porosity (`porosity_min`)
 The optional parameter `porosity_min` places a hard lower bound on the computed
 porosity: if [eq:poro_evolve] yields a value below `porosity_min`, the porosity is

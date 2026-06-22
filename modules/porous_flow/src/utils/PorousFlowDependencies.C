@@ -242,6 +242,15 @@ PorousFlowDependencies::PorousFlowDependencies()
   _deps.insertDependency("halite_qp", "fluid_state_qp");
   _deps.insertDependency("halite_qp", "porosity_qp");
 
+  // The clogging feedback: PorousFlowPorosity with chemical_equilibrium=true subtracts the halite
+  // volume fraction from porosity, so it must be created at whatever nodal/qp level porosity is
+  // needed (in particular halite_qp, which permeability requires via porosity_qp).  This closes a
+  // graph cycle with the halite->porosity edges above, but that is harmless: these dependencies are
+  // only ever queried with the cycle-safe dependsOn() reachability check (never sorted), and at run
+  // time porosity reads the OLD halite volume fraction, so no actual computation cycle exists.
+  _deps.insertDependency("porosity_nodal", "halite_nodal");
+  _deps.insertDependency("porosity_qp", "halite_qp");
+
   _deps.insertDependency("biot_modulus_nodal", "porosity_nodal");
   _deps.insertDependency("biot_modulus_qp", "porosity_qp");
 
