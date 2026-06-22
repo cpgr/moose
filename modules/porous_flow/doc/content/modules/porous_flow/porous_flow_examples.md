@@ -9,6 +9,7 @@ The following tutorial and example problems demonstrate the capabilities of the 
 - [modules/porous_flow/flow_through_fractured_media.md]
 - [modules/porous_flow/coal_mining.md]
 - [modules/porous_flow/co2_intercomparison.md]
+- [modules/porous_flow/halite_precipitation.md]
 - [modules/porous_flow/lava_lamp.md]
 - [modules/porous_flow/thm_example.md]
 - [modules/porous_flow/thmc_example.md]

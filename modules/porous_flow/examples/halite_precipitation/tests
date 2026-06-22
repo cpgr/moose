@@ -1,0 +1,26 @@
+[Tests]
+  issues = '#0000' # TODO: replace with the PR/issue number that adds this example
+  design = 'porous_flow/halite_precipitation.md PorousFlowBrineCO2.md '
+           'PorousFlowHaliteVolumeFraction.md PorousFlowPrecipitateMassTimeDerivative.md '
+           'PorousFlowPorosity.md'
+  [dryout]
+    type = CSVDiff
+    input = 1Dradial_dryout.i
+    csvdiff = 1Dradial_dryout_time.csv
+    # Trimmed to a few steps so this runs cheaply in the regression suite.  With the
+    # example's timestepping these steps already carry the well cell past the
+    # solubility cap, so the local-equilibrium flash, the
+    # PorousFlowHaliteVolumeFraction material and the
+    # PorousFlowPrecipitateMassTimeDerivative kernel are all exercised (the gold
+    # shows halite_well and solid_salt_vol becoming non-zero by the final step).
+    # The full mass-conservation / clogging behaviour is regression-tested by the
+    # gold-backed cases in test/tests/fluidstate/halite_*.i; raise num_steps or
+    # remove the override to run the complete 10-day model.
+    cli_args = 'Executioner/num_steps=10'
+    abs_zero = 1e-8
+    requirement = 'The PorousFlow module shall simulate CO2 injection into a saline aquifer '
+                  'undergoing brine dry-out with native local-equilibrium halite precipitation, '
+                  'coupling the conserved-salt transport to the precipitated solid that drives '
+                  'near-well porosity and permeability reduction.'
+  []
+[]
