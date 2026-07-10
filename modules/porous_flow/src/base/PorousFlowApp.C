@@ -81,6 +81,24 @@ PorousFlowApp::registerAll(Factory & f, ActionFactory & af, Syntax & syntax)
   addTaskDependency("add_porous_flow_bc", "add_bc");
   addTaskDependency("resolve_optional_materials", "add_porous_flow_bc");
 
+  // Wells are operational forcing on the PorousFlow equations rather than PDE terms, so [Wells] is
+  // a top-level block that reads only the PorousFlowDictator: it works identically with
+  // Physics-built and hand-built inputs
+  syntax.registerActionSyntax("PorousFlowWellAction", "Wells/*", "add_porous_flow_well_gate");
+  syntax.registerActionSyntax("PorousFlowWellAction", "Wells/*", "add_porous_flow_well");
+
+  // A gated production well adds an AuxVariable, which must appear in the normal variable window:
+  // early enough for the relationship managers to see it and for its degrees of freedom to be
+  // distributed with everything else
+  registerMooseObjectTask("add_porous_flow_well_gate", PorousFlowWellBase, false);
+  addTaskDependency("add_porous_flow_well_gate", "add_aux_variable");
+  addTaskDependency("add_aux_kernel", "add_porous_flow_well_gate");
+
+  registerMooseObjectTask("add_porous_flow_well", PorousFlowWellBase, false);
+  addTaskDependency("add_porous_flow_well", "add_porous_flow_well_gate");
+  addTaskDependency("add_porous_flow_well", "add_dirac_kernel");
+  addTaskDependency("resolve_optional_materials", "add_porous_flow_well");
+
   // Task dependency and syntax for action to automatically add PorousFlow materials
   registerSyntax("PorousFlowAddMaterialAction", "Materials");
 

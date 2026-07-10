@@ -1,0 +1,143 @@
+[Tests]
+  design = 'PorousFlowInjectionWell.md PorousFlowProductionWell.md'
+  issues = '#30392'
+
+  [injection_2comp_hand]
+    type = 'CSVDiff'
+    input = 'injection_2comp_hand.i'
+    csvdiff = 'injection_2comp.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall simulate a multi-component injection well built from point sources by hand.'
+  []
+  [injection_2comp_action]
+    type = 'CSVDiff'
+    input = 'injection_2comp_action.i'
+    prereq = injection_2comp_hand
+    csvdiff = 'injection_2comp.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall reproduce a hand-built multi-component injection well exactly using the Wells block, splitting the total rate between the fluid components according to the injected composition.'
+  []
+
+  [production_2comp_hand]
+    type = 'CSVDiff'
+    input = 'production_2comp_hand.i'
+    csvdiff = 'production_2comp.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall simulate a multi-component production well built from polyline sinks by hand.'
+  []
+  [production_2comp_action]
+    type = 'CSVDiff'
+    input = 'production_2comp_action.i'
+    prereq = production_2comp_hand
+    csvdiff = 'production_2comp.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall reproduce a hand-built multi-component production well exactly using the Wells block, producing the resident composition of the reservoir.'
+  []
+
+  [injection_thermal_hand]
+    type = 'CSVDiff'
+    input = 'injection_thermal_hand.i'
+    csvdiff = 'injection_thermal.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall simulate a nonisothermal injection well, with its mass and enthalpy point sources built by hand.'
+  []
+  [injection_thermal_action]
+    type = 'CSVDiff'
+    input = 'injection_thermal_action.i'
+    prereq = injection_thermal_hand
+    csvdiff = 'injection_thermal.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall reproduce a hand-built nonisothermal injection well exactly using the Wells block, adding an enthalpy source that carries the total mass rate at the injection temperature.'
+  []
+
+  [injection_scheduled]
+    type = 'CSVDiff'
+    input = 'injection_scheduled.i'
+    csvdiff = 'injection_scheduled.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall shut a scheduled injection well in exactly on its start and end times, and shall report zero rate while the well is shut.'
+  []
+
+  [production_scheduled]
+    type = 'CSVDiff'
+    input = 'production_scheduled.i'
+    csvdiff = 'production_scheduled.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall shut a scheduled production well in by gating the flux of its polyline sinks, so that its produced mass, rate and cumulative all read zero while it is shut rather than holding their last open-step values.'
+  []
+
+  [production_scheduled_parallel]
+    type = 'CSVDiff'
+    input = 'production_scheduled.i'
+    prereq = production_scheduled
+    csvdiff = 'production_scheduled.csv'
+    rel_err = 1.0E-5
+    min_parallel = 2
+    max_parallel = 2
+    requirement = 'The system shall gate a scheduled production well identically in parallel, the gate AuxVariable being added early enough for the relationship managers to account for it.'
+  []
+
+  [injection_shut_if]
+    type = 'CSVDiff'
+    input = 'injection_shut_if.i'
+    csvdiff = 'injection_shut_if.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall shut a well in when a user-supplied condition on a postprocessor is met, at a time not known in advance.'
+  []
+
+  [except_bhp_max]
+    type = 'RunException'
+    input = 'injection_2comp_action.i'
+    cli_args = "Wells/inj1/bhp_max=30e6"
+    expect_err = "requires the implicit scalar-BHP well"
+    requirement = 'The system shall report an error, rather than silently ignoring the parameter, when a well declares a bottom-hole pressure limit that the fixed-rate well cannot honour.'
+  []
+  [except_wrong_mass_fraction_vars]
+    type = 'RunException'
+    input = 'injection_2comp_action.i'
+    cli_args = "Wells/inj1/mass_fraction_vars=''"
+    expect_err = "must have 1 entries"
+    requirement = 'The system shall report an error when the number of mass fraction variables supplied to a well is inconsistent with the number of fluid components.'
+  []
+  [except_wrong_num_injected_fractions]
+    type = 'RunException'
+    input = 'injection_2comp_action.i'
+    cli_args = "Wells/inj1/injected_mass_fractions='0.3 0.3 0.4'"
+    expect_err = "must have one entry per fluid component"
+    requirement = 'The system shall report an error when the injected composition of a well does not have one entry per fluid component.'
+  []
+  [except_injected_fractions_sum]
+    type = 'RunException'
+    input = 'injection_2comp_action.i'
+    cli_args = "Wells/inj1/injected_mass_fractions='0.3 0.6'"
+    expect_err = "must sum to 1"
+    requirement = 'The system shall report an error when the injected composition of a well does not sum to one.'
+  []
+  [except_injector_point_file]
+    type = 'RunException'
+    input = 'injection_2comp_action.i'
+    cli_args = "Wells/inj1/point_file=prod1.bh"
+    expect_err = "a fixed-rate injector is a single point source"
+    requirement = 'The system shall report an error when a fixed-rate injection well is given completions along a trajectory, which require the implicit scalar-BHP well.'
+  []
+  [except_thermal_missing_fp]
+    type = 'RunException'
+    input = 'injection_thermal_except.i'
+    expect_err = "also needs 'fp' and 'injection_temperature'"
+    requirement = 'The system shall report an error when a nonisothermal well omits the fluid properties or injection temperature needed to compute the injected enthalpy.'
+  []
+  [except_reopen_if]
+    type = 'RunException'
+    input = 'production_2comp_action.i'
+    cli_args = "Wells/prod1/reopen_if='something'"
+    expect_err = "'reopen_if' is not yet implemented"
+    requirement = 'The system shall report an error, rather than silently ignoring the parameter, when a well requests a reopen condition.'
+  []
+  [except_end_before_start]
+    type = 'RunException'
+    input = 'injection_scheduled.i'
+    cli_args = "Wells/inj1/end_time=100"
+    expect_err = "'end_time' must be greater than 'start_time'"
+    requirement = 'The system shall report an error when a well is scheduled to shut before it opens.'
+  []
+[]
