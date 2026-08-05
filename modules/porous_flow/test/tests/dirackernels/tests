@@ -502,6 +502,32 @@
     design = 'porous_flow/sinks.md PorousFlowPeacemanBorehole.md'
     issues = '#12962'
   []
+  [line_source]
+    type = 'CSVDiff'
+    input = 'line_source.i'
+    csvdiff = 'line_source.csv'
+    requirement = 'PorousFlowLineSourceFromPostprocessor shall inject the total mass flux given by a postprocessor, divided between the completions of the line in proportion to their length.'
+    design = 'porous_flow/sinks.md PorousFlowLineSourceFromPostprocessor.md'
+    issues = '#30392'
+  []
+  [line_source_one_point]
+    type = 'CSVDiff'
+    input = 'line_source.i'
+    cli_args = 'DiracKernels/source/point_file=line_source_1pt.bh'
+    csvdiff = 'line_source.csv'
+    prereq = line_source
+    requirement = 'PorousFlowLineSourceFromPostprocessor shall inject the same total mass whether the line is resolved by one completion or by many, and shall not require line_length in order to do so, since a prescribed rate does not scale with the length of the completion.'
+    design = 'porous_flow/sinks.md PorousFlowLineSourceFromPostprocessor.md'
+    issues = '#30392'
+  []
+  [line_source_thermal]
+    type = 'CSVDiff'
+    input = 'line_source_thermal.i'
+    csvdiff = 'line_source_thermal.csv'
+    requirement = 'PorousFlowLineEnthalpySourceFromPostprocessor shall add the heat energy carried by fluid injected along a line, evaluating the enthalpy of the injected fluid at the pressure of each completion.'
+    design = 'porous_flow/sinks.md PorousFlowLineEnthalpySourceFromPostprocessor.md'
+    issues = '#30392'
+  []
   [total_mobility_phase]
     type = 'CSVDiff'
     input = 'total_mobility.i'
