@@ -15,7 +15,10 @@ InputParameters
 PorousFlowInjectionWell::validParams()
 {
   InputParameters params = PorousFlowWellBase::validParams();
-  params.addRequiredParam<Point>("point", "The x,y,z coordinates of the injection point");
+  params.addParam<Point>("point",
+                         "The x,y,z coordinates of a well with a single completion.  This is "
+                         "shorthand: 'point_file' and 'line_base' describe a completion interval "
+                         "and may be used instead.");
   params.addRequiredParam<FunctionName>(
       "rate",
       "The TOTAL injection rate in kg/s, positive for injection.  This is split between the fluid "
@@ -32,16 +35,10 @@ PorousFlowInjectionWell::validParams()
   params.addParam<FunctionName>("injection_temperature",
                                 "The temperature of the injected fluid, in K");
 
-  // Declared so that a multi-completion injector gets an explanatory error rather than an
-  // "unused parameter" one.  Completions along a trajectory need the Peaceman well of phase 1b.
-  params.addParam<std::string>("point_file",
-                               "File of completion coordinates.  Not supported for fixed-rate "
-                               "injectors: see the error message.");
-
   params.addClassDescription(
-      "A rate-controlled injection well, injecting a fluid of fixed composition at a point.  The "
-      "rate is prescribed, not computed from a bottom-hole pressure, so the well has no "
-      "injectivity limit.");
+      "A rate-controlled injection well, injecting a fluid of fixed composition at a point or "
+      "along a completion interval.  The rate is prescribed, not computed from a bottom-hole "
+      "pressure, so the well has no injectivity limit.");
   return params;
 }
 

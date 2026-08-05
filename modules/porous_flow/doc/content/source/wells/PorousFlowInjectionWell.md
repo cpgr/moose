@@ -3,18 +3,31 @@
 !syntax description /Wells/PorousFlowInjectionWell
 
 A rate-controlled injection well, specified inside the [Wells](syntax/Wells/index.md) block.  The
-well injects a fluid of fixed composition at a single point, at a total mass rate given by the
-`rate` function.
+well injects a fluid of fixed composition at a total mass rate given by the `rate` function.
+
+The completions are described in either of two ways.  `point` gives the coordinates of a well
+completed at a single point.  `point_file` or `line_base`, exactly as for
+[PorousFlowProductionWell](PorousFlowProductionWell.md), instead describe a completion interval; with
+`line_base` one completion is generated for each element the interval passes through, and those
+completions follow the mesh if it is adapted or displaced.  The prescribed rate is divided between
+the completions in proportion to the length of interval each represents, so the total injected is the
+same however finely the interval is resolved.
 
 The [PorousFlowWellAction](/Wells/index.md) expands this object into:
 
-- one [PorousFlowPointSourceFromPostprocessor](PorousFlowPointSourceFromPostprocessor.md) per fluid
-  component, each carrying $q_i = w_i q_\mathrm{total}$, where $w_i$ is the $i$th entry of
-  `injected_mass_fractions`.  Components with a zero mass fraction are skipped;
-- when `temperature` is supplied, a
-  [PorousFlowPointEnthalpySourceFromPostprocessor](PorousFlowPointEnthalpySourceFromPostprocessor.md)
-  carrying the *total* mass rate at the injection temperature;
+- one mass source per fluid component, each carrying $q_i = w_i q_\mathrm{total}$, where $w_i$ is the
+  $i$th entry of `injected_mass_fractions`.  Components with a zero mass fraction are skipped.  These
+  are [PorousFlowPointSourceFromPostprocessor](PorousFlowPointSourceFromPostprocessor.md) for a well
+  completed at a single `point`, and
+  [PorousFlowLineSourceFromPostprocessor](PorousFlowLineSourceFromPostprocessor.md) for one completed
+  over an interval;
+- when `temperature` is supplied, the matching
+  [point](PorousFlowPointEnthalpySourceFromPostprocessor.md) or
+  [line](PorousFlowLineEnthalpySourceFromPostprocessor.md) enthalpy source, carrying the *total* mass
+  rate at the injection temperature;
 - the rate postprocessors `<well>_q_<i>` and the cumulative-mass postprocessors `<well>_cum_<i>`.
+
+Which source object is built follows from the geometry given, and is not chosen by the user.
 
 Because the rate is prescribed rather than computed from a bottom-hole pressure, this well has no
 injectivity limit and cannot fail to bootstrap: it is safe from a cold start, even when injecting

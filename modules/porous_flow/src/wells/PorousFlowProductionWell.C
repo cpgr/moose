@@ -16,23 +16,6 @@ PorousFlowProductionWell::validParams()
 {
   InputParameters params = PorousFlowWellBase::validParams();
 
-  // Geometry, passed straight through to PorousFlowLineGeometry
-  params.addParam<std::string>("point_file",
-                               "File containing the completion coordinates and their weights, one "
-                               "'r x y z' per line, as for PorousFlowPolyLineSink");
-  params.addParam<std::vector<Real>>("line_base",
-                                     "Completion base point, in the same 'r x y z' format as a "
-                                     "single-line point_file");
-  params.addRangeCheckedParam<Real>(
-      "line_length",
-      0.0,
-      "line_length>=0",
-      "Length of the completion.  Only used if there is a single completion point.");
-  params.addParam<RealVectorValue>(
-      "line_direction",
-      RealVectorValue(0.0, 0.0, 1.0),
-      "Direction of the completion.  Only used if there is a single completion point.");
-
   // Deliverability curve, passed straight through to PorousFlowPolyLineSink
   params.addRequiredParam<std::vector<Real>>(
       "p_or_t_vals",

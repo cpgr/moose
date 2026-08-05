@@ -25,6 +25,25 @@ PorousFlowWellBase::validParamsCommon()
       "List of variables holding the mass balances of the fluid components.  The i^th variable "
       "holds the equation for the i^th fluid component, and 'porepressure' holds the equation for "
       "the final fluid component, exactly as in the PorousFlow Physics/Action.");
+  // Completion geometry, passed straight through to PorousFlowLineGeometry.  Every well is a
+  // trajectory through the formation, whatever drives the flux at its completions, so these belong
+  // to all well types alike
+  params.addParam<std::string>("point_file",
+                               "File containing the completion coordinates and their weights, one "
+                               "'r x y z' per line, as for PorousFlowPolyLineSink");
+  params.addParam<std::vector<Real>>("line_base",
+                                     "Completion base point, in the same 'r x y z' format as a "
+                                     "single-line point_file.  One completion is then generated "
+                                     "for each element the completion interval passes through.");
+  params.addRangeCheckedParam<Real>(
+      "line_length",
+      0.0,
+      "line_length>=0",
+      "Length of the completion interval.  Only used if there is a single completion point.");
+  params.addParam<RealVectorValue>(
+      "line_direction",
+      RealVectorValue(0.0, 0.0, 1.0),
+      "Direction of the completion interval.  Only used if there is a single completion point.");
   params.addParam<Real>("start_time", "The time at which this well starts operating");
   params.addParam<Real>("end_time", "The time at which this well stops operating");
   params.addParam<std::vector<Real>>(

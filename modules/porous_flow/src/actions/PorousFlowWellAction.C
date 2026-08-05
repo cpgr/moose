@@ -144,13 +144,25 @@ PorousFlowWellAction::addInjectionWell()
   const InputParameters & obj_pars = getObjectParams();
   const std::string nm = name();
 
-  if (obj_pars.isParamValid("point_file"))
-    mooseError(nm,
-               ": a fixed-rate injector is a single point source, so 'point_file' is not "
-               "supported.  Completions along a trajectory require the implicit scalar-BHP well "
-               "(Task 14 phase 1b).  Use 'point' instead.");
+  // A well completed at a single point is modelled by the point sources, and one completed over an
+  // interval by the line sources, which divide the prescribed rate between the completions.  The
+  // user declares the geometry and never chooses between the two.
+  const bool single_completion = obj_pars.isParamValid("point");
+  const bool completion_interval =
+      obj_pars.isParamValid("point_file") || obj_pars.isParamValid("line_base");
 
-  const Point & point = obj_pars.get<Point>("point");
+  if (single_completion && completion_interval)
+    mooseError(nm,
+               ": the completions are given both by 'point' and by 'point_file' or 'line_base'.  "
+               "Use 'point' for a well completed at a single point, and 'point_file' or "
+               "'line_base' for one completed over an interval.");
+  if (!single_completion && !completion_interval)
+    mooseError(nm,
+               ": a well's completions must be given by 'point', 'point_file' or 'line_base'.  "
+               "[Wells] models a well as a point/line source in the model; areal or radial "
+               "injection across a boundary is a boundary condition, so use PorousFlowSink "
+               "instead.");
+
   // The gate task built this function; its name is derived from name(), not carried in a member
   const FunctionName rate =
       isGated() ? FunctionName(nm + "_rate_sched") : obj_pars.get<FunctionName>("rate");
@@ -185,10 +197,14 @@ PorousFlowWellAction::addInjectionWell()
     const PostprocessorName rate_pp = nm + "_q_" + Moose::stringify(i);
     addRatePostprocessor(rate_pp, rate, mass_fractions[i]);
 
-    const std::string class_name = "PorousFlowPointSourceFromPostprocessor";
+    const std::string class_name = single_completion ? "PorousFlowPointSourceFromPostprocessor"
+                                                     : "PorousFlowLineSourceFromPostprocessor";
     InputParameters pars = _factory.getValidParams(class_name);
     pars.set<NonlinearVariableName>("variable") = componentVariable(i);
-    pars.set<Point>("point") = point;
+    if (single_completion)
+      pars.set<Point>("point") = obj_pars.get<Point>("point");
+    else
+      setLineGeometry(pars);
     pars.set<PostprocessorName>("mass_flux") = rate_pp;
     const std::string kernel_name = nm + "_source_" + Moose::stringify(i);
     _problem->addDiracKernel(class_name, kernel_name, pars);
@@ -214,10 +230,15 @@ PorousFlowWellAction::addInjectionWell()
   const PostprocessorName t_in_pp = nm + "_T_in";
   addRatePostprocessor(t_in_pp, obj_pars.get<FunctionName>("injection_temperature"), 1.0);
 
-  const std::string class_name = "PorousFlowPointEnthalpySourceFromPostprocessor";
+  const std::string class_name = single_completion
+                                     ? "PorousFlowPointEnthalpySourceFromPostprocessor"
+                                     : "PorousFlowLineEnthalpySourceFromPostprocessor";
   InputParameters pars = _factory.getValidParams(class_name);
   pars.set<NonlinearVariableName>("variable") = obj_pars.get<VariableName>("temperature");
-  pars.set<Point>("point") = point;
+  if (single_completion)
+    pars.set<Point>("point") = obj_pars.get<Point>("point");
+  else
+    setLineGeometry(pars);
   pars.set<PostprocessorName>("mass_flux") = total_rate_pp;
   pars.set<PostprocessorName>("T_in") = t_in_pp;
   pars.set<UserObjectName>("fp") = obj_pars.get<UserObjectName>("fp");

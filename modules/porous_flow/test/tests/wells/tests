@@ -113,12 +113,20 @@
     expect_err = "must sum to 1"
     requirement = 'The system shall report an error when the injected composition of a well does not sum to one.'
   []
-  [except_injector_point_file]
+  [injection_interval]
+    type = 'CSVDiff'
+    input = 'injection_interval.i'
+    csvdiff = 'injection_interval.csv'
+    rel_err = 1.0E-5
+    requirement = 'The system shall inject at a prescribed rate over a completion interval, generating one completion for each element the interval passes through and dividing the rate between them, so that the mass of each fluid component added to the model matches the cumulative reported by the well.'
+    issues = '#30392'
+  []
+  [except_injector_two_geometries]
     type = 'RunException'
     input = 'injection_2comp_action.i'
     cli_args = "Wells/inj1/point_file=prod1.bh"
-    expect_err = "a fixed-rate injector is a single point source"
-    requirement = 'The system shall report an error when a fixed-rate injection well is given completions along a trajectory, which require the implicit scalar-BHP well.'
+    expect_err = "completions are given both by"
+    requirement = 'The system shall report an error when a well is given its completions both as a single point and as a completion interval.'
   []
   [except_thermal_missing_fp]
     type = 'RunException'
