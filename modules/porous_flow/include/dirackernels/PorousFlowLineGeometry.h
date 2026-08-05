@@ -63,6 +63,27 @@ protected:
   /// 0.5*(length of polyline segments between points)
   std::vector<Real> _half_seg_len;
 
+  /// Length of the entire polyline, which is completionLength() summed over every point
+  Real _total_line_length;
+
+  /**
+   * The length of line attributed to one Dirac point: half the distance back to the previous
+   * point plus half the distance forward to the next, so that summing over all the points
+   * recovers the length of the line
+   * @param dirac_ptid The ID assigned to the point by addPoints()
+   */
+  Real completionLength(unsigned dirac_ptid) const;
+
+  /**
+   * The fraction of the line attributed to one Dirac point, so that the fractions of all the
+   * points sum to unity.  This is the share of a prescribed total, such as an injection rate,
+   * that this point should carry.  A line with a single completion carries all of it whatever
+   * line_length says: unlike the Peaceman well constant, a prescribed rate does not scale with
+   * the length of the completion, so line_length may be left at its default here.
+   * @param dirac_ptid The ID assigned to the point by addPoints()
+   */
+  Real completionFraction(unsigned dirac_ptid) const;
+
   /// Add Dirac Points to the line sink
   virtual void addPoints() override;
 

@@ -46,16 +46,7 @@ PorousFlowPolyLineSink::PorousFlowPolyLineSink(const InputParameters & parameter
 Real
 PorousFlowPolyLineSink::computeQpBaseOutflow(unsigned current_dirac_ptid) const
 {
-  Real outflow = 0.0;
-
-  if (current_dirac_ptid > 0)
-    // contribution from half-segment "behind" this point (must have >1 point for
-    // current_dirac_ptid>0)
-    outflow += _half_seg_len[current_dirac_ptid - 1];
-
-  if (current_dirac_ptid + 1 < _zs.size() || _zs.size() == 1)
-    // contribution from half-segment "ahead of" this point, or we only have one point
-    outflow += _half_seg_len[current_dirac_ptid];
+  const Real outflow = completionLength(current_dirac_ptid);
 
   return outflow * _test[_i][_qp] * _sink_func.sample(ptqp()) * _weight->at(current_dirac_ptid);
 }
@@ -73,14 +64,7 @@ PorousFlowPolyLineSink::computeQpBaseOutflowJacobian(unsigned jvar,
     return;
   const unsigned pvar = _dictator.porousFlowVariableNum(jvar);
 
-  if (current_dirac_ptid > 0)
-    // contribution from half-segment "behind" this point (must have >1 point for
-    // current_dirac_ptid>0)
-    outflow += _half_seg_len[current_dirac_ptid - 1];
-
-  if (current_dirac_ptid + 1 < _zs.size() || _zs.size() == 1)
-    // contribution from half-segment "ahead of" this point, or we only have one point
-    outflow += _half_seg_len[current_dirac_ptid];
+  outflow = completionLength(current_dirac_ptid);
 
   outflowp = outflow * _test[_i][_qp] * _sink_func.sampleDerivative(ptqp()) * dptqp(pvar) *
              _phi[_j][_qp] * _weight->at(current_dirac_ptid);

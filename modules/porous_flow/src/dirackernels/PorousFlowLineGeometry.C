@@ -13,6 +13,7 @@
 #include "libmesh/utility.h"
 
 #include <fstream>
+#include <numeric>
 
 InputParameters
 PorousFlowLineGeometry::validParams()
@@ -72,6 +73,7 @@ PorousFlowLineGeometry::PorousFlowLineGeometry(const InputParameters & parameter
     _line_length(getParam<Real>("line_length")),
     _line_direction(getParam<RealVectorValue>("line_direction")),
     _point_file(getParam<std::string>("point_file")),
+    _total_line_length(0.0),
     _x_coord(isParamValid("x_coord_reporter") ? &getReporterValue<std::vector<Real>>(
                                                     "x_coord_reporter", REPORTER_MODE_REPLICATED)
                                               : &_xs),
@@ -228,6 +230,39 @@ PorousFlowLineGeometry::calcLineLengths()
   }
   if (num_pts == 1)
     _half_seg_len[0] = _line_length;
+
+  // Every segment is half-counted at each of its two end points, so summing completionLength()
+  // over all the points simply gives the length of the line
+  _total_line_length = (num_pts == 1)
+                           ? _line_length
+                           : 2.0 * std::accumulate(_half_seg_len.begin(), _half_seg_len.end(), 0.0);
+}
+
+Real
+PorousFlowLineGeometry::completionLength(unsigned dirac_ptid) const
+{
+  Real len = 0.0;
+
+  if (dirac_ptid > 0)
+    // contribution from half-segment "behind" this point (must have >1 point for dirac_ptid>0)
+    len += _half_seg_len[dirac_ptid - 1];
+
+  if (dirac_ptid + 1 < _zs.size() || _zs.size() == 1)
+    // contribution from half-segment "ahead of" this point, or we only have one point
+    len += _half_seg_len[dirac_ptid];
+
+  return len;
+}
+
+Real
+PorousFlowLineGeometry::completionFraction(unsigned dirac_ptid) const
+{
+  // A single completion carries the whole of a prescribed total even when line_length has been
+  // left at its default of zero, which would otherwise make this a division of zero by zero
+  if (_zs.size() == 1)
+    return 1.0;
+
+  return completionLength(dirac_ptid) / _total_line_length;
 }
 
 void
