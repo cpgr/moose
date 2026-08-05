@@ -49,6 +49,16 @@ PorousFlowLineSink::validParams()
   params.addParam<bool>(
       "use_relative_permeability", false, "Multiply the flux by the fluid relative permeability");
   params.addParam<bool>("use_mobility", false, "Multiply the flux by the fluid mobility");
+  MooseEnum mobility_type_choice("phase=0 total=1", "phase");
+  params.addParam<MooseEnum>(
+      "mobility_type",
+      mobility_type_choice,
+      "The mobility used when use_mobility=true.  'phase' is the mobility of 'fluid_phase' alone, "
+      "k_r*rho/mu.  'total' is the density of 'fluid_phase' multiplied by the total mobility of "
+      "all phases, rho*sum_p(k_r_p/mu_p).  'phase' is correct for a production well, whose stream "
+      "carries what is mobile at the node.  An injection well needs 'total': the phase mobility of "
+      "a phase that is absent from the block is zero, so with 'phase' such a well has no "
+      "injectivity at all and can never begin to flow.");
   params.addParam<bool>("use_enthalpy", false, "Multiply the flux by the fluid enthalpy");
   params.addParam<bool>(
       "use_internal_energy", false, "Multiply the flux by the fluid internal energy");
@@ -102,6 +112,7 @@ PorousFlowLineSink::PorousFlowLineSink(const InputParameters & parameters)
     _use_mass_fraction(isParamValid("mass_fraction_component")),
     _use_relative_permeability(getParam<bool>("use_relative_permeability")),
     _use_mobility(getParam<bool>("use_mobility")),
+    _mobility_type(getParam<MooseEnum>("mobility_type").getEnum<MobilityTypeChoice>()),
     _use_enthalpy(getParam<bool>("use_enthalpy")),
     _use_internal_energy(getParam<bool>("use_internal_energy")),
 
@@ -211,6 +222,11 @@ PorousFlowLineSink::PorousFlowLineSink(const InputParameters & parameters)
     mooseError("PorousFlowLineSink: You have set use_mobility=true, but do not have nodal density, "
                "relative permeability or viscosity material");
 
+  if (_mobility_type == MobilityTypeChoice::total && !_use_mobility)
+    paramError("mobility_type",
+               "You have set mobility_type=total, but use_mobility=false, so the flux is not "
+               "multiplied by a mobility of any type");
+
   if (_use_enthalpy && !_has_enthalpy)
     mooseError("PorousFlowLineSink: You have set use_enthalpy=true, but do not have a nodal "
                "enthalpy material");
@@ -253,8 +269,7 @@ PorousFlowLineSink::computeQpResidual()
     outflow *= (*_relative_permeability)[_i][_ph];
 
   if (_use_mobility)
-    outflow *= (*_relative_permeability)[_i][_ph] * (*_fluid_density_node)[_i][_ph] /
-               (*_fluid_viscosity)[_i][_ph];
+    outflow *= mobility();
 
   if (_use_mass_fraction)
     outflow *= (*_mass_fractions)[_i][_ph][_sp];
@@ -311,18 +326,8 @@ PorousFlowLineSink::jac(unsigned int jvar)
 
   if (_use_mobility)
   {
-    const Real mob = (*_relative_permeability)[_i][_ph] * (*_fluid_density_node)[_i][_ph] /
-                     (*_fluid_viscosity)[_i][_ph];
-    const Real mob_prime =
-        (_i != _j
-             ? 0.0
-             : (*_drelative_permeability_dvar)[_i][_ph][pvar] * (*_fluid_density_node)[_i][_ph] /
-                       (*_fluid_viscosity)[_i][_ph] +
-                   (*_relative_permeability)[_i][_ph] *
-                       (*_dfluid_density_node_dvar)[_i][_ph][pvar] / (*_fluid_viscosity)[_i][_ph] -
-                   (*_relative_permeability)[_i][_ph] * (*_fluid_density_node)[_i][_ph] *
-                       (*_dfluid_viscosity_dvar)[_i][_ph][pvar] /
-                       Utility::pow<2>((*_fluid_viscosity)[_i][_ph]));
+    const Real mob = mobility();
+    const Real mob_prime = (_i != _j ? 0.0 : dmobility(pvar));
     outflowp = mob * outflowp + mob_prime * outflow;
     outflow *= mob;
   }
@@ -351,6 +356,48 @@ PorousFlowLineSink::jac(unsigned int jvar)
   }
 
   return outflowp;
+}
+
+Real
+PorousFlowLineSink::mobility() const
+{
+  if (_mobility_type == MobilityTypeChoice::phase)
+    return (*_relative_permeability)[_i][_ph] * (*_fluid_density_node)[_i][_ph] /
+           (*_fluid_viscosity)[_i][_ph];
+
+  // Injected fluid displaces whatever is resident, so the resistance it meets is that of all the
+  // phases together.  Unlike the phase mobility, this is nonzero in a block containing none of the
+  // injected phase, which is what allows an injection well to begin flowing.  The mass rate is
+  // carried at the density of the injected phase, so that factor remains the nominated phase's.
+  Real total_mobility = 0.0;
+  for (const auto p : make_range(_dictator.numPhases()))
+    total_mobility += (*_relative_permeability)[_i][p] / (*_fluid_viscosity)[_i][p];
+  return (*_fluid_density_node)[_i][_ph] * total_mobility;
+}
+
+Real
+PorousFlowLineSink::dmobility(unsigned pvar) const
+{
+  if (_mobility_type == MobilityTypeChoice::phase)
+    return (*_drelative_permeability_dvar)[_i][_ph][pvar] * (*_fluid_density_node)[_i][_ph] /
+               (*_fluid_viscosity)[_i][_ph] +
+           (*_relative_permeability)[_i][_ph] * (*_dfluid_density_node_dvar)[_i][_ph][pvar] /
+               (*_fluid_viscosity)[_i][_ph] -
+           (*_relative_permeability)[_i][_ph] * (*_fluid_density_node)[_i][_ph] *
+               (*_dfluid_viscosity_dvar)[_i][_ph][pvar] /
+               Utility::pow<2>((*_fluid_viscosity)[_i][_ph]);
+
+  Real total_mobility = 0.0;
+  Real dtotal_mobility = 0.0;
+  for (const auto p : make_range(_dictator.numPhases()))
+  {
+    total_mobility += (*_relative_permeability)[_i][p] / (*_fluid_viscosity)[_i][p];
+    dtotal_mobility += (*_drelative_permeability_dvar)[_i][p][pvar] / (*_fluid_viscosity)[_i][p] -
+                       (*_relative_permeability)[_i][p] * (*_dfluid_viscosity_dvar)[_i][p][pvar] /
+                           Utility::pow<2>((*_fluid_viscosity)[_i][p]);
+  }
+  return (*_dfluid_density_node_dvar)[_i][_ph][pvar] * total_mobility +
+         (*_fluid_density_node)[_i][_ph] * dtotal_mobility;
 }
 
 Real

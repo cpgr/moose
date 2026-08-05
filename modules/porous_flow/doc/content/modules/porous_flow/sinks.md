@@ -304,6 +304,31 @@ ensures superior numerical convergence.
 !alert note
 You should almost always set `use_mobility=true`.  The exceptions are when using the volumetric version of PorousFlow (when `multiply_by_density = false` appears in your input file) or in non-fluid simulations (`function_of = temperature`).
 
+#### Phase mobility and total mobility
+
+By default (`mobility_type = phase`) the mobility above is that of `fluid_phase` alone,
+$k_{\mathrm{r}}\rho/\mu$.  That is correct for a *production* well, whose stream carries whatever is
+mobile at the node.
+
+It is not correct for an *injection* well, and for gas injection it is fatal.  The relative
+permeability of a phase is zero when none of that phase is present --- Corey relative permeability
+is exactly zero at zero saturation --- so a gas injector completed in a block that is fully
+saturated with water has a phase mobility of exactly zero.  Since the mobility multiplies the flux,
+such a well injects nothing at all, no gas ever appears at the well, the relative permeability
+remains zero, and the well can never begin to flow, however high $P_{\mathrm{wellbore}}$ is raised.
+
+Setting `mobility_type = total` weights the flux by the density of `fluid_phase` multiplied by the
+total mobility of all phases,
+
+\begin{equation}
+\rho_{\beta} \sum_{\beta'} \frac{k_{\mathrm{r}\beta'}}{\mu_{\beta'}} \ ,
+\end{equation}
+
+where $\beta$ is `fluid_phase`.  This is the resistance offered by whatever is being displaced, and
+it is nonzero in a fully water-saturated block, so the injector starts flowing.  The density remains
+that of `fluid_phase` because it is the injected fluid whose mass is being added.  This is the
+standard treatment of injecting well connections in reservoir simulators.
+
 
 ### The character
 

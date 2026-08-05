@@ -45,6 +45,20 @@ protected:
    */
   Real dptqp(unsigned pvar) const;
 
+  /**
+   * The mobility that multiplies the flux when _use_mobility==true: for _mobility_type==phase this
+   * is the mobility of the nominated phase, k_r*rho/mu, and for _mobility_type==total it is the
+   * density of the nominated phase multiplied by the total mobility of all phases,
+   * rho*sum_p(k_r_p/mu_p)
+   */
+  Real mobility() const;
+
+  /**
+   * d(mobility)/d(PorousFlow variable)
+   * @param pvar The PorousFlow variable number
+   */
+  Real dmobility(unsigned pvar) const;
+
   /// Returns the flux from the line sink (before modification by mobility, etc).  Derived classes should override this
   virtual Real computeQpBaseOutflow(unsigned current_dirac_ptid) const = 0;
 
@@ -103,6 +117,9 @@ protected:
 
   /// Whether the flux will be multiplied by the mobility
   const bool _use_mobility;
+
+  /// Whether the mobility is that of the nominated phase alone, or the total mobility of all phases
+  const enum class MobilityTypeChoice { phase, total } _mobility_type;
 
   /// Whether the flux will be multiplied by the enthalpy
   const bool _use_enthalpy;

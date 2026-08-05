@@ -502,4 +502,22 @@
     design = 'porous_flow/sinks.md PorousFlowPeacemanBorehole.md'
     issues = '#12962'
   []
+  [total_mobility_phase]
+    type = 'CSVDiff'
+    input = 'total_mobility.i'
+    cli_args = 'Outputs/file_base=total_mobility_phase'
+    csvdiff = 'total_mobility_phase.csv'
+    requirement = 'PorousFlowPeacemanBorehole shall, when weighting its flux by the mobility of a single phase, inject nothing at all into a reservoir containing none of that phase, since the phase relative permeability and hence the phase mobility is zero there.'
+    design = 'porous_flow/sinks.md PorousFlowPeacemanBorehole.md'
+    issues = '#30392'
+  []
+  [total_mobility_total]
+    type = 'CSVDiff'
+    input = 'total_mobility.i'
+    cli_args = 'DiracKernels/injector/mobility_type=total'
+    csvdiff = 'total_mobility.csv'
+    requirement = 'PorousFlowPeacemanBorehole shall, when weighting its flux by the total mobility of all phases, inject into a reservoir containing none of the injected phase, since the resident phases provide a nonzero total mobility.'
+    design = 'porous_flow/sinks.md PorousFlowPeacemanBorehole.md'
+    issues = '#30392'
+  []
 []

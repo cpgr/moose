@@ -861,6 +861,16 @@
     issues = '#6845'
     design = 'porous_flow/tutorial_09.md porous_flow/tutorial_02.md porous_flow/solvers.md porous_flow/nonlinear_convergence_problems.md PorousFlowDictator.md'
   []
+  [line_sink01_total_mobility]
+    type = 'PetscJacobianTester'
+    input = 'line_sink01.i'
+    ratio_tol = 1E-7
+    difference_tol = 1E10
+    cli_args = 'DiracKernels/dirac2/mobility_type=total DiracKernels/dirac7/mobility_type=total Executioner/num_steps=1'
+    requirement = 'The system shall compute all Jacobian entries of physics kernels for the a peaceman line sink, with 2-phase, 3-components, when the flux is weighted by the total mobility of all phases instead of the mobility of one phase.'
+    issues = '#30392'
+    design = 'porous_flow/tutorial_09.md porous_flow/tutorial_02.md porous_flow/solvers.md porous_flow/nonlinear_convergence_problems.md PorousFlowDictator.md'
+  []
   [line_sink02]
     type = 'PetscJacobianTester'
     input = 'line_sink02.i'
