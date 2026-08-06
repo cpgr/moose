@@ -134,8 +134,8 @@ PorousFlowPeacemanBorehole::validParams()
 
 PorousFlowPeacemanBorehole::PorousFlowPeacemanBorehole(const InputParameters & parameters)
   : PorousFlowLineSink(parameters),
-    _character(getFunction("character")),
-    _p_bot(getFunction("bottom_p_or_t")),
+    _character(isParamValid("character") ? &getFunction("character") : nullptr),
+    _p_bot(isParamValid("bottom_p_or_t") ? &getFunction("bottom_p_or_t") : nullptr),
     _unit_weight(isParamValid("unit_weight") ? getParam<RealVectorValue>("unit_weight")
                                              : RealVectorValue()),
     _use_density_from_temperature(isParamValid("unit_weight_fp")),
@@ -292,7 +292,7 @@ PorousFlowPeacemanBorehole::computeWellborePressures()
   // use case: a linear thermal gradient with a locally-linear density(temperature)), and it
   // degenerates exactly to the constant-unit_weight formula when the density is constant, since
   // the sum then telescopes to density*gravity.(x_i - x_bottom).
-  _bh_pressure[num_pts - 1] = _p_bot.value(_t, _bottom_point);
+  _bh_pressure[num_pts - 1] = _p_bot->value(_t, _bottom_point);
   for (std::size_t i = num_pts - 1; i > 0; --i)
   {
     const RealVectorValue segment(_x_coord->at(i - 1) - _x_coord->at(i),
@@ -307,7 +307,7 @@ Real
 PorousFlowPeacemanBorehole::wellborePressure(unsigned current_dirac_ptid) const
 {
   if (!_use_density_from_temperature)
-    return _p_bot.value(_t, _bottom_point) + _unit_weight * (_q_point[_qp] - _bottom_point);
+    return _p_bot->value(_t, _bottom_point) + _unit_weight * (_q_point[_qp] - _bottom_point);
 
   mooseAssert(current_dirac_ptid < _bh_pressure.size(),
               "PorousFlowPeacemanBorehole: the wellbore pressure profile has not been computed "
@@ -448,7 +448,7 @@ PorousFlowPeacemanBorehole::wellConstantSum(unsigned current_dirac_ptid) const
 Real
 PorousFlowPeacemanBorehole::computeQpBaseOutflow(unsigned current_dirac_ptid) const
 {
-  const Real character = _character.value(_t, _q_point[_qp]);
+  const Real character = _character->value(_t, _q_point[_qp]);
   if (character == 0.0)
     return 0.0;
 
@@ -475,7 +475,7 @@ PorousFlowPeacemanBorehole::computeQpBaseOutflowJacobian(unsigned jvar,
   outflow = 0.0;
   outflowp = 0.0;
 
-  const Real character = _character.value(_t, _q_point[_qp]);
+  const Real character = _character->value(_t, _q_point[_qp]);
   if (character == 0.0)
     return;
 

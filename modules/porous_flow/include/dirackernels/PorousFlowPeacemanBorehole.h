@@ -48,11 +48,15 @@ protected:
    * If negative then the borehole acts as a source (injection well) for porepressure < borehole
    * pressure, and does nothing otherwise
    * The flow rate to/from the borehole is multiplied by |character|, so usually character = +/- 1
+   *
+   * A derived class whose borehole pressure is an unknown suppresses this parameter, since the
+   * direction of flow is then settled by the constraint rather than prescribed, so this may be
+   * nullptr
    */
-  const Function & _character;
+  const Function * const _character;
 
-  /// Bottomhole pressure of borehole
-  const Function & _p_bot;
+  /// Bottomhole pressure of borehole, or nullptr if a derived class solves for it instead
+  const Function * const _p_bot;
 
   /// Unit weight of fluid in borehole (for calculating bottomhole pressure at each Dirac Point).
   /// Not used if _use_density_from_temperature is true.
