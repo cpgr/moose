@@ -59,6 +59,16 @@ PorousFlowLineSink::validParams()
       "carries what is mobile at the node.  An injection well needs 'total': the phase mobility of "
       "a phase that is absent from the block is zero, so with 'phase' such a well has no "
       "injectivity at all and can never begin to flow.");
+  params.addParam<FunctionName>(
+      "injected_mass_fraction",
+      "The mass fraction of 'mass_fraction_component' in the fluid this object injects.  Fluid "
+      "leaving the porespace carries the composition of the porespace, but fluid entering it "
+      "carries the composition of whatever is being injected, which the reservoir has no knowledge "
+      "of.  Without this parameter inflow is weighted by the resident mass fraction, which is "
+      "correct for a producer but not for an injector: injecting a gas into brine that holds "
+      "almost none of it, the resident weighting injects almost nothing.  May be a function of "
+      "time, for an injectate whose composition changes.  Only meaningful with "
+      "'mass_fraction_component'.");
   params.addParam<bool>("use_enthalpy", false, "Multiply the flux by the fluid enthalpy");
   params.addParam<bool>(
       "use_internal_energy", false, "Multiply the flux by the fluid internal energy");
@@ -112,6 +122,9 @@ PorousFlowLineSink::PorousFlowLineSink(const InputParameters & parameters)
     _use_mass_fraction(isParamValid("mass_fraction_component")),
     _use_relative_permeability(getParam<bool>("use_relative_permeability")),
     _use_mobility(getParam<bool>("use_mobility")),
+    _use_injected_mass_fraction(isParamValid("injected_mass_fraction")),
+    _injected_mass_fraction(_use_injected_mass_fraction ? &getFunction("injected_mass_fraction")
+                                                        : nullptr),
     _mobility_type(getParam<MooseEnum>("mobility_type").getEnum<MobilityTypeChoice>()),
     _use_enthalpy(getParam<bool>("use_enthalpy")),
     _use_internal_energy(getParam<bool>("use_internal_energy")),
@@ -255,7 +268,17 @@ PorousFlowLineSink::addPoints()
 }
 
 Real
-PorousFlowLineSink::weightingFactor() const
+PorousFlowLineSink::massFraction(const Real base_outflow) const
+{
+  // A negative outflow is fluid entering the porespace, which carries the injected composition
+  if (_use_injected_mass_fraction && base_outflow < 0.0)
+    return _injected_mass_fraction->value(_t, _q_point[_qp]);
+
+  return (*_mass_fractions)[_i][_ph][_sp];
+}
+
+Real
+PorousFlowLineSink::weightingFactor(const Real base_outflow) const
 {
   Real weight = _multiplying_var[_qp];
 
@@ -266,7 +289,7 @@ PorousFlowLineSink::weightingFactor() const
     weight *= mobility();
 
   if (_use_mass_fraction)
-    weight *= (*_mass_fractions)[_i][_ph][_sp];
+    weight *= massFraction(base_outflow);
 
   if (_use_enthalpy)
     weight *= (*_enthalpy)[_i][_ph];
@@ -286,7 +309,7 @@ PorousFlowLineSink::weightedOutflow()
   if (outflow == 0.0)
     return 0.0;
 
-  return outflow * weightingFactor();
+  return outflow * weightingFactor(outflow);
 }
 
 Real
@@ -328,6 +351,10 @@ PorousFlowLineSink::jac(unsigned int jvar)
   if (outflow == 0.0 && outflowp == 0.0)
     return 0.0;
 
+  // Which way the fluid moves, and so which composition it carries, is settled by the unweighted
+  // flux, before any of the weightings below have multiplied into it
+  const Real base_outflow = outflow;
+
   outflow *= _multiplying_var[_qp];
   outflowp *= _multiplying_var[_qp];
 
@@ -348,10 +375,15 @@ PorousFlowLineSink::jac(unsigned int jvar)
 
   if (_use_mass_fraction)
   {
-    const Real mass_fractions_prime =
-        (_i != _j ? 0.0 : (*_dmass_fractions_dvar)[_i][_ph][_sp][pvar]);
-    outflowp = (*_mass_fractions)[_i][_ph][_sp] * outflowp + mass_fractions_prime * outflow;
-    outflow *= (*_mass_fractions)[_i][_ph][_sp];
+    // The injected composition is prescribed rather than a property of the reservoir, so where it
+    // is used the derivative of the weighting vanishes
+    const bool injecting = (base_outflow < 0.0);
+    const Real mass_frac = massFraction(base_outflow);
+    const Real mass_fractions_prime = (injecting && _use_injected_mass_fraction) || _i != _j
+                                          ? 0.0
+                                          : (*_dmass_fractions_dvar)[_i][_ph][_sp][pvar];
+    outflowp = mass_frac * outflowp + mass_fractions_prime * outflow;
+    outflow *= mass_frac;
   }
 
   if (_use_enthalpy)

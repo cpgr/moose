@@ -40,8 +40,19 @@ protected:
    * with multiplying_var.  The base outflow is multiplied by this to give the flux.  None of these
    * weightings depends on the pressure in the borehole, which is what lets a derived class
    * differentiate the flux with respect to a bottom-hole pressure that is an unknown.
+   * @param base_outflow The unweighted flux, whose sign says which way the fluid is moving and so
+   * which composition it carries
    */
-  Real weightingFactor() const;
+  Real weightingFactor(Real base_outflow) const;
+
+  /**
+   * The mass fraction the flux is weighted by at node _i.  Fluid leaving the porespace carries the
+   * composition of the porespace, but fluid entering it carries the composition of whatever is
+   * being injected, which is not the same thing and is not known to the reservoir.  With
+   * injected_mass_fraction given, inflow is weighted by that instead of by the resident value.
+   * @param base_outflow The unweighted flux, negative when fluid is entering the porespace
+   */
+  Real massFraction(Real base_outflow) const;
 
   /**
    * The flux out of the porespace into the line sink at node _i: the base outflow of the derived
@@ -133,6 +144,12 @@ protected:
 
   /// Whether the flux will be multiplied by the mobility
   const bool _use_mobility;
+
+  /// Whether the injected composition differs from the resident one, ie injected_mass_fraction given
+  const bool _use_injected_mass_fraction;
+
+  /// The mass fraction of `mass_fraction_component` in the injected fluid, or nullptr if resident
+  const Function * const _injected_mass_fraction;
 
   /// Whether the mobility is that of the nominated phase alone, or the total mobility of all phases
   const enum class MobilityTypeChoice { phase, total } _mobility_type;

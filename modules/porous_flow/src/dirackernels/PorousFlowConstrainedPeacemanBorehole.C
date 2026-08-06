@@ -208,7 +208,10 @@ PorousFlowConstrainedPeacemanBorehole::computeQpJacobianScalar()
 {
   // outflow = weighting * conductance * (porepressure - boreholePressure()), and neither the
   // weighting nor the conductance depends on the borehole pressure
-  return -weightingFactor() * conductance(currentPointCachedID());
+  const unsigned current_dirac_ptid = currentPointCachedID();
+  const Real base_outflow = computeQpBaseOutflow(current_dirac_ptid);
+
+  return -weightingFactor(base_outflow) * conductance(current_dirac_ptid);
 }
 
 Real

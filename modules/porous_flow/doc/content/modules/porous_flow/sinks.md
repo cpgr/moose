@@ -588,3 +588,21 @@ Some results (run on a fine mesh) are shown in [inj_prod_p.fig] and [inj_prod_t.
 
 
 !bibtex bibliography
+
+## Injected composition
+
+Fluid leaving the porespace carries the composition of the porespace, so weighting a line sink's flux
+by the resident nodal mass fraction is correct for a producer. Fluid entering the porespace does not:
+it carries the composition of whatever is being injected, which the reservoir has no knowledge of.
+
+Weighting inflow by the resident fraction is not merely inaccurate but self-defeating. Injecting a
+gas into brine that holds almost none of that component, the resident fraction is almost zero, so
+almost none of the component is injected, so the resident fraction stays almost zero. This is the
+composition counterpart of the injectivity problem that `mobility_type = total` solves, and it has
+the same shape: a weighting that is correct for production reads as an absence of the very thing
+being injected.
+
+Giving `injected_mass_fraction` weights inflow by that value instead, leaving outflow weighted by the
+resident fraction as before. It may be a function of time, for an injectate whose composition
+changes. Since the injected composition is prescribed rather than a property of the reservoir, it
+contributes no derivative to the Jacobian where it is used.
