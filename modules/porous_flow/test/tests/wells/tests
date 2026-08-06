@@ -158,4 +158,40 @@
     expect_err = "'end_time' must be greater than 'start_time'"
     requirement = 'The system shall report an error when a well is scheduled to shut before it opens.'
   []
+  [injection_constrained_rate]
+    type = 'CSVDiff'
+    input = 'injection_interval.i'
+    cli_args = 'Wells/inj1/bhp_max=1e12 Outputs/file_base=injection_constrained_rate'
+    csvdiff = 'injection_constrained_rate.csv'
+    abs_zero = 1E-10
+    requirement = 'The system shall deliver the rate requested of a well whose bottom-hole pressure is solved for, dividing it between the completions and between the fluid components according to the injected composition, when the pressure limit never binds.'
+    design = 'porous_flow/sinks.md PorousFlowConstrainedPeacemanBorehole.md'
+    issues = '#30392'
+  []
+  [injection_constrained_rate_parallel]
+    type = 'CSVDiff'
+    input = 'injection_interval.i'
+    cli_args = 'Wells/inj1/bhp_max=1e12 Outputs/file_base=injection_constrained_rate'
+    csvdiff = 'injection_constrained_rate.csv'
+    abs_zero = 1E-10
+    prereq = injection_constrained_rate
+    min_parallel = 2
+    max_parallel = 2
+    requirement = 'The system shall divide a well\'s requested rate between completions lying on different processors so that the total delivered is the rate asked for, giving the same answer on two processors as on one.'
+    design = 'porous_flow/sinks.md PorousFlowConstrainedPeacemanBorehole.md'
+    issues = '#30392'
+  []
+  [injection_constrained_rate_parallel4]
+    type = 'CSVDiff'
+    input = 'injection_interval.i'
+    cli_args = 'Wells/inj1/bhp_max=1e12 Outputs/file_base=injection_constrained_rate'
+    csvdiff = 'injection_constrained_rate.csv'
+    abs_zero = 1E-10
+    prereq = injection_constrained_rate_parallel
+    min_parallel = 4
+    max_parallel = 4
+    requirement = 'The system shall divide a well\'s requested rate between completions independently of how many processors the completions are spread across, giving the same answer on four processors as on one.'
+    design = 'porous_flow/sinks.md PorousFlowConstrainedPeacemanBorehole.md'
+    issues = '#30392'
+  []
 []
