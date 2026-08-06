@@ -255,35 +255,49 @@ PorousFlowLineSink::addPoints()
 }
 
 Real
-PorousFlowLineSink::computeQpResidual()
+PorousFlowLineSink::weightingFactor() const
+{
+  Real weight = _multiplying_var[_qp];
+
+  if (_use_relative_permeability)
+    weight *= (*_relative_permeability)[_i][_ph];
+
+  if (_use_mobility)
+    weight *= mobility();
+
+  if (_use_mass_fraction)
+    weight *= (*_mass_fractions)[_i][_ph][_sp];
+
+  if (_use_enthalpy)
+    weight *= (*_enthalpy)[_i][_ph];
+
+  if (_use_internal_energy)
+    weight *= (*_internal_energy)[_i][_ph];
+
+  return weight;
+}
+
+Real
+PorousFlowLineSink::weightedOutflow()
 {
   // Get the ID we initially assigned to this point
   const unsigned current_dirac_ptid = currentPointCachedID();
-  Real outflow = computeQpBaseOutflow(current_dirac_ptid);
+  const Real outflow = computeQpBaseOutflow(current_dirac_ptid);
   if (outflow == 0.0)
     return 0.0;
 
-  outflow *= _multiplying_var[_qp];
+  return outflow * weightingFactor();
+}
 
-  if (_use_relative_permeability)
-    outflow *= (*_relative_permeability)[_i][_ph];
-
-  if (_use_mobility)
-    outflow *= mobility();
-
-  if (_use_mass_fraction)
-    outflow *= (*_mass_fractions)[_i][_ph][_sp];
-
-  if (_use_enthalpy)
-    outflow *= (*_enthalpy)[_i][_ph];
-
-  if (_use_internal_energy)
-    outflow *= (*_internal_energy)[_i][_ph];
+Real
+PorousFlowLineSink::computeQpResidual()
+{
+  const Real outflow = weightedOutflow();
 
   _total_outflow_mass.add(
       outflow * _dt); // this is not thread safe, but DiracKernel's aren't currently threaded
   if (_point_fluxes)
-    _point_fluxes->add(current_dirac_ptid, outflow);
+    _point_fluxes->add(currentPointCachedID(), outflow);
 
   return outflow;
 }

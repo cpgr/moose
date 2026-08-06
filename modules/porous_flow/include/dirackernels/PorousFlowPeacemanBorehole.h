@@ -142,6 +142,15 @@ protected:
                     const Elem * ele,
                     const Real & rad) const;
 
+  /**
+   * The sum of the Peaceman well constants of the half-segments either side of a Dirac point, which
+   * is the conductance of that completion per unit pressure difference and per unit weighting.
+   * Unlike computeQpBaseOutflow this carries no directional gate, so a derived class whose borehole
+   * pressure is an unknown can use it to form a flux that is differentiable in that unknown.
+   * @param current_dirac_ptid The ID assigned to the point by addPoints()
+   */
+  Real wellConstantSum(unsigned current_dirac_ptid) const;
+
   Real computeQpBaseOutflow(unsigned current_dirac_ptid) const override;
   void computeQpBaseOutflowJacobian(unsigned jvar,
                                     unsigned current_dirac_ptid,

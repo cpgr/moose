@@ -35,6 +35,22 @@ protected:
   /// Jacobian contribution for the derivative wrt the variable jvar
   Real jac(unsigned int jvar);
 
+  /**
+   * The product of every weighting requested by the use_* parameters, evaluated at node _i, along
+   * with multiplying_var.  The base outflow is multiplied by this to give the flux.  None of these
+   * weightings depends on the pressure in the borehole, which is what lets a derived class
+   * differentiate the flux with respect to a bottom-hole pressure that is an unknown.
+   */
+  Real weightingFactor() const;
+
+  /**
+   * The flux out of the porespace into the line sink at node _i: the base outflow of the derived
+   * class, weighted by weightingFactor().  This is computeQpResidual() without its side effect on
+   * the PorousFlowSumQuantity, so that it may be summed over the nodes of an element without
+   * counting the mass more than once.
+   */
+  Real weightedOutflow();
+
   /// If _p_or_t==0, then returns the quadpoint porepressure, else returns the quadpoint temperature
   Real ptqp() const;
 

@@ -421,6 +421,31 @@ PorousFlowPeacemanBorehole::wellConstant(const RealTensorValue & perm,
 }
 
 Real
+PorousFlowPeacemanBorehole::wellConstantSum(unsigned current_dirac_ptid) const
+{
+  Real wc_sum = 0.0;
+
+  if (current_dirac_ptid > 0)
+    // contribution from half-segment "behind" this point (must have >1 point for
+    // current_dirac_ptid>0)
+    wc_sum += wellConstant(_perm_or_cond[_qp],
+                           _rot_matrix[current_dirac_ptid - 1],
+                           _half_seg_len[current_dirac_ptid - 1],
+                           _current_elem,
+                           _weight->at(current_dirac_ptid));
+
+  if (current_dirac_ptid + 1 < _zs.size() || _zs.size() == 1)
+    // contribution from half-segment "ahead of" this point, or we only have one point
+    wc_sum += wellConstant(_perm_or_cond[_qp],
+                           _rot_matrix[current_dirac_ptid],
+                           _half_seg_len[current_dirac_ptid],
+                           _current_elem,
+                           _weight->at(current_dirac_ptid));
+
+  return wc_sum;
+}
+
+Real
 PorousFlowPeacemanBorehole::computeQpBaseOutflow(unsigned current_dirac_ptid) const
 {
   const Real character = _character.value(_t, _q_point[_qp]);
@@ -430,38 +455,13 @@ PorousFlowPeacemanBorehole::computeQpBaseOutflow(unsigned current_dirac_ptid) co
   const Real bh_pressure = wellborePressure(current_dirac_ptid);
   const Real pp = ptqp();
 
-  Real outflow = 0.0; // this is the flow rate from porespace out of the system
+  // this is the flow rate from porespace out of the system.  The borehole only acts in the
+  // direction given by the sign of character: a production well does nothing where the borehole
+  // pressure exceeds the porepressure, and an injection well does nothing where it does not
+  if (!((character < 0.0 && pp < bh_pressure) || (character > 0.0 && pp > bh_pressure)))
+    return 0.0;
 
-  if (current_dirac_ptid > 0)
-  // contribution from half-segment "behind" this point (must have >1 point for
-  // current_dirac_ptid>0)
-  {
-    if ((character < 0.0 && pp < bh_pressure) || (character > 0.0 && pp > bh_pressure))
-    {
-      // injection, so outflow<0 || production, so outflow>0
-      const Real wc = wellConstant(_perm_or_cond[_qp],
-                                   _rot_matrix[current_dirac_ptid - 1],
-                                   _half_seg_len[current_dirac_ptid - 1],
-                                   _current_elem,
-                                   _weight->at(current_dirac_ptid));
-      outflow += wc * (pp - bh_pressure);
-    }
-  }
-
-  if (current_dirac_ptid + 1 < _zs.size() || _zs.size() == 1)
-  // contribution from half-segment "ahead of" this point, or we only have one point
-  {
-    if ((character < 0.0 && pp < bh_pressure) || (character > 0.0 && pp > bh_pressure))
-    {
-      // injection, so outflow<0 || // production, so outflow>0
-      const Real wc = wellConstant(_perm_or_cond[_qp],
-                                   _rot_matrix[current_dirac_ptid],
-                                   _half_seg_len[current_dirac_ptid],
-                                   _current_elem,
-                                   _weight->at(current_dirac_ptid));
-      outflow += wc * (pp - bh_pressure);
-    }
-  }
+  const Real outflow = wellConstantSum(current_dirac_ptid) * (pp - bh_pressure);
 
   return outflow * _test[_i][_qp] * std::abs(character);
 }
