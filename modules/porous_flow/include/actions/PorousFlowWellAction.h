@@ -37,6 +37,21 @@ protected:
   /// Error on any parameter that requires the implicit scalar-BHP well of phase 1b
   void checkNotYetImplemented();
 
+  /// Whether this well's bottom-hole pressure is solved for rather than implied by a prescribed rate
+  bool solvesForBottomHolePressure() const;
+
+  /// The name of the scalar variable holding this well's bottom-hole pressure
+  VariableName bottomHolePressureVariable() const;
+
+  /**
+   * Add the scalar variable holding the bottom-hole pressure, along with the NullScalarKernel that
+   * lets the kernel coverage check see it.  The coverage check builds its list of covered variables
+   * from Kernels, ScalarKernels, finite volume objects and IntegratedBCs, never from DiracKernels,
+   * so the variable would otherwise look uncovered even though a DiracKernel assembles its
+   * equation.
+   */
+  void addBottomHolePressureVariable();
+
   /**
    * The variable holding the mass balance of fluid component `component`.  The PorousFlow
    * Physics/Action convention is that component i < N is on mass_fraction_vars[i] and the final

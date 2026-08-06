@@ -84,8 +84,16 @@ PorousFlowApp::registerAll(Factory & f, ActionFactory & af, Syntax & syntax)
   // Wells are operational forcing on the PorousFlow equations rather than PDE terms, so [Wells] is
   // a top-level block that reads only the PorousFlowDictator: it works identically with
   // Physics-built and hand-built inputs
+  syntax.registerActionSyntax("PorousFlowWellAction", "Wells/*", "add_porous_flow_well_variable");
   syntax.registerActionSyntax("PorousFlowWellAction", "Wells/*", "add_porous_flow_well_gate");
   syntax.registerActionSyntax("PorousFlowWellAction", "Wells/*", "add_porous_flow_well");
+
+  // A well whose bottom-hole pressure is solved for adds a SCALAR variable to the nonlinear system,
+  // which has to happen before the variable window closes.  The gate task below is too late for
+  // that: it sits after add_aux_variable, which itself follows add_variable
+  registerMooseObjectTask("add_porous_flow_well_variable", PorousFlowWellBase, false);
+  addTaskDependency("add_variable", "add_porous_flow_well_variable");
+  addTaskDependency("add_scalar_kernel", "add_porous_flow_well_variable");
 
   // A gated production well adds an AuxVariable, which must appear in the normal variable window:
   // early enough for the relationship managers to see it and for its degrees of freedom to be

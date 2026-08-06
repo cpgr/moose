@@ -35,6 +35,13 @@ PorousFlowWellAction::act()
 {
   const InputParameters & obj_pars = getObjectParams();
 
+  if (_current_task == "add_porous_flow_well_variable")
+  {
+    if (solvesForBottomHolePressure())
+      addBottomHolePressureVariable();
+    return;
+  }
+
   if (_current_task == "add_porous_flow_well_gate")
   {
     checkNotYetImplemented();
@@ -69,6 +76,36 @@ PorousFlowWellAction::act()
   else if (_type == "PorousFlowProductionWell")
     addProductionWell();
   // NOTE: no reason to catch unknown types here - MOOSE will catch that much earlier
+}
+
+bool
+PorousFlowWellAction::solvesForBottomHolePressure() const
+{
+  // The mechanism follows from the constraints the well declares, and is never named by the user: a
+  // well that must respect a pressure limit cannot be a prescribed-rate source, because the rate it
+  // achieves is whatever the limit allows
+  return getObjectParams().isParamValid("bhp_max");
+}
+
+VariableName
+PorousFlowWellAction::bottomHolePressureVariable() const
+{
+  return name() + "_bhp";
+}
+
+void
+PorousFlowWellAction::addBottomHolePressureVariable()
+{
+  const VariableName var_name = bottomHolePressureVariable();
+
+  auto var_params = _factory.getValidParams("MooseVariableScalar");
+  var_params.set<MooseEnum>("family") = "SCALAR";
+  var_params.set<MooseEnum>("order") = "FIRST";
+  _problem->addVariable("MooseVariableScalar", var_name, var_params);
+
+  auto pars = _factory.getValidParams("NullScalarKernel");
+  pars.set<NonlinearVariableName>("variable") = var_name;
+  _problem->addScalarKernel("NullScalarKernel", var_name + "_null", pars);
 }
 
 void
