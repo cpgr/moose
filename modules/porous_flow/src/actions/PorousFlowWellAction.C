@@ -112,7 +112,7 @@ void
 PorousFlowWellAction::checkNotYetImplemented()
 {
   const InputParameters & obj_pars = getObjectParams();
-  for (const std::string & p : {"bhp", "bhp_max", "bhp_min"})
+  for (const std::string & p : {"bhp", "bhp_min"})
     if (obj_pars.isParamValid(p))
       mooseError(name(),
                  ": '",
@@ -223,6 +223,12 @@ PorousFlowWellAction::addInjectionWell()
   if (std::abs(sum - 1.0) > 1.0E-8)
     mooseError(nm, ": 'injected_mass_fractions' must sum to 1, but they sum to ", sum);
 
+  if (solvesForBottomHolePressure())
+  {
+    addConstrainedInjectionWell(rate, mass_fractions);
+    return;
+  }
+
   // One point source per component, carrying q_i = w_i * q_total.  A positive mass_flux is already
   // a source in PorousFlowPointSourceFromPostprocessor, so the natural-sense sign passes straight
   // through
@@ -295,6 +301,89 @@ PorousFlowWellAction::setLineGeometry(InputParameters & pars) const
     pars.set<std::vector<Real>>("line_base") = obj_pars.get<std::vector<Real>>("line_base");
   pars.set<Real>("line_length") = obj_pars.get<Real>("line_length");
   pars.set<RealVectorValue>("line_direction") = obj_pars.get<RealVectorValue>("line_direction");
+}
+
+void
+PorousFlowWellAction::addConstrainedInjectionWell(const FunctionName & rate,
+                                                  const std::vector<Real> & mass_fractions)
+{
+  const InputParameters & obj_pars = getObjectParams();
+  const std::string nm = name();
+
+  // The Peaceman well constant needs the radius of the hole, which point_file and line_base carry
+  // as the first entry of each completion.  'point' has nowhere to put one
+  if (obj_pars.isParamValid("point"))
+    mooseError(nm,
+               ": a well that respects 'bhp_max' is modelled by a Peaceman borehole, whose well "
+               "constant depends on the radius of the hole.  Give the completions with "
+               "'point_file' or 'line_base', whose first entry per completion is that radius, "
+               "rather than with 'point'.");
+
+  // [Wells] states rates positive for injection, the borehole states them positive for production
+  const FunctionName injection_rate = nm + "_rate_injected";
+  {
+    InputParameters pars = _factory.getValidParams("ParsedFunction");
+    pars.set<std::string>("expression") = "-q";
+    pars.set<std::vector<std::string>>("symbol_names") = {"q"};
+    pars.set<std::vector<std::string>>("symbol_values") = {rate};
+    _problem->addFunction("ParsedFunction", injection_rate, pars);
+  }
+
+  const std::string class_name = "PorousFlowConstrainedPeacemanBorehole";
+
+  // Every borehole of this well shares one bottom-hole pressure, and each needs its own
+  // PorousFlowSumQuantity, which accumulates and so cannot be shared
+  auto boreholeParams = [&](const std::string & uo_name)
+  {
+    InputParameters pars = _factory.getValidParams(class_name);
+    setLineGeometry(pars);
+    pars.set<UserObjectName>("PorousFlowDictator") =
+        obj_pars.get<UserObjectName>("PorousFlowDictator");
+    pars.set<std::vector<VariableName>>("bottom_hole_pressure") = {bottomHolePressureVariable()};
+    // An injector weighted by the mobility of a phase absent from the reservoir has no injectivity
+    // at all and can never begin to flow, so the total mobility is the only usable choice here
+    pars.set<bool>("use_mobility") = true;
+    pars.set<MooseEnum>("mobility_type") = "total";
+    // The wellbore hydrostatic gradient is not yet a [Wells] parameter; zero is right for a single
+    // completion or a horizontal interval, and understates the pressure at the foot of a long
+    // vertical one
+    pars.set<RealVectorValue>("unit_weight") = RealVectorValue(0.0, 0.0, 0.0);
+
+    InputParameters uo_pars = _factory.getValidParams("PorousFlowSumQuantity");
+    _problem->addUserObject("PorousFlowSumQuantity", uo_name, uo_pars);
+    pars.set<UserObjectName>("SumQuantityUO") = uo_name;
+    return pars;
+  };
+
+  // The borehole that owns the constraint takes no fluid component, so its flux is the well's
+  // total, which is what 'rate' refers to.  It contributes no flux of its own: the per-component
+  // boreholes below do that, and their fluxes sum to this one because the injected fractions do
+  {
+    InputParameters pars = boreholeParams(nm + "_total_uo");
+    pars.set<NonlinearVariableName>("variable") = componentVariable(0);
+    pars.set<bool>("compute_field_residuals") = false;
+    pars.set<FunctionName>("rate") = injection_rate;
+    pars.set<FunctionName>("bhp_max") = Moose::stringify(obj_pars.get<Real>("bhp_max"));
+    _problem->addDiracKernel(class_name, nm + "_constraint", pars);
+  }
+
+  for (const auto i : make_range(_num_components))
+  {
+    if (mass_fractions[i] == 0.0)
+      continue;
+
+    InputParameters pars = boreholeParams(nm + "_uo_" + Moose::stringify(i));
+    pars.set<NonlinearVariableName>("variable") = componentVariable(i);
+    pars.set<unsigned int>("mass_fraction_component") = i;
+    // Injected fluid carries the composition being injected, not the reservoir's
+    pars.set<FunctionName>("injected_mass_fraction") = Moose::stringify(mass_fractions[i]);
+    pars.set<bool>("compute_scalar_residuals") = false;
+    _problem->addDiracKernel(class_name, nm + "_source_" + Moose::stringify(i), pars);
+  }
+
+  // No reporter is added for the pressure the well settled at: the scalar variable is itself
+  // written to CSV, under the name bottomHolePressureVariable() gives it, so a postprocessor would
+  // only duplicate it and would collide with the variable's own name
 }
 
 void

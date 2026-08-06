@@ -62,6 +62,17 @@ protected:
   /// Build the objects modelling a PorousFlowInjectionWell
   void addInjectionWell();
 
+  /**
+   * Build an injection well whose bottom-hole pressure is solved for: one borehole owning the rate
+   * constraint, and one per fluid component contributing flux, all sharing the scalar variable.
+   * The owner carries no mass_fraction_component, so its flux is the total the rate refers to,
+   * and since the injected fractions sum to one the component fluxes sum to the same thing.
+   * @param rate The well's total rate function, already gated
+   * @param mass_fractions The composition of the injected stream
+   */
+  void addConstrainedInjectionWell(const FunctionName & rate,
+                                   const std::vector<Real> & mass_fractions);
+
   /// Build the objects modelling a PorousFlowProductionWell
   void addProductionWell();
 

@@ -77,6 +77,26 @@ In both cases the physics is right and the reporting is wrong.  Instead, an inje
 is multiplied by a gate that is 1 when open and 0 when shut, and a producer's polyline sinks are
 given that same gate as their `multiplying_var`.  Everything downstream then reads zero honestly.
 
+## Wells that respect a pressure limit
+
+A well given `bhp_max` no longer delivers its rate unconditionally.  Its bottom-hole pressure becomes
+an unknown of the simulation, solved for alongside the reservoir equations, and the well delivers the
+requested rate whenever it can do so beneath the limit and holds the limit when it cannot.  The rate
+then declines as the reservoir pressures up, which a well of prescribed rate cannot represent.
+
+Nothing else in the block changes: adding the one parameter is what selects the mechanism, and the
+expansion is again the action's business.  It builds one borehole owning the rate constraint, one
+per fluid component carrying the injected composition, and a single scalar variable holding the
+pressure that all of them share, reported under `<well>_bhp`.
+
+Such a well is modelled by a Peaceman borehole, whose well constant depends on the radius of the
+hole, so its completions must be given by `point_file` or `line_base`, whose first entry per
+completion is that radius.  A bare `point` carries no radius and is an error here.
+
+The wellbore hydrostatic gradient is not yet a parameter of this block and is taken as zero, which
+is right for a well completed at one point or along a horizontal interval and understates the
+pressure at the foot of a long vertical one.
+
 ## Example
 
 !listing modules/porous_flow/test/tests/wells/injection_2comp_action.i block=Wells

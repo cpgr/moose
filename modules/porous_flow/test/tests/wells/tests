@@ -85,12 +85,22 @@
     requirement = 'The system shall shut a well in when a user-supplied condition on a postprocessor is met, at a time not known in advance.'
   []
 
-  [except_bhp_max]
+  [except_bhp_max_needs_radius]
     type = 'RunException'
     input = 'injection_2comp_action.i'
     cli_args = "Wells/inj1/bhp_max=30e6"
-    expect_err = "requires the implicit scalar-BHP well"
-    requirement = 'The system shall report an error, rather than silently ignoring the parameter, when a well declares a bottom-hole pressure limit that the fixed-rate well cannot honour.'
+    expect_err = "depends on the radius of the hole"
+    requirement = 'The system shall report an error when a well declares a bottom-hole pressure limit but gives its completions as a bare point, since the Peaceman well constant that such a well needs depends on the radius of the hole and a point does not carry one.'
+  []
+  [injection_bhp_max]
+    type = 'CSVDiff'
+    input = 'injection_interval.i'
+    cli_args = 'Wells/inj1/bhp_max=1e7 Outputs/file_base=injection_bhp_max'
+    csvdiff = 'injection_bhp_max.csv'
+    abs_zero = 1E-10
+    requirement = 'The system shall solve for the bottom-hole pressure of a well declaring a pressure limit, expanding the well into one borehole owning the rate constraint and one per fluid component carrying the injected composition, all sharing a single scalar unknown, and shall hold the limit once the requested rate can no longer be delivered beneath it.'
+    design = 'porous_flow/sinks.md PorousFlowConstrainedPeacemanBorehole.md'
+    issues = '#30392'
   []
   [except_wrong_mass_fraction_vars]
     type = 'RunException'
