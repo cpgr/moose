@@ -93,9 +93,12 @@ Such a well is modelled by a Peaceman borehole, whose well constant depends on t
 hole, so its completions must be given by `point_file` or `line_base`, whose first entry per
 completion is that radius.  A bare `point` carries no radius and is an error here.
 
-The wellbore hydrostatic gradient is not yet a parameter of this block and is taken as zero, which
-is right for a well completed at one point or along a horizontal interval and understates the
-pressure at the foot of a long vertical one.
+The pressure at a completion is the bottom-hole pressure plus the weight of the fluid standing
+between them, so a well completed over a tall interval does not see one pressure throughout.  That
+gradient is `wellbore_density` times `gravity`, the latter normally set once in `GlobalParams` as the
+Physics take it.  The density is the one in the hole, the injected stream rather than anything in the
+formation, so it is the user's to give; left at its default of zero the wellbore carries no gradient,
+which is exact for a well completed at a single point or along a horizontal interval.
 
 ## Example
 

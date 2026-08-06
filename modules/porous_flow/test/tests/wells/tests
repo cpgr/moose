@@ -194,4 +194,14 @@
     design = 'porous_flow/sinks.md PorousFlowConstrainedPeacemanBorehole.md'
     issues = '#30392'
   []
+  [injection_wellbore_gradient]
+    type = 'CSVDiff'
+    input = 'injection_interval.i'
+    cli_args = "Wells/inj1/bhp_max=1e12 Wells/inj1/wellbore_density=1000 GlobalParams/gravity='0 -9.81 0' Outputs/file_base=injection_wellbore_gradient"
+    csvdiff = 'injection_wellbore_gradient.csv'
+    abs_zero = 1E-10
+    requirement = 'The system shall carry the weight of the fluid standing in the wellbore down to each completion, so that a well completed over a tall interval does not see its bottom-hole pressure throughout, while still delivering the rate asked of it.'
+    design = 'porous_flow/sinks.md PorousFlowConstrainedPeacemanBorehole.md'
+    issues = '#30392'
+  []
 []

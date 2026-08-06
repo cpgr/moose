@@ -44,6 +44,23 @@ PorousFlowWellBase::validParamsCommon()
       "line_direction",
       RealVectorValue(0.0, 0.0, 1.0),
       "Direction of the completion interval.  Only used if there is a single completion point.");
+  params.addParam<RealVectorValue>(
+      "gravity",
+      RealVectorValue(0.0, 0.0, 0.0),
+      "Gravitational acceleration as a vector pointing downwards.  This is normally set once in "
+      "GlobalParams, exactly as the PorousFlow Physics take it, and is used here only with "
+      "'wellbore_density' to give the pressure gradient down the wellbore.");
+  params.addParam<Real>(
+      "wellbore_density",
+      0.0,
+      "Density of the fluid standing in the wellbore, used with 'gravity' to give the pressure "
+      "gradient down the hole, so that the pressure at a completion is the bottom-hole pressure "
+      "plus that gradient over the height between them.  This is the density of the fluid in the "
+      "well rather than in the formation: the injected stream for an injector, the produced one "
+      "for a producer.  Left at zero the wellbore carries no gradient, which is exact for a well "
+      "completed at a single point or along a horizontal interval, and understates the pressure at "
+      "the foot of a long vertical one.  Only wells that solve for their bottom-hole pressure use "
+      "this.");
   params.addParam<Real>("start_time", "The time at which this well starts operating");
   params.addParam<Real>("end_time", "The time at which this well stops operating");
   params.addParam<std::vector<Real>>(

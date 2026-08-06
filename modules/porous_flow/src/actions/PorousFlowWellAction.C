@@ -344,10 +344,12 @@ PorousFlowWellAction::addConstrainedInjectionWell(const FunctionName & rate,
     // at all and can never begin to flow, so the total mobility is the only usable choice here
     pars.set<bool>("use_mobility") = true;
     pars.set<MooseEnum>("mobility_type") = "total";
-    // The wellbore hydrostatic gradient is not yet a [Wells] parameter; zero is right for a single
-    // completion or a horizontal interval, and understates the pressure at the foot of a long
-    // vertical one
-    pars.set<RealVectorValue>("unit_weight") = RealVectorValue(0.0, 0.0, 0.0);
+    // The borehole wants the weight per unit volume of the fluid standing in the hole, which is
+    // the wellbore density times gravity.  Both are the user's to give, since the density is that
+    // of the injected stream rather than of anything in the formation, and the default of zero
+    // leaves the wellbore with no gradient
+    pars.set<RealVectorValue>("unit_weight") =
+        obj_pars.get<Real>("wellbore_density") * obj_pars.get<RealVectorValue>("gravity");
 
     InputParameters uo_pars = _factory.getValidParams("PorousFlowSumQuantity");
     _problem->addUserObject("PorousFlowSumQuantity", uo_name, uo_pars);
