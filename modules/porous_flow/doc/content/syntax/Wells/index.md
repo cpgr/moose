@@ -23,6 +23,42 @@ with exactly the meaning they have in the PorousFlow Physics: the $i$th entry of
 `mass_fraction_vars` holds the equation for the $i$th fluid component, and `porepressure` holds the
 equation for the final one.
 
+These two parameters are a map from fluid component to variable, and the order in which the
+variables are listed *is* the map. They do not describe what the variables are.
+
+In a compositional simulation the distinction does not show, because the variables carrying the
+component equations are mass fractions, so `mass_fraction_vars` both maps the components and
+describes its entries. Three components solved for pressure and two total mass fractions:
+
+```
+porepressure = pp
+mass_fraction_vars = 'z_h2 z_ch4'
+```
+
+which puts component 0 on `z_h2`, component 1 on `z_ch4` and component 2 on `pp`.
+
+An immiscible simulation separates the two meanings. Solving for pressure, gas saturation and the
+mass fraction of hydrogen in the gas gives
+
+```
+porepressure = pp
+mass_fraction_vars = 'sg y_h2'
+```
+
+which puts component 0 on `sg`, component 1 on `y_h2` and component 2 on `pp`. Only one of the two
+entries is a mass fraction and the first is a saturation, so here the parameter's name describes
+its entries wrongly while still mapping them correctly. What matters is the order, and it must
+agree with the order the kernels were written in. Nothing checks this: the map is supplied by the
+input rather than derived from the equations, so listing the variables in the wrong order silently
+attaches each well's flux to the wrong component equation. Write the list by reading off which
+variable each `PorousFlowMassTimeDerivative` acts on, in `fluid_component` order.
+
+!alert note
+Both parameters exist only because the PorousFlowDictator does not record which variable carries
+each component's equation. Were it to do so, `[Wells]` would ask the dictator instead of the user,
+the order would no longer be something to get wrong, and the naming difficulty above would not
+arise. That is the intended direction, and these parameters should be expected to disappear.
+
 ## Shutting a well in: gate the flux, never the object
 
 A well is always shut in by driving its flux to zero, never by disabling its objects with a
