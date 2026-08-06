@@ -86,6 +86,16 @@ PorousFlowConstrainedPeacemanBorehole::timestepSetup()
 {
   PorousFlowPeacemanBorehole::timestepSetup();
   _n_swaps = 0;
+
+  // The constraint is decided here, once per timestep, so that the equation being solved never
+  // changes part way through a solve.  Deciding it between Newton iterations instead was measured
+  // to cost a failed timestep wherever the limit engages, while never engaging the limit within the
+  // step that first breaches it, so it bought nothing for that cost
+  if (_bhp_max)
+  {
+    _communicator.sum(_rate_mode_residual);
+    updateConstraint();
+  }
 }
 
 void
@@ -93,18 +103,8 @@ PorousFlowConstrainedPeacemanBorehole::residualSetup()
 {
   PorousFlowPeacemanBorehole::residualSetup();
 
-  // The accumulator holds what the previous residual evaluation recorded.  Only a genuine
-  // nonlinear residual is allowed to move the active set: a finite-difference Jacobian evaluates
-  // the residual at perturbed states, and letting those switch the constraint would compare a
-  // Jacobian of one constraint against differences of the other
-  if (_bhp_max && _fe_problem.computingNonlinearResid())
-  {
-    // Completions are spread over elements and over ranks, so the constraint residual is only
-    // complete once it has been summed
-    _communicator.sum(_rate_mode_residual);
-    updateConstraint();
-  }
-
+  // The decision is made in timestepSetup, so this only resets the accumulator: the value left
+  // behind by the last evaluation of a timestep is the one that decides the next
   _rate_mode_residual = 0.0;
 }
 

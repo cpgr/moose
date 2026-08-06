@@ -26,11 +26,11 @@ with $P_{bh} = bhp_{max}$ whenever the rate could only be met above that pressur
 delivers whatever rate the held pressure sustains. As the reservoir pressures up towards the limit
 that rate declines, which is the behaviour being modelled.
 
-Which of the two constraints applies is decided between Newton iterations, never within one, so that
-the residual and the Jacobian always describe the same equation. The rate constraint takes over
-again once it would be satisfied below the limit, which is detected from the sign of the rate
-constraint's residual: the flux falls as the bottom-hole pressure rises, so a negative value means
-the requested rate would be met at a pressure the well is allowed to reach.
+Which of the two constraints applies is decided once per timestep, so the equation being solved
+never changes part way through a solve. The rate constraint takes over again once it would be
+satisfied below the limit, which is detected from the sign of the rate constraint's residual: the
+flux falls as the bottom-hole pressure rises, so a negative value means the requested rate would be
+met at a pressure the well is allowed to reach.
 
 A well whose operating point sits exactly on the limit could switch back and forth indefinitely.
 [!param](/DiracKernels/PorousFlowConstrainedPeacemanBorehole/max_constraint_swaps) bounds how often
@@ -38,9 +38,21 @@ that may happen in one timestep, after which the well keeps whichever constraint
 next one.
 
 !alert note
-Changing the constraint changes the equation being solved, so the timestep in which the limit first
-engages may fail to converge and be cut. The solve recovers on the shortened step and is stable
-afterwards. Only the switch itself costs this, not the steps that follow.
+The limit applies from the timestep after the one in which it is first reached, so the bottom-hole
+pressure may exceed it for a single step. Deciding the constraint between Newton iterations instead
+was measured to cost a failed timestep wherever the limit engages, while never engaging the limit
+within the step that first breached it, so it gave a worse solve for the same overshoot.
+
+A real well does overshoot its limit, since nothing that controls it responds instantly, so a single
+step above the limit is not by itself unreasonable. The size of this one is set by the timestep
+rather than by any response time, however, and a reservoir timestep is far longer than the seconds
+or minutes a real control system takes, so the resemblance should not be relied upon. What matters
+is what the limit represents. Where it is an operating target the excursion is harmless and corrects
+itself on the following step. Where it is a physical threshold such as a fracture pressure, exceeding
+it in reality changes the formation, and since none of that is modelled here the excursion is not
+physical but simply unrepresented. Wells of the second kind need the timestep to be rejected when the
+limit is breached, which this object does not do; keep the timestep short enough that the overshoot
+is small, and check the reported bottom-hole pressure against the limit.
 
 ## Differences from the parent
 
