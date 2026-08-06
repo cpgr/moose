@@ -18,7 +18,7 @@
 InputParameters
 PorousFlowLineGeometry::validParams()
 {
-  InputParameters params = DiracKernel::validParams();
+  InputParameters params = PorousFlowDiracKernelScalarBase::validParams();
   params.addParam<std::string>(
       "point_file",
       "",
@@ -68,7 +68,7 @@ PorousFlowLineGeometry::validParams()
 }
 
 PorousFlowLineGeometry::PorousFlowLineGeometry(const InputParameters & parameters)
-  : DiracKernel(parameters),
+  : PorousFlowDiracKernelScalarBase(parameters),
     ReporterInterface(this),
     _line_length(getParam<Real>("line_length")),
     _line_direction(getParam<RealVectorValue>("line_direction")),
@@ -319,7 +319,7 @@ PorousFlowLineGeometry::regenPoints()
 void
 PorousFlowLineGeometry::meshChanged()
 {
-  DiracKernel::meshChanged();
+  PorousFlowDiracKernelScalarBase::meshChanged();
   regenPoints();
 }
 

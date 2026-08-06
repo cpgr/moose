@@ -546,4 +546,23 @@
     design = 'porous_flow/sinks.md PorousFlowPeacemanBorehole.md'
     issues = '#30392'
   []
+  [dirac_scalar]
+    type = 'CSVDiff'
+    input = 'dirac_scalar.i'
+    csvdiff = 'dirac_scalar_out.csv'
+    allow_test_objects = true
+    requirement = 'A DiracKernel derived from PorousFlowDiracKernelScalarBase shall solve for a scalar variable whose only equation is the constraint the DiracKernel itself assembles, recovering the point-sink strength that delivers a prescribed rate.'
+    design = 'porous_flow/sinks.md PorousFlowDiracKernelScalarBase.md'
+    issues = '#30392'
+  []
+  [dirac_scalar_jacobian]
+    type = 'PetscJacobianTester'
+    input = 'dirac_scalar.i'
+    ratio_tol = 1E-7
+    difference_tol = 1E10
+    allow_test_objects = true
+    requirement = 'A DiracKernel derived from PorousFlowDiracKernelScalarBase shall compute all four Jacobian blocks that couple its field variable to a scalar variable, namely field-field, field-scalar, scalar-field and scalar-scalar.'
+    design = 'porous_flow/sinks.md PorousFlowDiracKernelScalarBase.md'
+    issues = '#30392'
+  []
 []

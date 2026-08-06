@@ -9,13 +9,17 @@
 
 #pragma once
 
-#include "DiracKernel.h"
+#include "PorousFlowDiracKernelScalarBase.h"
 #include "ReporterInterface.h"
 
 /**
  * Approximates a borehole by a sequence of Dirac Points
+ *
+ * The base is PorousFlowDiracKernelScalarBase rather than DiracKernel so that a line sink can hold
+ * a bottom-hole pressure that is itself an unknown.  Without a "scalar_variable" that base is a
+ * plain DiracKernel, so line sinks that do not use one are unaffected.
  */
-class PorousFlowLineGeometry : public DiracKernel, public ReporterInterface
+class PorousFlowLineGeometry : public PorousFlowDiracKernelScalarBase, public ReporterInterface
 {
 public:
   /**
