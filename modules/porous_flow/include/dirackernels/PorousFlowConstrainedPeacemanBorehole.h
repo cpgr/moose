@@ -35,7 +35,17 @@ public:
 
   PorousFlowConstrainedPeacemanBorehole(const InputParameters & parameters);
 
+  virtual void timestepSetup() override;
+  virtual void residualSetup() override;
+
 protected:
+  /**
+   * Choose between delivering the rate and holding the pressure limit, using what the previous
+   * residual evaluation recorded.  This is an active set decision taken between Newton iterations,
+   * never within one, so that the residual and the Jacobian always describe the same constraint.
+   */
+  void updateConstraint();
+
   /// The pressure in the borehole at the current Dirac point, from the scalar unknown
   Real boreholePressure() const;
 
@@ -61,4 +71,28 @@ protected:
 
   /// The rate this well is asked to deliver, positive for production
   const Function & _rate;
+
+  /// The bottom-hole pressure this well may not exceed, or nullptr if it is unlimited
+  const Function * const _bhp_max;
+
+  /// How many times per timestep the well may switch between its two constraints
+  const unsigned int _max_swaps;
+
+  /// Whether the well is currently holding _bhp_max rather than delivering _rate
+  bool _clamped;
+
+  /// Switches made so far this timestep
+  unsigned int _n_swaps;
+
+  /**
+   * The residual the rate constraint would have, accumulated over the completions during the
+   * previous residual evaluation and summed across ranks before use.  It is recorded even while
+   * the well is holding its pressure limit, because it is what says when the limit stops binding:
+   * the flux falls with rising bottom-hole pressure, so a negative value means the rate constraint
+   * would settle below the limit.
+   */
+  Real _rate_mode_residual;
+
+  /// The bottom-hole pressure seen during the previous residual evaluation
+  Real _pbh_last;
 };

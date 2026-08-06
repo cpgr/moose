@@ -18,6 +18,30 @@ Please see [sinks](sinks.md) for an extended discussion of line sinks, and
 [PorousFlowDiracKernelScalarBase](PorousFlowDiracKernelScalarBase.md) for how a `DiracKernel`
 assembles into a scalar variable at all.
 
+## The pressure limit
+
+A well that cannot meet its target without over-pressuring the formation should stop trying. Giving
+[!param](/DiracKernels/PorousFlowConstrainedPeacemanBorehole/bhp_max) replaces the rate constraint
+with $P_{bh} = bhp_{max}$ whenever the rate could only be met above that pressure, and the well then
+delivers whatever rate the held pressure sustains. As the reservoir pressures up towards the limit
+that rate declines, which is the behaviour being modelled.
+
+Which of the two constraints applies is decided between Newton iterations, never within one, so that
+the residual and the Jacobian always describe the same equation. The rate constraint takes over
+again once it would be satisfied below the limit, which is detected from the sign of the rate
+constraint's residual: the flux falls as the bottom-hole pressure rises, so a negative value means
+the requested rate would be met at a pressure the well is allowed to reach.
+
+A well whose operating point sits exactly on the limit could switch back and forth indefinitely.
+[!param](/DiracKernels/PorousFlowConstrainedPeacemanBorehole/max_constraint_swaps) bounds how often
+that may happen in one timestep, after which the well keeps whichever constraint it holds until the
+next one.
+
+!alert note
+Changing the constraint changes the equation being solved, so the timestep in which the limit first
+engages may fail to converge and be cut. The solve recovers on the shortened step and is stable
+afterwards. Only the switch itself costs this, not the steps that follow.
+
 ## Differences from the parent
 
 Neither [!param](/DiracKernels/PorousFlowPeacemanBorehole/bottom_p_or_t) nor
