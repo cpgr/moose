@@ -1,0 +1,212 @@
+# fully-saturated
+# injection
+[Mesh]
+  type = GeneratedMesh
+  dim = 3
+  nx = 1
+  ny = 1
+  nz = 1
+  xmin = -1
+  xmax = 1
+  ymin = -1
+  ymax = 1
+  zmin = -1
+  zmax = 1
+[]
+
+[GlobalParams]
+  PorousFlowDictator = dictator
+[]
+
+[Variables]
+  [pp]
+    initial_condition = 0
+  []
+  [bhp]
+    family = SCALAR
+    order = FIRST
+    initial_condition = 0
+  []
+[]
+
+[ScalarKernels]
+  [bhp_null]
+    # checkKernelCoverage cannot see a variable whose equation a DiracKernel assembles
+    type = NullScalarKernel
+    variable = bhp
+  []
+[]
+
+[Kernels]
+  [mass0]
+    type = PorousFlowMassTimeDerivative
+    fluid_component = 0
+    variable = pp
+  []
+[]
+
+[UserObjects]
+  [dictator]
+    type = PorousFlowDictator
+    porous_flow_vars = 'pp'
+    number_fluid_phases = 1
+    number_fluid_components = 1
+  []
+  [borehole_total_outflow_mass]
+    type = PorousFlowSumQuantity
+  []
+  [pc]
+    type = PorousFlowCapillaryPressureVG
+    m = 0.5
+    alpha = 1e-7
+  []
+[]
+
+[FluidProperties]
+  [simple_fluid]
+    type = SimpleFluidProperties
+    bulk_modulus = 2e9
+    viscosity = 1e-3
+    density0 = 1000
+    thermal_expansion = 0
+  []
+[]
+
+[Materials]
+  [temperature]
+    type = PorousFlowTemperature
+  []
+  [ppss]
+    type = PorousFlow1PhaseP
+    porepressure = pp
+    capillary_pressure = pc
+  []
+  [massfrac]
+    type = PorousFlowMassFraction
+  []
+  [simple_fluid]
+    type = PorousFlowSingleComponentFluid
+    fp = simple_fluid
+    phase = 0
+  []
+  [porosity]
+    type = PorousFlowPorosityConst
+    porosity = 0.1
+  []
+  [permeability]
+    type = PorousFlowPermeabilityConst
+    permeability = '1E-12 0 0 0 1E-12 0 0 0 1E-12'
+  []
+  [relperm]
+    type = PorousFlowRelativePermeabilityCorey
+    n = 2
+    phase = 0
+  []
+[]
+
+[DiracKernels]
+  [bh]
+    type = PorousFlowConstrainedPeacemanBorehole
+    variable = pp
+    SumQuantityUO = borehole_total_outflow_mass
+    point_file = bh03.bh
+    function_of = pressure
+    fluid_phase = 0
+    unit_weight = '0 0 0'
+    use_mobility = true
+    bottom_hole_pressure = bhp
+    rate = -1.0E-2
+  []
+[]
+
+[Postprocessors]
+  [bh_report]
+    type = PorousFlowPlotQuantity
+    uo = borehole_total_outflow_mass
+  []
+
+  [fluid_mass0]
+    type = PorousFlowFluidMass
+    execute_on = timestep_begin
+  []
+
+  [fluid_mass1]
+    type = PorousFlowFluidMass
+    execute_on = timestep_end
+  []
+
+  [zmass_error]
+    type = FunctionValuePostprocessor
+    function = mass_bal_fcn
+    execute_on = timestep_end
+    indirect_dependencies = 'fluid_mass1 fluid_mass0 bh_report'
+  []
+
+  [dt_pp]
+    type = TimestepSize
+    execute_on = timestep_end
+  []
+
+  # bh_report is the mass over the step, so bh_report/dt is the delivered rate.  This is the
+  # quantity the well exists to control, and it should equal the requested rate to solver tolerance
+  [rate_error]
+    type = ParsedPostprocessor
+    expression = 'abs(m / dt + 1.0E-2)'
+    pp_names = 'bh_report dt_pp'
+    pp_symbols = 'm dt'
+    execute_on = timestep_end
+  []
+
+  [bhp_value]
+    type = ScalarVariable
+    variable = bhp
+    execute_on = timestep_end
+  []
+
+  [p0]
+    type = PointValue
+    variable = pp
+    point = '0 0 0'
+    execute_on = timestep_end
+  []
+[]
+
+[Functions]
+  [mass_bal_fcn]
+    type = ParsedFunction
+    expression = abs((a-c+d)/2/(a+c))
+    symbol_names = 'a c d'
+    symbol_values = 'fluid_mass1 fluid_mass0 bh_report'
+  []
+  [insitu_pp]
+    type = ParsedFunction
+    expression = '-2e7*z' #bh_bottom is located at z=-0.5
+  []
+[]
+
+[Preconditioning]
+  [usual]
+    type = SMP
+    full = true
+    petsc_options = '-snes_converged_reason'
+    petsc_options_iname = '-ksp_type -pc_type -ksp_max_it'
+    petsc_options_value = 'bcgs bjacobi 30'
+  []
+[]
+
+[Executioner]
+  type = Transient
+  end_time = 0.5
+  dt = 1E-2
+  solve_type = NEWTON
+  nl_abs_tol = 1E-10
+  nl_rel_tol = 1E-10
+  nl_max_its = 10000
+[]
+
+[Outputs]
+  file_base = bh03_constrained
+  exodus = false
+  csv = true
+  execute_on = timestep_end
+[]

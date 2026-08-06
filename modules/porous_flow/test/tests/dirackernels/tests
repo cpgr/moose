@@ -565,4 +565,13 @@
     design = 'porous_flow/sinks.md PorousFlowDiracKernelScalarBase.md'
     issues = '#30392'
   []
+  [bh03_constrained]
+    type = 'CSVDiff'
+    input = 'bh03_constrained.i'
+    csvdiff = 'bh03_constrained.csv'
+    abs_zero = 1E-10
+    requirement = 'PorousFlowConstrainedPeacemanBorehole shall deliver the rate it is asked for at every timestep, solving for the bottom-hole pressure that achieves it, and shall conserve mass while doing so.'
+    design = 'porous_flow/sinks.md PorousFlowConstrainedPeacemanBorehole.md'
+    issues = '#30392'
+  []
 []
