@@ -69,8 +69,9 @@ protected:
   virtual Real computeQpScalarOffDiagJacobian(unsigned int jvar_num) override;
   virtual Real computeQpJacobianScalar() override;
 
-  /// The rate this well is asked to deliver, positive for production
-  const Function & _rate;
+  /// The rate this well is asked to deliver, positive for production, or nullptr if it owns no
+  /// constraint and so contributes flux alone
+  const Function * const _rate;
 
   /// The bottom-hole pressure this well may not exceed, or nullptr if it is unlimited
   const Function * const _bhp_max;

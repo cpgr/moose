@@ -28,11 +28,13 @@ PorousFlowConstrainedPeacemanBorehole::validParams()
                           "The scalar variable holding the pressure at the bottom of this "
                           "borehole.  Its value is solved for, not prescribed: it is whatever "
                           "delivers 'rate'.");
-  params.addRequiredParam<FunctionName>(
+  params.addParam<FunctionName>(
       "rate",
       "The rate this well is asked to deliver, summed over all of its completions, positive for "
       "production and negative for injection.  The units are those of the equation the borehole "
-      "contributes to, so kg/s for a fluid mass equation and J/s for a heat equation.");
+      "contributes to, so kg/s for a fluid mass equation and J/s for a heat equation.  Needed only "
+      "by the object that owns the constraint: where a well is expanded into one object per fluid "
+      "component, the others set compute_scalar_residuals=false and contribute flux alone.");
   params.addParam<FunctionName>(
       "bhp_max",
       "The bottom-hole pressure this well may not exceed.  Where delivering 'rate' would need more "
@@ -60,7 +62,7 @@ PorousFlowConstrainedPeacemanBorehole::validParams()
 PorousFlowConstrainedPeacemanBorehole::PorousFlowConstrainedPeacemanBorehole(
     const InputParameters & parameters)
   : PorousFlowPeacemanBorehole(parameters),
-    _rate(getFunction("rate")),
+    _rate(isParamValid("rate") ? &getFunction("rate") : nullptr),
     _bhp_max(isParamValid("bhp_max") ? &getFunction("bhp_max") : nullptr),
     _max_swaps(getParam<unsigned int>("max_constraint_swaps")),
     _clamped(false),
@@ -73,6 +75,12 @@ PorousFlowConstrainedPeacemanBorehole::PorousFlowConstrainedPeacemanBorehole(
                "this borehole solves for its bottom-hole pressure, so it needs a scalar variable "
                "to hold it.  Supply 'bottom_hole_pressure', or use a PorousFlowPeacemanBorehole "
                "instead if the bottom-hole pressure is known in advance.");
+
+  if (_compute_scalar_residuals && !_rate)
+    paramError("rate",
+               "this object assembles the well's constraint, so it needs the rate the well is "
+               "asked to deliver.  Objects that contribute only flux, and leave the constraint to "
+               "another, set compute_scalar_residuals=false and need no rate.");
 
   if (_k_order != 1)
     paramError("bottom_hole_pressure",
@@ -187,7 +195,7 @@ PorousFlowConstrainedPeacemanBorehole::computeQpScalarResidual()
   // exactly once however the completions are spread over elements and ranks.  Subtracting each
   // completion's share of it sums to the rate by construction, needs no communication, and does
   // not depend on how many ranks the well is divided between
-  const Real rate_mode = flux - _rate.value(_t, _q_point[_qp]) * fraction;
+  const Real rate_mode = flux - _rate->value(_t, _q_point[_qp]) * fraction;
 
   // Recorded even while the limit is being held, because it is what says when the limit stops
   // binding.  residualSetup() sums it across ranks and acts on it between Newton iterations
